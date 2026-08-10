@@ -1,0 +1,35 @@
+# Laravel .gitignore
+laravel/vendor/
+laravel/node_modules/
+laravel/.env
+laravel/storage/logs/*.log
+laravel/storage/framework/cache/data/*
+laravel/storage/framework/sessions/*
+laravel/storage/framework/views/*
+laravel/storage/framework/testing/
+laravel/bootstrap/cache/*.php
+laravel/public/hot
+laravel/public/storage
+laravel/.phpunit.result.cache
+laravel/coverage/
+
+# Legacy root files — keep but ignore uploads folder content
+uploads/*
+!uploads/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Composer lock (keep) — but ignore vendor
+!laravel/composer.lock
