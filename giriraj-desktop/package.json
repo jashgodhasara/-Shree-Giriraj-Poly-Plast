@@ -1,0 +1,12 @@
+{
+  "name": "shreegiriraj-erp-desktop",
+  "version": "1.0.0",
+  "description": "Shree Giriraj Poly Plast — Windows Desktop ERP",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^33.2.1"
+  }
+}

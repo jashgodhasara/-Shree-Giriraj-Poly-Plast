@@ -26,7 +26,7 @@ class MaterialTransactionApiController extends Controller
                 'total_amount'     => $t->total_amount ? (float) $t->total_amount : null,
                 'supplier_id'      => $t->supplier_id,
                 'supplier_name'    => $t->supplier?->name,
-                'transaction_date' => $t->transaction_date->format('Y-m-d'),
+                'transaction_date' => $t->transaction_date?->format('Y-m-d') ?? ($t->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
                 'reference_no'     => $t->reference_no,
                 'vehicle_no'       => $t->vehicle_no,
                 'remarks'          => $t->remarks,

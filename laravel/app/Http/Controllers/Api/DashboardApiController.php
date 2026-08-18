@@ -31,10 +31,10 @@ class DashboardApiController extends Controller
                 ->map(fn($inv) => [
                     'id'             => $inv->id,
                     'invoice_number' => $inv->invoice_number,
-                    'customer_name'  => $inv->customer->name,
+                    'customer_name'  => $inv->customer?->name ?? 'Walk-in / Cash',
                     'grand_total'    => (float) $inv->grand_total,
                     'status'         => $inv->status,
-                    'invoice_date'   => $inv->invoice_date->format('Y-m-d'),
+                    'invoice_date'   => $inv->invoice_date ? \Carbon\Carbon::parse($inv->invoice_date)->format('Y-m-d') : null,
                 ]),
             'low_stock' => Material::where('stock_quantity', '<', 10)
                 ->orderBy('stock_quantity')

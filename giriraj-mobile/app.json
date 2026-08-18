@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Shree Giriraj ERP",
+    "slug": "shree-giriraj-erp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1e293b"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shreegiriraj.erp"
+    },
+    "android": {
+      "package": "com.shreegiriraj.erp",
+      "adaptiveIcon": {
+        "backgroundColor": "#1e293b",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

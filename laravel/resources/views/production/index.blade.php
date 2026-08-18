@@ -3,6 +3,32 @@
 @section('page-title', 'Processing / Production Logs')
 
 @section('content')
+
+{{-- Date Filter Bar --}}
+@include('partials.date-filter', ['action' => route('production.index')])
+
+{{-- Summary Cards --}}
+@if($preset || $dateFrom)
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:18px;">
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Log Entries</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--primary);">{{ number_format($totalCount) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Raw Material Used</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#8b5cf6;">{{ number_format($totalRawKg, 1) }} <span style="font-size:0.9rem;font-weight:500">Kg</span></div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Output Produced</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#10b981;">{{ number_format($totalPieces) }} <span style="font-size:0.9rem;font-weight:500">Pcs</span></div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Salvage / Scrap</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#ef4444;">{{ number_format($totalSalvage, 1) }} <span style="font-size:0.9rem;font-weight:500">Kg</span></div>
+    </div>
+</div>
+@endif
+
 <div class="card">
     <div class="card-header">
         <h3><i class="fa fa-industry"></i> Production Logs</h3>
@@ -12,7 +38,10 @@
     </div>
     <div class="card-body" style="padding:0">
         @if($logs->isEmpty())
-        <div class="empty-state"><i class="fa fa-industry"></i><p>No production logs yet.</p></div>
+        <div class="empty-state">
+            <i class="fa fa-industry"></i>
+            <p>No production logs{{ $preset ? ' found for this period' : ' yet' }}.</p>
+        </div>
         @else
         <div class="table-wrap">
             <table>

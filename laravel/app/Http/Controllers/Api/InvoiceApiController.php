@@ -26,7 +26,7 @@ class InvoiceApiController extends Controller
         return response()->json([
             'id'              => $invoice->id,
             'invoice_number'  => $invoice->invoice_number,
-            'invoice_date'    => $invoice->invoice_date->format('Y-m-d'),
+            'invoice_date'    => $invoice->invoice_date?->format('Y-m-d') ?? ($invoice->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
             'status'          => $invoice->status,
             'subtotal'        => (float) $invoice->subtotal,
             'cgst'            => (float) $invoice->cgst,
@@ -58,7 +58,7 @@ class InvoiceApiController extends Controller
             'payments' => $invoice->payments->map(fn($p) => [
                 'id'           => $p->id,
                 'amount'       => (float) $p->amount,
-                'payment_date' => $p->payment_date->format('Y-m-d'),
+                'payment_date' => $p->payment_date?->format('Y-m-d') ?? ($p->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
                 'payment_mode' => $p->payment_mode,
                 'reference_no' => $p->reference_no,
                 'remarks'      => $p->remarks,
@@ -133,7 +133,20 @@ class InvoiceApiController extends Controller
 
             foreach ($itemsData as $item) {
                 $invoice->items()->create($item);
+
+                // Deduct stock quantity from product
+                Product::where('id', $item['product_id'])->decrement('stock_quantity', $item['quantity']);
             }
+
+            // Auto-post Customer Debit Ledger entry
+            \App\Models\Ledger::create([
+                'entity_type'      => 'Customer',
+                'entity_id'        => $customer->id,
+                'transaction_date' => now()->toDateString(),
+                'type'             => 'Debit',
+                'amount'           => $invoice->grand_total,
+                'description'      => 'Sales Invoice #' . $invoice->invoice_number,
+            ]);
 
             DB::commit();
             return response()->json([
@@ -170,7 +183,33 @@ class InvoiceApiController extends Controller
 
     public function destroy(Invoice $invoice)
     {
-        $invoice->delete();
-        return response()->json(['message' => 'Invoice deleted.']);
+        DB::beginTransaction();
+        try {
+            $invoice->load('items.product');
+
+            // 1. Restore product stock quantity
+            foreach ($invoice->items as $item) {
+                if ($item->product) {
+                    $item->product->increment('stock_quantity', $item->quantity);
+                }
+            }
+
+            // 2. Remove matching Customer Debit ledger entry
+            \App\Models\Ledger::where('entity_type', 'Customer')
+                ->where('entity_id', $invoice->customer_id)
+                ->where('description', 'Sales Invoice #' . $invoice->invoice_number)
+                ->delete();
+
+            // 3. Delete associated payments & items
+            $invoice->payments()->delete();
+            $invoice->items()->delete();
+            $invoice->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Invoice deleted and stock restored.']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

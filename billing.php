@@ -1,5 +1,7 @@
 <?php
 require_once 'config/db.php';
+require_once 'config/auth.php';
+requireAuth();
 $stmtCust = $pdo->query("SELECT * FROM customers ORDER BY name ASC");
 $customers = $stmtCust->fetchAll();
 

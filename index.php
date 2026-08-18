@@ -1,5 +1,7 @@
 <?php
 require_once 'config/db.php';
+require_once 'config/auth.php';
+requireAuth();
 error_reporting(0);
 
 // Fetch key metrics
@@ -31,6 +33,9 @@ $recent_inv = $pdo->query("
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="manifest.json">
     <title>ERP Dashboard - Shree Giriraj Poly Plast</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="css/style.css">

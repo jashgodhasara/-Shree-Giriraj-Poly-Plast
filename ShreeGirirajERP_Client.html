@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shree Giriraj Poly Plast ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .setup-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 45px;
+            width: 480px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        }
+
+        .logo-wrap {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 38px;
+            box-shadow: 0 10px 30px rgba(79,70,229,0.4);
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+
+        .status-area {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .dot-checking { background: #f59e0b; animation: pulse 1s infinite; }
+        .dot-ok { background: #10b981; }
+        .dot-error { background: #ef4444; }
+
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+        .server-url-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .server-url-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.2);
+        }
+
+        .server-url-input::placeholder { color: #64748b; }
+
+        .btn-connect {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-connect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79,70,229,0.4);
+        }
+
+        .help-text {
+            margin-top: 20px;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .app-frame-wrap {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #f8fafc;
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        .app-topbar {
+            background: #0f172a;
+            color: #fff;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            gap: 15px;
+        }
+
+        .app-topbar span { color: #94a3b8; }
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .btn-disconnect {
+            padding: 5px 14px;
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #app-iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SETUP SCREEN -->
+    <div class="setup-card" id="setup-screen">
+        <div class="logo-wrap">🏭</div>
+        <h1>Shree Giriraj Poly Plast</h1>
+        <p class="subtitle">ERP Client Portal — All data saved on Owner's Server</p>
+
+        <div class="status-area" id="status-area">
+            <div class="status-row">
+                <div class="status-dot dot-checking" id="dot-server"></div>
+                <div id="msg-server">Waiting for server address...</div>
+            </div>
+        </div>
+
+        <label style="display:block; text-align:left; font-size:12px; font-weight:600; color:#94a3b8; margin-bottom:8px;">
+            SERVER URL (Provided by Shree Giriraj Admin)
+        </label>
+        <input
+            type="text"
+            id="server-url-input"
+            class="server-url-input"
+            placeholder="e.g. https://abcxyz.serveo.net or http://localhost:4000"
+            value="https://6f03ff5beb67c974-152-59-51-23.serveousercontent.com"
+        >
+
+        <button class="btn-connect" onclick="connectToServer()">
+            <i class='bx bx-link-external'></i>
+            Connect & Open ERP Application
+        </button>
+
+        <div class="help-text">
+            ⓘ Enter the URL provided by Shree Giriraj ERP admin.<br>
+            Your data will automatically save on the central server.<br>
+            No installation or setup required on your device.
+        </div>
+    </div>
+
+    <!-- FULL APP FRAME (after connect) -->
+    <div class="app-frame-wrap" id="app-frame-wrap">
+        <div class="app-topbar">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span>🏭</span>
+                <strong>Shree Giriraj Poly Plast ERP</strong>
+                <span id="connected-url-display"></span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    LIVE — Central Server
+                </div>
+                <button class="btn-disconnect" onclick="disconnect()">✕ Disconnect</button>
+            </div>
+        </div>
+        <iframe id="app-iframe" src="about:blank" allow="fullscreen"></iframe>
+    </div>
+
+    <script>
+        // ─── Auto-fill server URL if stored from last session ───
+        const DEFAULT_URL = 'https://6f03ff5beb67c974-152-59-51-23.serveousercontent.com';
+        const savedUrl = localStorage.getItem('sgp_server_url') || DEFAULT_URL;
+        document.getElementById('server-url-input').value = savedUrl;
+        updateStatus('checking', `Connecting to server...`);
+        autoConnect(savedUrl);
+
+        function updateStatus(type, msg) {
+            const dot = document.getElementById('dot-server');
+            const msgEl = document.getElementById('msg-server');
+            dot.className = 'status-dot ' + (type === 'ok' ? 'dot-ok' : type === 'error' ? 'dot-error' : 'dot-checking');
+            msgEl.textContent = msg;
+        }
+
+        async function autoConnect(url) {
+            try {
+                const cleanUrl = url.trim().replace(/\/$/, '');
+                const res = await fetch(`${cleanUrl}/api/stats`, { signal: AbortSignal.timeout(5000) });
+                if (res.ok) {
+                    updateStatus('ok', `✓ Server reachable: ${cleanUrl}`);
+                    openApp(cleanUrl);
+                } else {
+                    updateStatus('error', 'Server returned an error. Please check the URL.');
+                }
+            } catch {
+                updateStatus('checking', 'Auto-connect failed. Please enter the server URL manually.');
+            }
+        }
+
+        async function connectToServer() {
+            const rawUrl = document.getElementById('server-url-input').value.trim();
+            if (!rawUrl) {
+                alert('Please enter the server URL provided by the ERP admin.');
+                return;
+            }
+
+            const url = rawUrl.replace(/\/$/, '');
+            updateStatus('checking', `Connecting to ${url} ...`);
+
+            try {
+                const res = await fetch(`${url}/api/stats`, { signal: AbortSignal.timeout(8000) });
+                if (res.ok) {
+                    updateStatus('ok', `✓ Connected! Opening ERP...`);
+                    localStorage.setItem('sgp_server_url', url);
+                    setTimeout(() => openApp(url), 600);
+                } else {
+                    updateStatus('error', `Server error (${res.status}). Check the URL.`);
+                }
+            } catch (err) {
+                updateStatus('error', `Cannot reach server. Check URL or ask admin if server is running.`);
+            }
+        }
+
+        function openApp(url) {
+            document.getElementById('connected-url-display').textContent = url;
+            document.getElementById('app-iframe').src = url;
+            document.getElementById('setup-screen').style.display = 'none';
+
+            const frameWrap = document.getElementById('app-frame-wrap');
+            frameWrap.style.display = 'flex';
+        }
+
+        function disconnect() {
+            document.getElementById('app-iframe').src = 'about:blank';
+            document.getElementById('app-frame-wrap').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'block';
+            updateStatus('checking', 'Disconnected. Enter server URL to reconnect.');
+        }
+
+        // ─── Enter key connects ───
+        document.getElementById('server-url-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') connectToServer();
+        });
+    </script>
+</body>
+</html>

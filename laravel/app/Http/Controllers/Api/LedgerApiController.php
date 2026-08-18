@@ -15,7 +15,7 @@ class LedgerApiController extends Controller
             'entity_type'      => $e->entity_type,
             'entity_id'        => $e->entity_id,
             'entity_name'      => $e->entityName(),
-            'transaction_date' => $e->transaction_date->format('Y-m-d'),
+            'transaction_date' => $e->transaction_date?->format('Y-m-d') ?? ($e->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
             'type'             => $e->type,
             'amount'           => (float) $e->amount,
             'hsn_code'         => $e->hsn_code,

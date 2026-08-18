@@ -11,42 +11,49 @@
     </div>
 </div>
 
+{{-- Date Filter Bar --}}
+@include('partials.date-filter', ['action' => route('reports.index')])
+
 <div class="stats-grid mb-4">
-    <div class="stat-card s-indigo">
+    <a href="{{ route('invoices.index') }}" class="stat-card s-indigo" title="Click to view all Invoices">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-chart-line"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Total Sales Revenue</div>
         <div class="stat-value">₹{{ number_format($totalSales, 2) }}</div>
         <small class="text-muted">{{ $invoiceCount }} Invoices Generated</small>
-    </div>
+    </a>
 
-    <div class="stat-card s-emerald">
+    <a href="{{ route('purchase-orders.index') }}" class="stat-card s-emerald" title="Click to view Purchase Orders">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-cart-flatbed"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Total Procurement Cost</div>
         <div class="stat-value">₹{{ number_format($totalPurchases, 2) }}</div>
         <small class="text-muted">{{ $poCount }} Purchase Orders</small>
-    </div>
+    </a>
 
-    <div class="stat-card s-amber">
+    <a href="{{ route('invoices.index') }}?status=Unpaid" class="stat-card s-amber" title="Click to view Customer Outstanding">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-hand-holding-dollar"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Accounts Receivable (AR)</div>
         <div class="stat-value">₹{{ number_format($totalAr, 2) }}</div>
         <small class="text-muted">Customer Outstanding Balance</small>
-    </div>
+    </a>
 
-    <div class="stat-card s-rose">
+    <a href="{{ route('purchase-orders.index') }}" class="stat-card s-rose" title="Click to view Vendor Payables">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-file-invoice-dollar"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Accounts Payable (AP)</div>
         <div class="stat-value">₹{{ number_format($totalAp, 2) }}</div>
         <small class="text-muted">Vendor Payable Balance</small>
-    </div>
+    </a>
 </div>
 
 <div class="form-row cols-2 mb-4">

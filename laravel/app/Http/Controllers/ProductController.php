@@ -7,9 +7,12 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $products = Product::latest()->get();
+        if ($request->wantsJson()) {
+            return response()->json($products);
+        }
         return view('products.index', compact('products'));
     }
 

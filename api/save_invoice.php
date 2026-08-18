@@ -1,6 +1,9 @@
 <?php
 error_reporting(0);
 require_once '../config/db.php';
+require_once '../config/auth.php';
+requireAuth();
+
 header('Content-Type: application/json');
 
 // Get raw JSON data
@@ -17,6 +20,9 @@ if ($data) {
     }
 
     try {
+        $currentUser = getCurrentUser();
+        $createdBy = $currentUser['id'] ?? null;
+
         $pdo->beginTransaction();
         
         // Generate Invoice Number (e.g., INV-YYYYMM-XXXX)
@@ -52,9 +58,10 @@ if ($data) {
         $grand_total = 0;
         
         // Determine if IGST applies (check customer state)
-        $stmtCust = $pdo->prepare("SELECT state FROM customers WHERE id = ?");
+        $stmtCust = $pdo->prepare("SELECT name, state FROM customers WHERE id = ?");
         $stmtCust->execute([$customer_id]);
         $customer = $stmtCust->fetch();
+        $customer_name = $customer['name'] ?? 'Customer #' . $customer_id;
         $is_igst = false;
         if ($customer && $customer['state']) {
             if (strtolower(trim($customer['state'])) !== 'gujarat') {
@@ -63,8 +70,8 @@ if ($data) {
         }
         
         // Insert empty invoice first to get ID
-        $stmtInv = $pdo->prepare("INSERT INTO invoices (invoice_number, customer_id, invoice_date, subtotal, cgst, sgst, igst, grand_total) VALUES (?, ?, ?, 0, 0, 0, 0, 0)");
-        $stmtInv->execute([$invoice_number, $customer_id, $date]);
+        $stmtInv = $pdo->prepare("INSERT INTO invoices (invoice_number, customer_id, invoice_date, subtotal, cgst, sgst, igst, grand_total, created_by) VALUES (?, ?, ?, 0, 0, 0, 0, 0, ?)");
+        $stmtInv->execute([$invoice_number, $customer_id, $date, $createdBy]);
         $invoice_id = $pdo->lastInsertId();
         
         // Insert items and calculate totals
@@ -105,9 +112,11 @@ if ($data) {
         $stmtUpdate->execute([$subtotal, $total_cgst, $total_sgst, $total_igst, $grand_total, $invoice_id]);
 
         // Auto-post Customer Debit Ledger entry
-        $stmtLedger = $pdo->prepare("INSERT INTO ledgers (entity_type, entity_id, transaction_date, type, amount, description) VALUES ('Customer', ?, ?, 'Debit', ?, ?)");
-        $stmtLedger->execute([$customer_id, $date, $grand_total, 'Sales Invoice #' . $invoice_number]);
+        $stmtLedger = $pdo->prepare("INSERT INTO ledgers (entity_type, entity_id, transaction_date, type, amount, description, created_by) VALUES ('Customer', ?, ?, 'Debit', ?, ?, ?)");
+        $stmtLedger->execute([$customer_id, $date, $grand_total, 'Sales Invoice #' . $invoice_number, $createdBy]);
         
+        logActivity($pdo, 'CREATE', 'Invoices', "Created Sales Invoice #$invoice_number for Customer '$customer_name' (Total: ₹" . number_format($grand_total, 2) . ")");
+
         $pdo->commit();
         
         echo json_encode(['success' => true, 'message' => 'Invoice created successfully', 'invoice_id' => $invoice_id]);

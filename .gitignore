@@ -1,7 +1,18 @@
-# Laravel .gitignore
+# Dependencies
+node_modules/
+*/node_modules/
 laravel/vendor/
 laravel/node_modules/
+giriraj-mobile/node_modules/
+giriraj-desktop/node_modules/
+
+# Environment files
+.env
 laravel/.env
+laravel/.env.backup
+laravel/.env.production
+
+# Storage and logs
 laravel/storage/logs/*.log
 laravel/storage/framework/cache/data/*
 laravel/storage/framework/sessions/*
@@ -13,16 +24,33 @@ laravel/public/storage
 laravel/.phpunit.result.cache
 laravel/coverage/
 
-# Legacy root files — keep but ignore uploads folder content
+# Databases and runtime data
+*.db
+*.sqlite
+laravel/shreegiriraj_billing
+shreegiriraj_desktop.db
+
+# Temporary text & URL files
+live_url.txt
+pinggy_url.txt
+serveo_url.txt
+
+# Build packages & binaries
+*.apk
+*.zip
+dist/
+giriraj-desktop/dist/
+giriraj-mobile/.expo/
+giriraj-mobile/web-build/
+
+# Legacy uploads
 uploads/*
 !uploads/.gitkeep
 
-# OS
+# OS & IDE
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# IDE / editor
 .idea/
 .vscode/
 *.suo
@@ -31,5 +59,5 @@ desktop.ini
 *.sln
 *.sw?
 
-# Composer lock (keep) — but ignore vendor
+# Composer lock
 !laravel/composer.lock

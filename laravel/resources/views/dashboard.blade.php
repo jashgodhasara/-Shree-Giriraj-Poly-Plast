@@ -6,68 +6,122 @@
 <style>
 .dashboard-grid { display:grid; grid-template-columns:1fr 320px; gap:22px; }
 @media(max-width:1024px){ .dashboard-grid { grid-template-columns:1fr; } }
+a.stat-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+a.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(99,102,241,.12);
+    border-color: rgba(99,102,241,.35);
+}
+.stat-card .stat-arrow {
+    font-size: 11px;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all .2s ease;
+    color: var(--text-muted);
+}
+a.stat-card:hover .stat-arrow {
+    opacity: 0.85;
+    transform: translateX(0);
+}
 </style>
 
 @include('partials.guided-tour')
 
+@if(!empty($isCustomDate))
+<div style="margin-bottom:20px; padding:14px 20px; background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08)); border:1.5px solid rgba(99,102,241,0.35); border-radius:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow: 0 4px 16px rgba(99,102,241,0.08);">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,var(--primary),#8b5cf6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow: 0 4px 12px rgba(99,102,241,0.3);">
+            <i class="fa fa-filter"></i>
+        </div>
+        <div>
+            <div style="font-weight:700; font-size:14.5px; color:var(--text); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                Filtered Period: <span style="color:var(--primary);">{{ $dateLabel ?? $workingDate }}</span>
+                <span style="font-size:10px; font-weight:700; background:var(--primary); color:#fff; padding:2px 7px; border-radius:10px; text-transform:uppercase;">Filter Active</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                Dashboard metrics & invoices are filtered for this period. Active bill creation date: <strong>{{ \Carbon\Carbon::parse($workingDate)->format('D, d M, Y') }}</strong>
+            </div>
+        </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="openDateSelectorModal()"><i class="fa fa-calendar-days"></i> Change Filter</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="resetWorkingDate()"><i class="fa fa-rotate-left"></i> Reset to Today</button>
+    </div>
+</div>
+@endif
+
 {{-- Stats Grid --}}
 <div class="stats-grid">
-    <div class="stat-card s-indigo">
+    <a href="{{ route('customers.index') }}" class="stat-card s-indigo" title="Click to view all Customers">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-users"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Total Customers</div>
         <div class="stat-value">{{ $stats['customers'] }}</div>
-    </div>
-    <div class="stat-card s-amber">
+    </a>
+    <a href="{{ route('suppliers.index') }}" class="stat-card s-amber" title="Click to view all Suppliers">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-truck-field"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Suppliers</div>
         <div class="stat-value">{{ $stats['suppliers'] }}</div>
-    </div>
-    <div class="stat-card s-violet">
+    </a>
+    <a href="{{ route('invoices.index') }}" class="stat-card s-violet" title="Click to view all Sales Invoices">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-indian-rupee-sign"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Total Sales</div>
         <div class="stat-value"><small>₹</small>{{ number_format($stats['revenue'], 0) }}</div>
-    </div>
-    <div class="stat-card s-emerald">
+    </a>
+    <a href="{{ route('invoices.index') }}?status=Paid" class="stat-card s-emerald" title="Click to view Paid Invoices">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-circle-check"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Amount Received</div>
         <div class="stat-value"><small>₹</small>{{ number_format($stats['paid'], 0) }}</div>
-    </div>
-    <div class="stat-card s-red">
+    </a>
+    <a href="{{ route('invoices.index') }}?status=Unpaid" class="stat-card s-red" title="Click to view Pending Dues">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-clock"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Pending Dues</div>
         <div class="stat-value"><small>₹</small>{{ number_format($stats['unpaid'], 0) }}</div>
-    </div>
-    <div class="stat-card s-cyan">
+    </a>
+    <a href="{{ route('production.index') }}" class="stat-card s-cyan" title="Click to view Production Runs">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-industry"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Production Runs</div>
         <div class="stat-value">{{ $stats['productions'] }}</div>
-    </div>
-    <div class="stat-card s-teal">
+    </a>
+    <a href="{{ route('materials.index') }}" class="stat-card s-teal" title="Click to view Raw Material Inventory">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-boxes-stacked"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Raw Material Stock (Kg)</div>
         <div class="stat-value">{{ number_format($stats['raw_materials'], 0) }}</div>
-    </div>
-    <div class="stat-card s-rose">
+    </a>
+    <a href="{{ route('products.index') }}" class="stat-card s-rose" title="Click to view all Finished Products">
         <div class="stat-top">
             <div class="stat-icon"><i class="fa fa-tag"></i></div>
+            <i class="fa-solid fa-arrow-up-right-from-square stat-arrow"></i>
         </div>
         <div class="stat-label">Total Products</div>
         <div class="stat-value">{{ $stats['products'] }}</div>
-    </div>
+    </a>
 </div>
 
 <div class="dashboard-grid">

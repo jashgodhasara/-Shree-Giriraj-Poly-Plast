@@ -3,6 +3,35 @@
 @section('page-title', 'Ledger / Book Keeping')
 
 @section('content')
+
+{{-- Date Filter Bar --}}
+@include('partials.date-filter', ['action' => route('ledger.index')])
+
+{{-- Summary Cards --}}
+@if($preset || $dateFrom)
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:18px;">
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Entries</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--primary);">{{ number_format($totalCount) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Total Credit</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#10b981;">₹{{ number_format($totalCredit, 2) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Total Debit</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#ef4444;">₹{{ number_format($totalDebit, 2) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Net Balance</div>
+        @php $net = $totalCredit - $totalDebit; @endphp
+        <div style="font-size:1.4rem;font-weight:800;color:{{ $net >= 0 ? '#10b981' : '#ef4444' }};">
+            {{ $net >= 0 ? '+' : '' }}₹{{ number_format(abs($net), 2) }}
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="card">
     <div class="card-header">
         <h3><i class="fa fa-book"></i> Ledger Entries</h3>
@@ -12,7 +41,10 @@
     </div>
     <div class="card-body" style="padding:0">
         @if($entries->isEmpty())
-        <div class="empty-state"><i class="fa fa-book"></i><p>No ledger entries yet.</p></div>
+        <div class="empty-state">
+            <i class="fa fa-calendar-times"></i>
+            <p>No ledger entries found{{ $preset ? ' for this period' : '' }}.</p>
+        </div>
         @else
         <div class="table-wrap">
             <table>

@@ -14,6 +14,9 @@
     </a>
 </div>
 
+{{-- Date Filter Bar --}}
+@include('partials.date-filter', ['action' => route('purchase-orders.index')])
+
 <div class="card">
     <div class="table-wrap">
         <table>

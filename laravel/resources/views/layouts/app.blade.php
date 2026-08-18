@@ -160,6 +160,29 @@
             padding: 6px 14px; background: var(--bg);
             border-radius: 20px; border: 1px solid var(--border);
         }
+        .topbar-date-btn {
+            font-size: 12px; font-weight: 600; color: var(--text);
+            padding: 6px 14px; background: var(--bg);
+            border-radius: 20px; border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; transition: all .2s ease;
+            text-decoration: none; font-family: 'Inter', sans-serif;
+        }
+        .topbar-date-btn:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(99,102,241,0.15);
+        }
+        .topbar-date-btn.is-custom {
+            background: rgba(99,102,241,0.1);
+            border-color: rgba(99,102,241,0.4);
+            color: var(--primary);
+        }
+        .topbar-date-btn .date-badge-custom {
+            font-size: 10px; font-weight: 700; background: var(--primary); color: #fff;
+            padding: 1px 6px; border-radius: 10px; text-transform: uppercase;
+        }
 
         .content { padding: 28px; flex: 1; }
 
@@ -617,6 +640,25 @@
     </a>
 
     <div class="sidebar-divider"></div>
+    <div class="sidebar-section">Masters &amp; Directory</div>
+    <a href="{{ route('products.index') }}" class="{{ request()->routeIs('products.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-tag"></i></span>
+        <span class="nav-label">Products</span>
+    </a>
+    <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-users"></i></span>
+        <span class="nav-label">Customers</span>
+    </a>
+    <a href="{{ route('suppliers.index') }}" class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-handshake"></i></span>
+        <span class="nav-label">Suppliers</span>
+    </a>
+    <a href="{{ route('transporters.index') }}" class="{{ request()->routeIs('transporters.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-truck"></i></span>
+        <span class="nav-label">Transporters</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
     <div class="sidebar-section">Sales Module</div>
     <a href="{{ route('invoices.create') }}" class="{{ request()->routeIs('invoices.create') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-file-signature"></i></span>
@@ -706,6 +748,44 @@
         <span class="nav-icon"><i class="fa fa-receipt"></i></span>
         <span class="nav-label">Receipt</span>
     </a>
+
+    @auth
+    @if(auth()->user()->isAdmin())
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">Administration</div>
+    <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-users-gear"></i></span>
+        <span class="nav-label">User Management</span>
+    </a>
+    @endif
+
+    <!-- Sidebar User Footer -->
+    <div style="margin-top:auto;padding:16px 14px 20px;border-top:1px solid rgba(255,255,255,.06);">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06);margin-bottom:10px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span style="font-size:14px;font-weight:700;color:#fff;">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:12.5px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
+                <div style="font-size:10px;color:{{ auth()->user()->isAdmin() ? '#818cf8' : '#10b981' }};font-weight:600;text-transform:uppercase;letter-spacing:.5px;">
+                    <i class="fa {{ auth()->user()->isAdmin() ? 'fa-user-shield' : 'fa-user-tie' }}" style="margin-right:3px;"></i>
+                    {{ ucfirst(auth()->user()->role) }}
+                </div>
+            </div>
+        </div>
+        <a href="{{ route('change-password') }}" style="display:flex;align-items:center;gap:9px;padding:8px 12px;color:#64748b;text-decoration:none;font-size:12.5px;font-weight:500;border-radius:8px;transition:all .2s;margin-bottom:4px;" onmouseover="this.style.background='rgba(255,255,255,.06)';this.style.color='#94a3b8'" onmouseout="this.style.background='';this.style.color='#64748b'">
+            <i class="fa fa-key" style="font-size:12px;width:14px;text-align:center;"></i>
+            Change Password
+        </a>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" style="width:100%;display:flex;align-items:center;gap:9px;padding:8px 12px;color:#ef4444;background:none;border:none;font-size:12.5px;font-weight:500;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .2s;" onmouseover="this.style.background='rgba(239,68,68,.08)'" onmouseout="this.style.background=''">
+                <i class="fa fa-right-from-bracket" style="font-size:12px;width:14px;text-align:center;"></i>
+                Logout
+            </button>
+        </form>
+    </div>
+    @endauth
 </nav>
 
 <div class="main">
@@ -727,13 +807,29 @@
             <a href="{{ route('onboard.index') }}" class="btn btn-outline btn-sm" style="font-size:11px; border-color:var(--primary); color:var(--primary);">
                 <i class="fa fa-wand-magic-sparkles"></i> AI Setup Configurator
             </a>
-            <div class="topbar-date">
-                <i class="fa fa-calendar" style="color:var(--primary)"></i>
-                <span id="topbar-date-text"></span>
-            </div>
+            @php
+                $currentFilter = \App\Http\Controllers\DashboardController::resolveDateFilter();
+            @endphp
+            <button type="button" class="topbar-date-btn {{ $currentFilter['is_filtered'] ? 'is-custom' : '' }}" onclick="openDateSelectorModal()" id="topbarDateBtn" title="Click to filter ERP data by date range or single day">
+                <i class="fa fa-calendar-days" style="color:var(--primary)"></i>
+                <span id="topbar-date-text">{{ $currentFilter['label'] }}</span>
+                @if($currentFilter['is_filtered'])
+                    <span class="date-badge-custom">Filter Active</span>
+                @endif
+                <i class="fa fa-chevron-down" style="font-size:10px; opacity:0.6;"></i>
+            </button>
             <a href="{{ route('branches.index') }}" class="topbar-company" style="text-decoration:none;" title="Click to manage multi-location branches">
                 <i class="fa fa-location-dot"></i> {{ session('current_branch', 'Ahmedabad, Gujarat') }}
             </a>
+            @auth
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text-muted);">
+                <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:10px;font-weight:700;color:#fff;">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
+                </div>
+                <span style="font-weight:500;color:var(--text);">{{ auth()->user()->name }}</span>
+                <span style="padding:2px 7px;background:{{ auth()->user()->isAdmin() ? 'rgba(99,102,241,.12)' : 'rgba(16,185,129,.12)' }};color:{{ auth()->user()->isAdmin() ? 'var(--primary)' : 'var(--accent2)' }};border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;">{{ auth()->user()->role }}</span>
+            </div>
+            @endauth
         </div>
     </div>
     <div class="content">
@@ -743,15 +839,264 @@
 
 <div id="toast-container"></div>
 
+<!-- Date Filter Modal -->
+<div class="modal-overlay" id="dateSelectorModal">
+    <div class="modal" style="max-width:480px; background:#ffffff; box-shadow: 0 25px 60px rgba(0,0,0,0.35); border: 1px solid #e2e8f0; border-radius:20px; overflow:hidden;">
+        <div class="modal-header" style="background:#ffffff; border-bottom:1px solid #e2e8f0; padding:18px 24px;">
+            <h3 style="font-size:16px; font-weight:700; color:#1e293b; margin:0; display:flex; align-items:center; gap:10px;">
+                <div class="modal-header-icon" style="background:#ede9fe; color:#6366f1; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa fa-filter"></i>
+                </div>
+                <span>ERP Date Filter & Working Date</span>
+            </h3>
+            <button class="modal-close" onclick="closeModal('dateSelectorModal')">&times;</button>
+        </div>
+
+        <div class="modal-body" style="padding:20px 24px; background:#ffffff;">
+            <!-- Tabs -->
+            <div style="display:flex; background:#f1f5f9; padding:4px; border-radius:10px; margin-bottom:18px;">
+                <button type="button" class="date-tab-btn active" id="tabBtnPresets" onclick="switchDateTab('presets')" style="flex:1; padding:8px 10px; font-size:12.5px; font-weight:600; border:none; border-radius:7px; background:#ffffff; color:#4338ca; box-shadow:0 1px 3px rgba(0,0,0,0.08); cursor:pointer; transition:all .2s;">
+                    <i class="fa fa-bolt"></i> Presets
+                </button>
+                <button type="button" class="date-tab-btn" id="tabBtnSingle" onclick="switchDateTab('single')" style="flex:1; padding:8px 10px; font-size:12.5px; font-weight:600; border:none; border-radius:7px; background:transparent; color:#64748b; cursor:pointer; transition:all .2s;">
+                    <i class="fa fa-calendar-day"></i> Single Day
+                </button>
+                <button type="button" class="date-tab-btn" id="tabBtnRange" onclick="switchDateTab('range')" style="flex:1; padding:8px 10px; font-size:12.5px; font-weight:600; border:none; border-radius:7px; background:transparent; color:#64748b; cursor:pointer; transition:all .2s;">
+                    <i class="fa fa-calendar-week"></i> Date Range
+                </button>
+            </div>
+
+            <!-- TAB 1: PRESETS -->
+            <div id="dateTabPresets">
+                <p style="font-size:12.5px; color:#64748b; margin-bottom:14px;">Select a standard date period to filter dashboard analytics & reports:</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+                    <button type="button" class="preset-choice-btn {{ ($currentFilter['preset'] === 'today') ? 'active-preset' : '' }}" onclick="applyPreset('today')">
+                        <i class="fa fa-sun" style="color:#eab308; font-size:16px;"></i>
+                        <div style="text-align:left;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b;">Today</div>
+                            <div style="font-size:11px; color:#94a3b8;">{{ date('d M Y') }}</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="preset-choice-btn {{ ($currentFilter['preset'] === 'yesterday') ? 'active-preset' : '' }}" onclick="applyPreset('yesterday')">
+                        <i class="fa fa-clock-rotate-left" style="color:#6366f1; font-size:16px;"></i>
+                        <div style="text-align:left;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b;">Yesterday</div>
+                            <div style="font-size:11px; color:#94a3b8;">{{ date('d M Y', strtotime('-1 day')) }}</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="preset-choice-btn {{ ($currentFilter['preset'] === 'this_month') ? 'active-preset' : '' }}" onclick="applyPreset('this_month')">
+                        <i class="fa fa-calendar-check" style="color:#10b981; font-size:16px;"></i>
+                        <div style="text-align:left;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b;">This Month</div>
+                            <div style="font-size:11px; color:#94a3b8;">{{ date('M Y') }}</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="preset-choice-btn {{ ($currentFilter['preset'] === 'last_month') ? 'active-preset' : '' }}" onclick="applyPreset('last_month')">
+                        <i class="fa fa-calendar-minus" style="color:#f97316; font-size:16px;"></i>
+                        <div style="text-align:left;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b;">Last Month</div>
+                            <div style="font-size:11px; color:#94a3b8;">{{ date('M Y', strtotime('first day of last month')) }}</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="preset-choice-btn {{ ($currentFilter['preset'] === 'this_year') ? 'active-preset' : '' }}" onclick="applyPreset('this_year')">
+                        <i class="fa fa-chart-line" style="color:#3b82f6; font-size:16px;"></i>
+                        <div style="text-align:left;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b;">This Year</div>
+                            <div style="font-size:11px; color:#94a3b8;">{{ date('Y') }}</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="preset-choice-btn {{ ($currentFilter['preset'] === 'last_year') ? 'active-preset' : '' }}" onclick="applyPreset('last_year')">
+                        <i class="fa fa-landmark" style="color:#8b5cf6; font-size:16px;"></i>
+                        <div style="text-align:left;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b;">Last Year</div>
+                            <div style="font-size:11px; color:#94a3b8;">{{ date('Y', strtotime('-1 year')) }}</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 2: SINGLE DAY -->
+            <div id="dateTabSingle" style="display:none;">
+                <p style="font-size:12.5px; color:#64748b; margin-bottom:14px;">Choose a specific date for daily operations & bill creation:</p>
+                <form id="singleDateForm" onsubmit="submitSingleDate(event)">
+                    <div class="form-group" style="margin-bottom:18px;">
+                        <label style="font-size:13px; font-weight:600; color:#1e293b; margin-bottom:6px; display:block;">Pick Date</label>
+                        <input type="date" id="filterSingleDateInput" value="{{ $currentFilter['date_from'] ?: session('working_date', date('Y-m-d')) }}" style="width:100%; padding:11px 14px; border:1.5px solid #cbd5e1; border-radius:10px; font-size:14px; font-weight:600; color:#0f172a; outline:none;" required>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('dateSelectorModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-check"></i> Set Working Day</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- TAB 3: DATE RANGE -->
+            <div id="dateTabRange" style="display:none;">
+                <p style="font-size:12.5px; color:#64748b; margin-bottom:14px;">Select custom Start Date and End Date range:</p>
+                <form id="rangeDateForm" onsubmit="submitRangeDate(event)">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:12.5px; font-weight:600; color:#1e293b; margin-bottom:6px; display:block;">From Date</label>
+                            <input type="date" id="filterRangeFromInput" value="{{ $currentFilter['date_from'] ?: date('Y-m-01') }}" style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; font-size:13.5px; font-weight:600; color:#0f172a; outline:none;" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:12.5px; font-weight:600; color:#1e293b; margin-bottom:6px; display:block;">To Date</label>
+                            <input type="date" id="filterRangeToInput" value="{{ $currentFilter['date_to'] ?: date('Y-m-d') }}" style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; font-size:13.5px; font-weight:600; color:#0f172a; outline:none;" required>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('dateSelectorModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-filter"></i> Apply Range</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer Action -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:14px; border-top:1px solid #f1f5f9; margin-top:10px;">
+                @if($currentFilter['is_filtered'])
+                <button type="button" class="btn btn-danger btn-sm" onclick="resetWorkingDate()"><i class="fa fa-rotate-left"></i> Reset to Default</button>
+                @else
+                <span style="font-size:12px; color:#94a3b8;">Status: Default (Today)</span>
+                @endif
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('dateSelectorModal')">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.preset-choice-btn {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-radius: 12px; border: 1.5px solid #e2e8f0; background: #f8fafc;
+    cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif;
+}
+.preset-choice-btn:hover {
+    background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-1px);
+}
+.preset-choice-btn.active-preset {
+    background: #ede9fe; border-color: #6366f1; box-shadow: 0 0 0 1px #6366f1;
+}
+</style>
+
 <script>
-    // Live date
-    (function() {
-        const el = document.getElementById('topbar-date-text');
-        if (el) {
-            const d = new Date();
-            el.textContent = d.toLocaleDateString('en-IN', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
-        }
-    })();
+    function openDateSelectorModal() {
+        openModal('dateSelectorModal');
+    }
+
+    function switchDateTab(tabName) {
+        document.getElementById('dateTabPresets').style.display = (tabName === 'presets') ? 'block' : 'none';
+        document.getElementById('dateTabSingle').style.display  = (tabName === 'single') ? 'block' : 'none';
+        document.getElementById('dateTabRange').style.display   = (tabName === 'range') ? 'block' : 'none';
+
+        const btnPresets = document.getElementById('tabBtnPresets');
+        const btnSingle  = document.getElementById('tabBtnSingle');
+        const btnRange   = document.getElementById('tabBtnRange');
+
+        const activeStyle = { bg: '#ffffff', color: '#4338ca', shadow: '0 1px 3px rgba(0,0,0,0.08)' };
+        const inactiveStyle = { bg: 'transparent', color: '#64748b', shadow: 'none' };
+
+        [
+            { btn: btnPresets, active: tabName === 'presets' },
+            { btn: btnSingle,  active: tabName === 'single' },
+            { btn: btnRange,   active: tabName === 'range' }
+        ].forEach(t => {
+            t.btn.style.background = t.active ? activeStyle.bg : inactiveStyle.bg;
+            t.btn.style.color      = t.active ? activeStyle.color : inactiveStyle.color;
+            t.btn.style.boxShadow  = t.active ? activeStyle.shadow : inactiveStyle.shadow;
+        });
+    }
+
+    function applyPreset(presetName) {
+        fetch('{{ route('working-date.set') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ type: 'preset', preset: presetName }),
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                showToast('Applied ' + res.label, 'success');
+                setTimeout(() => window.location.reload(), 250);
+            }
+        })
+        .catch(() => showToast('Error applying filter', 'error'));
+    }
+
+    function submitSingleDate(e) {
+        e.preventDefault();
+        const dateVal = document.getElementById('filterSingleDateInput').value;
+        if (!dateVal) return;
+
+        fetch('{{ route('working-date.set') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ type: 'single', single_date: dateVal }),
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                showToast('Working day set to ' + res.label, 'success');
+                setTimeout(() => window.location.reload(), 250);
+            }
+        })
+        .catch(() => showToast('Error setting date', 'error'));
+    }
+
+    function submitRangeDate(e) {
+        e.preventDefault();
+        const fromVal = document.getElementById('filterRangeFromInput').value;
+        const toVal   = document.getElementById('filterRangeToInput').value;
+
+        fetch('{{ route('working-date.set') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ type: 'range', date_from: fromVal, date_to: toVal }),
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                showToast('Date range applied: ' + res.label, 'success');
+                setTimeout(() => window.location.reload(), 250);
+            }
+        })
+        .catch(() => showToast('Error applying range', 'error'));
+    }
+
+    function resetWorkingDate() {
+        fetch('{{ route('working-date.reset') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                showToast('Date filter reset to Today', 'success');
+                setTimeout(() => window.location.reload(), 250);
+            }
+        })
+        .catch(() => showToast('Error resetting filter', 'error'));
+    }
 
     /* ── Toast ── */
     function showToast(message, type = 'success') {

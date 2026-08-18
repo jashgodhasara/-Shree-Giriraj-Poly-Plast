@@ -15,6 +15,8 @@ class MaterialResource extends JsonResource
             'id'              => $this->id,
             'type'            => $this->type,
             'name'            => $this->name,
+            'image'           => $this->image,
+            'image_url'       => $this->image_url,
             'unit'            => $this->unit,
             'grade_variation' => $this->grade_variation,
             'temp'            => $this->temp,

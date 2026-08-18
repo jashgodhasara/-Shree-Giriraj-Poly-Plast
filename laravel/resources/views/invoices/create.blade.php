@@ -8,27 +8,98 @@
 @media(max-width:900px){ .billing-grid { grid-template-columns:1fr; } }
 .billing-grid > div:last-child .card { position:static !important; }
 @media(max-width:900px){ #itemsTable th:nth-child(5), #itemsTable th:nth-child(6), #itemsTable td:nth-child(5), #itemsTable td:nth-child(6) { display:none; } }
+
+/* ── SEARCHABLE COMBOBOX ── */
+.combo-wrap { position: relative; width: 100%; }
+.combo-input {
+    width: 100%; padding: 8px 30px 8px 10px;
+    border: 1.5px solid #cbd5e1; border-radius: 6px;
+    font-size: 13px; font-weight: 500; color: #1e293b;
+    background: #fff; outline: none; transition: all .2s;
+}
+.combo-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+.combo-arrow {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: #94a3b8; pointer-events: none; transition: transform .2s;
+}
+.combo-wrap.open .combo-arrow { transform: translateY(-50%) rotate(180deg); color: #6366f1; }
+.combo-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    max-height: 240px; overflow-y: auto;
+    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    z-index: 1000; display: none; padding: 4px;
+}
+.combo-wrap.open .combo-dropdown { display: block; animation: dropIn .15s ease-out; }
+@keyframes dropIn { from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:translateY(0)} }
+
+.combo-item {
+    padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; color: #1e293b;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    transition: background .15s;
+}
+.combo-item:hover, .combo-item.active { background: #f1f5f9; color: #4338ca; }
+.combo-item.selected { background: #e0e7ff; color: #3730a3; font-weight: 600; }
+.combo-item-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; flex-shrink: 0; }
+.badge-stock { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.badge-price { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.badge-gst   { background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; }
+.combo-empty {
+    padding: 12px 10px; font-size: 12px; color: #64748b; text-align: center;
+}
+.combo-add-btn {
+    display: block; width: 100%; padding: 8px; text-align: center;
+    background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;
+    color: #4f46e5; font-size: 12px; font-weight: 600; cursor: pointer;
+    margin-top: 4px; transition: background .2s;
+}
+.combo-add-btn:hover { background: #ede9fe; border-color: #818cf8; }
 </style>
+
 <div class="billing-grid">
 
 <div>
 <div class="card">
-    <div class="card-header"><h3><i class="fa fa-file-invoice-dollar"></i> Bill Items</h3></div>
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3><i class="fa fa-file-invoice-dollar"></i> Bill Items</h3>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline btn-sm" onclick="openQuickAddCustomerModal()">
+                <i class="fa fa-user-plus"></i> + Add Customer
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="openQuickAddProductModal()">
+                <i class="fa fa-plus"></i> + Add Product
+            </button>
+        </div>
+    </div>
     <div class="card-body">
-        <!-- Customer & Transport -->
-        <div class="form-row cols-2" style="margin-bottom:8px">
+        <!-- Customer, Invoice Date & Transport -->
+        <div class="form-row cols-3" style="margin-bottom:8px">
             <div class="form-group">
-                <label>Customer *</label>
-                <select id="customerSelect" required>
-                    <option value="">Choose a customer...</option>
-                    @foreach($customers as $c)
-                    <option value="{{ $c->id }}" data-state="{{ $c->state }}">{{ $c->name }}@if($c->state) ({{ $c->state }})@endif</option>
-                    @endforeach
-                </select>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin-bottom:0">Customer * <small style="color:var(--primary);font-weight:normal;">(Type to search)</small></label>
+                    <a href="javascript:void(0)" onclick="openQuickAddCustomerModal()" style="font-size:11px; color:var(--primary); text-decoration:underline;">+ New Customer</a>
+                </div>
+                <!-- Searchable Customer Combo -->
+                <div class="combo-wrap" id="customerComboWrap">
+                    <input type="text" id="customerSearchInput" class="combo-input" placeholder="Type or click to choose customer..." autocomplete="off">
+                    <i class="fa fa-chevron-down combo-arrow"></i>
+                    <input type="hidden" id="customerSelect" value="" required>
+                    <div class="combo-dropdown" id="customerDropdown">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Invoice Date *</label>
+                <input type="date" id="invoiceDate" value="{{ session('working_date', date('Y-m-d')) }}" style="padding:8px 10px; border-radius:6px; border:1.5px solid #cbd5e1; font-size:13px; font-weight:600; color:#1e293b;" required>
             </div>
             <div class="form-group">
                 <label>Transporter</label>
-                <select id="transporterSelect">
+                <select id="transporterSelect" style="padding:8px 10px; border-radius:6px; border:1.5px solid #cbd5e1; font-size:13px;">
                     <option value="">-- None --</option>
                     @foreach($transporters as $t)
                     <option value="{{ $t->id }}">{{ $t->name }}@if($t->vehicle_no) ({{ $t->vehicle_no }})@endif</option>
@@ -76,42 +147,32 @@
         </div>
 
         <!-- Items table -->
-        <div class="table-wrap">
+        <div class="table-wrap" style="overflow:visible;">
             <table id="itemsTable">
                 <thead>
                     <tr>
-                        <th style="width:32%">Product</th>
+                        <th style="width:36%">Product (Type to search)</th>
                         <th style="width:12%">Qty</th>
-                        <th style="width:16%">Unit Price</th>
-                        <th style="width:16%">Total</th>
+                        <th style="width:14%">Unit Price (₹)</th>
+                        <th style="width:14%">Total (₹)</th>
                         <th style="width:10%">GST%</th>
                         <th style="width:10%">GST Amt</th>
                         <th style="width:4%"></th>
                     </tr>
                 </thead>
                 <tbody id="itemsBody">
-                    <tr class="item-row">
-                        <td>
-                            <select class="product-select" onchange="onProductChange(this)" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;">
-                                <option value="">Select product</option>
-                                @foreach($products as $p)
-                                <option value="{{ $p->id }}" data-price="{{ $p->price }}" data-gst="{{ $p->gst_rate }}">{{ $p->name }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td><input type="number" class="qty-input" value="1" min="0.01" step="0.01" oninput="recalc()" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;"></td>
-                        <td><input type="number" class="price-input" step="0.01" oninput="recalc()" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;"></td>
-                        <td><input type="number" class="total-input" readonly style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
-                        <td><input type="text" class="gst-display" readonly style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
-                        <td><input type="number" class="gstamt-input" readonly style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
-                        <td><button type="button" class="btn btn-danger btn-sm btn-icon" onclick="removeRow(this)"><i class="fa fa-times"></i></button></td>
-                    </tr>
+                    <!-- Row 1 will be initialized by JS -->
                 </tbody>
             </table>
         </div>
-        <button type="button" class="btn btn-outline btn-sm" style="margin-top:10px;display:inline-flex;" onclick="addRow()">
-            <i class="fa fa-plus"></i> Add Row
-        </button>
+        <div class="d-flex justify-between align-center" style="margin-top:14px">
+            <button type="button" class="btn btn-outline btn-sm" style="display:inline-flex;" onclick="addRow()">
+                <i class="fa fa-plus"></i> Add Item Row
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm text-primary" onclick="openQuickAddProductModal()">
+                <i class="fa fa-tag"></i> + Product not in list? Add New Product
+            </button>
+        </div>
     </div>
 </div>
 </div>
@@ -123,7 +184,7 @@
     <div class="card-body">
         <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: #065f46; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-bolt" style="color: #10b981;"></i>
-            <div><strong>Offline Sync Active:</strong> Bills generated offline auto-cache &amp; cloud-sync.</div>
+            <div><strong>Instant Calculator:</strong> Real-time GST &amp; Total computation.</div>
         </div>
 
         <div id="taxLabel" style="font-size:12px;color:#64748b;margin-bottom:10px;padding:6px 10px;background:#f1f5f9;border-radius:6px;">
@@ -152,43 +213,293 @@
 </div>
 </div>
 </div>
+
+<!-- Quick Add Product Modal -->
+<div class="modal-overlay" id="quickProductModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3><i class="fa fa-tag"></i> Quick Add Product</h3>
+            <button class="modal-close" type="button" onclick="closeModal('quickProductModal')">✕</button>
+        </div>
+        <form id="quickProductForm" onsubmit="saveQuickProduct(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Product Name *</label>
+                    <input type="text" id="qp_name" required placeholder="e.g. Plastic Box, Poly Bag...">
+                </div>
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Unit Selling Price (₹) *</label>
+                        <input type="number" id="qp_price" step="0.01" required value="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>GST Rate (%) *</label>
+                        <select id="qp_gst_rate">
+                            <option value="0">0%</option>
+                            <option value="5">5%</option>
+                            <option value="12">12%</option>
+                            <option value="18" selected>18%</option>
+                            <option value="28">28%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>HSN Code</label>
+                        <input type="text" id="qp_hsn" placeholder="e.g. 3923">
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Stock Quantity</label>
+                        <input type="number" id="qp_stock" step="0.01" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('quickProductModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="qp_btn"><i class="fa fa-check"></i> Add Product &amp; Select</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Add Customer Modal -->
+<div class="modal-overlay" id="quickCustomerModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3><i class="fa fa-user-plus"></i> Quick Add Customer</h3>
+            <button class="modal-close" type="button" onclick="closeModal('quickCustomerModal')">✕</button>
+        </div>
+        <form id="quickCustomerForm" onsubmit="saveQuickCustomer(event)">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Customer / Company Name *</label>
+                    <input type="text" id="qc_name" required placeholder="e.g. Acme Polymers Ltd.">
+                </div>
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="qc_phone" placeholder="10-digit mobile">
+                    </div>
+                    <div class="form-group">
+                        <label>State</label>
+                        <input type="text" id="qc_state" value="Gujarat" placeholder="Gujarat">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>GSTIN</label>
+                    <input type="text" id="qc_gstin" placeholder="15-digit GSTIN">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="qc_address" placeholder="Billing address">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('quickCustomerModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="qc_btn"><i class="fa fa-check"></i> Add Customer &amp; Select</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
-const products = @json($products->keyBy('id'));
+let productsData = @json($products->keyBy('id'));
+let customersData = @json($customers->keyBy('id'));
+let selectedCustomerState = '';
 
-function onProductChange(sel) {
-    const opt = sel.options[sel.selectedIndex];
-    const row = sel.closest('tr');
-    row.querySelector('.price-input').value = opt.dataset.price || '';
-    row.querySelector('.gst-display').value = opt.dataset.gst ? opt.dataset.gst + '%' : '';
+// Close dropdowns on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.combo-wrap')) {
+        document.querySelectorAll('.combo-wrap').forEach(w => w.classList.remove('open'));
+    }
+});
+
+/* ── CUSTOMER SEARCHABLE COMBO ── */
+function initCustomerCombo() {
+    const wrap = document.getElementById('customerComboWrap');
+    const input = document.getElementById('customerSearchInput');
+    const dropdown = document.getElementById('customerDropdown');
+    const hidden = document.getElementById('customerSelect');
+
+    function renderCustomerOptions(filter = '') {
+        const query = filter.toLowerCase().trim();
+        const list = Object.values(customersData).filter(c => {
+            const name = (c.name || '').toLowerCase();
+            const phone = (c.phone || '').toLowerCase();
+            const gstin = (c.gstin || '').toLowerCase();
+            return name.includes(query) || phone.includes(query) || gstin.includes(query);
+        });
+
+        if (list.length === 0) {
+            dropdown.innerHTML = `
+                <div class="combo-empty">No customer found matching "${filter}"</div>
+                <button type="button" class="combo-add-btn" onclick="openQuickAddCustomerWithName('${escapeHtml(filter)}')">
+                    <i class="fa fa-plus"></i> Add "${escapeHtml(filter)}" as New Customer
+                </button>
+            `;
+            return;
+        }
+
+        dropdown.innerHTML = list.map(c => `
+            <div class="combo-item ${hidden.value == c.id ? 'selected' : ''}" onclick="selectCustomer(${c.id})">
+                <div>
+                    <strong>${escapeHtml(c.name)}</strong>
+                    ${c.state ? `<small style="color:#64748b;">(${escapeHtml(c.state)})</small>` : ''}
+                </div>
+                <div class="combo-item-meta">
+                    ${c.phone ? `<span style="color:#64748b;"><i class="fa fa-phone"></i> ${escapeHtml(c.phone)}</span>` : ''}
+                    ${c.gstin ? `<span class="badge badge-gray" style="font-size:10px;">${escapeHtml(c.gstin)}</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    input.addEventListener('focus', function() {
+        document.querySelectorAll('.combo-wrap').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+        wrap.classList.add('open');
+        renderCustomerOptions(this.value);
+    });
+
+    input.addEventListener('input', function() {
+        wrap.classList.add('open');
+        renderCustomerOptions(this.value);
+    });
+}
+
+function selectCustomer(id) {
+    const c = customersData[id];
+    if (!c) return;
+    document.getElementById('customerSelect').value = c.id;
+    document.getElementById('customerSearchInput').value = c.name + (c.state ? ` (${c.state})` : '');
+    selectedCustomerState = c.state || 'Gujarat';
+    document.getElementById('customerComboWrap').classList.remove('open');
+    updateTaxCalculation();
+}
+
+function updateTaxCalculation() {
+    const isInterState = selectedCustomerState && selectedCustomerState.toLowerCase() !== 'gujarat';
+    document.getElementById('row_cgst').style.display = isInterState ? 'none' : '';
+    document.getElementById('row_sgst').style.display = isInterState ? 'none' : '';
+    document.getElementById('row_igst').style.display = isInterState ? '' : 'none';
+    document.getElementById('taxLabel').innerHTML = isInterState
+        ? 'Tax type: <strong>IGST</strong> (Inter-state: ' + escapeHtml(selectedCustomerState) + ')'
+        : 'Tax type: <strong>CGST + SGST</strong> (Gujarat)';
     recalc();
 }
 
-function addRow() {
-    const tbody = document.getElementById('itemsBody');
-    const productOptions = Object.values(products).map(p =>
-        `<option value="${p.id}" data-price="${p.price}" data-gst="${p.gst_rate}">${p.name}</option>`
-    ).join('');
+/* ── PRODUCT SEARCHABLE COMBO FOR EACH ROW ── */
+function renderProductCombo(wrap, row) {
+    const input = wrap.querySelector('.combo-input');
+    const dropdown = wrap.querySelector('.combo-dropdown');
+    const hidden = wrap.querySelector('.product-id-input');
 
+    function renderOptions(filter = '') {
+        const query = filter.toLowerCase().trim();
+        const list = Object.values(productsData).filter(p => {
+            const name = (p.name || '').toLowerCase();
+            const hsn = (p.hsn_code || '').toLowerCase();
+            return name.includes(query) || hsn.includes(query);
+        });
+
+        if (list.length === 0) {
+            dropdown.innerHTML = `
+                <div class="combo-empty">No products found matching "${filter}"</div>
+                <button type="button" class="combo-add-btn" onclick="openQuickAddProductWithName('${escapeHtml(filter)}', this)">
+                    <i class="fa fa-plus"></i> Add "${escapeHtml(filter)}" as New Product
+                </button>
+            `;
+            return;
+        }
+
+        dropdown.innerHTML = list.map(p => {
+            const stock = parseFloat(p.stock_quantity || 0);
+            const price = parseFloat(p.price || 0);
+            const gst = parseFloat(p.gst_rate || 18);
+            return `
+                <div class="combo-item ${hidden.value == p.id ? 'selected' : ''}" onclick="selectProductInRow(this, ${p.id})">
+                    <div>
+                        <strong>${escapeHtml(p.name)}</strong>
+                        ${p.hsn_code ? `<small style="color:#64748b;margin-left:4px;">#${escapeHtml(p.hsn_code)}</small>` : ''}
+                    </div>
+                    <div class="combo-item-meta">
+                        ${stock > 0 ? `<span class="badge-stock">Stock: ${Math.round(stock)}</span>` : `<span style="color:#94a3b8;font-size:10px;">Stock: 0</span>`}
+                        <span class="badge-price">₹${price.toFixed(2)}</span>
+                        <span class="badge-gst">GST ${gst}%</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    input.addEventListener('focus', function() {
+        document.querySelectorAll('.combo-wrap').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+        wrap.classList.add('open');
+        renderOptions(this.value);
+    });
+
+    input.addEventListener('input', function() {
+        wrap.classList.add('open');
+        renderOptions(this.value);
+    });
+}
+
+function selectProductInRow(el, productId) {
+    const row = el.closest('tr');
+    const wrap = row.querySelector('.combo-wrap');
+    const p = productsData[productId];
+    if (!p) return;
+
+    row.querySelector('.product-id-input').value = p.id;
+    row.querySelector('.combo-input').value = p.name;
+    row.querySelector('.price-input').value = parseFloat(p.price || 0).toFixed(2);
+    row.querySelector('.gst-display').value = (p.gst_rate || 18) + '%';
+    row.dataset.gstRate = p.gst_rate || 18;
+
+    wrap.classList.remove('open');
+    recalc();
+
+    // Auto-focus quantity input for super fast billing
+    const qtyInput = row.querySelector('.qty-input');
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+}
+
+function addRow(prefillProductId = null) {
+    const tbody = document.getElementById('itemsBody');
     const tr = document.createElement('tr');
     tr.className = 'item-row';
+    tr.dataset.gstRate = '18';
     tr.innerHTML = `
-        <td>
-            <select class="product-select" onchange="onProductChange(this)" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;">
-                <option value="">Select product</option>
-                ${productOptions}
-            </select>
+        <td style="overflow:visible;">
+            <div class="combo-wrap">
+                <input type="text" class="combo-input product-search-input" placeholder="Type product name (e.g. plastic box)..." autocomplete="off">
+                <i class="fa fa-chevron-down combo-arrow"></i>
+                <input type="hidden" class="product-id-input" value="">
+                <div class="combo-dropdown"></div>
+            </div>
         </td>
-        <td><input type="number" class="qty-input" value="1" min="0.01" step="0.01" oninput="recalc()" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;"></td>
-        <td><input type="number" class="price-input" step="0.01" oninput="recalc()" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;"></td>
-        <td><input type="number" class="total-input" readonly style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
-        <td><input type="text" class="gst-display" readonly style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
-        <td><input type="number" class="gstamt-input" readonly style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
+        <td><input type="number" class="qty-input" value="1" min="0.01" step="0.01" oninput="recalc()" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;font-weight:600;"></td>
+        <td><input type="number" class="price-input" step="0.01" value="0.00" oninput="recalc()" style="width:100%;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:13px;"></td>
+        <td><input type="number" class="total-input" readonly style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;font-weight:700;background:#f8fafc;"></td>
+        <td><input type="text" class="gst-display" readonly value="18%" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
+        <td><input type="number" class="gstamt-input" readonly style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;"></td>
         <td><button type="button" class="btn btn-danger btn-sm btn-icon" onclick="removeRow(this)"><i class="fa fa-times"></i></button></td>
     `;
     tbody.appendChild(tr);
+
+    const wrap = tr.querySelector('.combo-wrap');
+    renderProductCombo(wrap, tr);
+
+    if (prefillProductId && productsData[prefillProductId]) {
+        const dummyEl = tr.querySelector('.combo-dropdown');
+        selectProductInRow(dummyEl, prefillProductId);
+    } else {
+        recalc();
+    }
 }
 
 function removeRow(btn) {
@@ -198,39 +509,28 @@ function removeRow(btn) {
     recalc();
 }
 
-function isInterState() {
-    const sel = document.getElementById('customerSelect');
-    const state = sel.options[sel.selectedIndex]?.dataset?.state || '';
-    return state && state.toLowerCase() !== 'gujarat';
-}
-
-document.getElementById('customerSelect').addEventListener('change', function() {
-    const inter = isInterState();
-    document.getElementById('row_cgst').style.display = inter ? 'none' : '';
-    document.getElementById('row_sgst').style.display = inter ? 'none' : '';
-    document.getElementById('row_igst').style.display = inter ? '' : 'none';
-    document.getElementById('taxLabel').innerHTML = inter
-        ? 'Tax type: <strong>IGST</strong> (Inter-state)'
-        : 'Tax type: <strong>CGST + SGST</strong> (Gujarat)';
-    recalc();
-});
-
 function recalc() {
     let subtotal = 0, cgst = 0, sgst = 0, igst = 0;
-    const inter = isInterState();
+    const isInterState = selectedCustomerState && selectedCustomerState.toLowerCase() !== 'gujarat';
 
     document.querySelectorAll('.item-row').forEach(row => {
         const qty      = parseFloat(row.querySelector('.qty-input').value) || 0;
         const price    = parseFloat(row.querySelector('.price-input').value) || 0;
-        const gstEl    = row.querySelector('.product-select');
-        const gstRate  = parseFloat(gstEl.options[gstEl.selectedIndex]?.dataset?.gst) || 0;
+        const gstRate  = parseFloat(row.dataset.gstRate || 18);
         const lineTotal = qty * price;
+
         row.querySelector('.total-input').value = lineTotal.toFixed(2);
         subtotal += lineTotal;
+
         const gstAmt = lineTotal * (gstRate / 100);
         row.querySelector('.gstamt-input').value = gstAmt.toFixed(2);
-        if (inter) { igst += gstAmt; }
-        else { cgst += gstAmt / 2; sgst += gstAmt / 2; }
+
+        if (isInterState) {
+            igst += gstAmt;
+        } else {
+            cgst += gstAmt / 2;
+            sgst += gstAmt / 2;
+        }
     });
 
     const grand = subtotal + cgst + sgst + igst;
@@ -243,20 +543,24 @@ function recalc() {
 
 function generateInvoice() {
     const customerId = document.getElementById('customerSelect').value;
-    if (!customerId) { showToast('Please select a customer.', 'error'); return; }
+    if (!customerId) { showToast('Please select a customer first (type to search).', 'error'); return; }
 
     const items = [];
     let valid = true;
     document.querySelectorAll('.item-row').forEach(row => {
-        const productId = row.querySelector('.product-select').value;
+        const productId = row.querySelector('.product-id-input').value;
         const qty = parseFloat(row.querySelector('.qty-input').value);
         const unitPrice = parseFloat(row.querySelector('.price-input').value);
-        if (!productId || !qty || !unitPrice) { valid = false; return; }
+        if (!productId) {
+            valid = false;
+            showToast('Please type and select a valid product in every row.', 'error');
+            return;
+        }
+        if (!qty || isNaN(unitPrice)) { valid = false; return; }
         items.push({ product_id: productId, quantity: qty, unit_price: unitPrice });
     });
 
     if (!valid || items.length === 0) {
-        showToast('Please fill all product rows with product, quantity and price.', 'error');
         return;
     }
 
@@ -269,6 +573,7 @@ function generateInvoice() {
         },
         body: JSON.stringify({
             customer_id:    customerId,
+            invoice_date:   document.getElementById('invoiceDate') ? document.getElementById('invoiceDate').value : null,
             transporter_id: document.getElementById('transporterSelect').value || null,
             lr_number:      document.getElementById('lrNumber').value || null,
             notes:          document.getElementById('invoiceNotes').value || null,
@@ -284,7 +589,7 @@ function generateInvoice() {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
-            showToast('Invoice created!', 'success');
+            showToast('Invoice created successfully!', 'success');
             setTimeout(() => window.location.href = `/invoices/${res.invoice_id}/print`, 800);
         } else {
             showToast(res.message || 'Error creating invoice', 'error');
@@ -302,5 +607,159 @@ function simulateUpiVerification() {
         }, 1000);
     }, 1500);
 }
+
+// Quick Modals
+let activeRowForQuickProduct = null;
+
+function openQuickAddProductModal() {
+    activeRowForQuickProduct = null;
+    document.getElementById('quickProductForm').reset();
+    document.getElementById('quickProductModal').classList.add('open');
+}
+
+function openQuickAddProductWithName(name, triggerEl) {
+    if (triggerEl) {
+        activeRowForQuickProduct = triggerEl.closest('tr');
+    }
+    document.getElementById('quickProductForm').reset();
+    document.getElementById('qp_name').value = name;
+    document.getElementById('quickProductModal').classList.add('open');
+}
+
+function openQuickAddCustomerModal() {
+    document.getElementById('quickCustomerForm').reset();
+    document.getElementById('quickCustomerModal').classList.add('open');
+}
+
+function openQuickAddCustomerWithName(name) {
+    document.getElementById('quickCustomerForm').reset();
+    document.getElementById('qc_name').value = name;
+    document.getElementById('quickCustomerModal').classList.add('open');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+function saveQuickProduct(e) {
+    e.preventDefault();
+    const btn = document.getElementById('qp_btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+
+    const formData = new FormData();
+    formData.append('name', document.getElementById('qp_name').value);
+    formData.append('price', document.getElementById('qp_price').value);
+    formData.append('gst_rate', document.getElementById('qp_gst_rate').value);
+    formData.append('hsn_code', document.getElementById('qp_hsn').value);
+    formData.append('stock_quantity', document.getElementById('qp_stock').value);
+
+    fetch('{{ route('products.store') }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-check"></i> Add Product &amp; Select';
+        if (res.success) {
+            showToast('Product added successfully!', 'success');
+            closeModal('quickProductModal');
+            // Fetch updated products and update state
+            fetch('{{ route('products.index') }}', { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(list => {
+                    productsData = {};
+                    list.forEach(p => { productsData[p.id] = p; });
+                    const newProd = list.find(p => p.name === document.getElementById('qp_name').value) || list[0];
+                    if (newProd) {
+                        if (activeRowForQuickProduct) {
+                            selectProductInRow(activeRowForQuickProduct.querySelector('.combo-dropdown'), newProd.id);
+                        } else {
+                            addRow(newProd.id);
+                        }
+                    }
+                })
+                .catch(() => location.reload());
+        } else {
+            showToast(res.message || 'Failed to add product', 'error');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-check"></i> Add Product &amp; Select';
+        showToast('Error saving product', 'error');
+    });
+}
+
+function saveQuickCustomer(e) {
+    e.preventDefault();
+    const btn = document.getElementById('qc_btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+
+    const formData = new FormData();
+    const custName = document.getElementById('qc_name').value;
+    const custState = document.getElementById('qc_state').value || 'Gujarat';
+    formData.append('name', custName);
+    formData.append('phone', document.getElementById('qc_phone').value);
+    formData.append('state', custState);
+    formData.append('gstin', document.getElementById('qc_gstin').value);
+    formData.append('address', document.getElementById('qc_address').value);
+
+    fetch('{{ route('customers.store') }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-check"></i> Add Customer &amp; Select';
+        if (res.success) {
+            showToast('Customer added successfully!', 'success');
+            closeModal('quickCustomerModal');
+            fetch('{{ route('customers.index') }}', { headers: { 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(list => {
+                    customersData = {};
+                    list.forEach(c => { customersData[c.id] = c; });
+                    const newCust = list.find(c => c.name === custName) || list[0];
+                    if (newCust) {
+                        selectCustomer(newCust.id);
+                    }
+                })
+                .catch(() => location.reload());
+        } else {
+            showToast(res.message || 'Failed to add customer', 'error');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-check"></i> Add Customer &amp; Select';
+        showToast('Error saving customer', 'error');
+    });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initCustomerCombo();
+    // Add first row
+    addRow();
+});
 </script>
 @endsection

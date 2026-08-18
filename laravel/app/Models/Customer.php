@@ -7,7 +7,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
-    protected $fillable = ['name', 'phone', 'email', 'address', 'gstin', 'state'];
+    protected $fillable = ['name', 'image', 'phone', 'email', 'address', 'gstin', 'state'];
+
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if ($this->image) {
+            return asset($this->image);
+        }
+        return null;
+    }
 
     public function invoices(): HasMany
     {

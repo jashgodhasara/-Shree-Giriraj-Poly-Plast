@@ -8,19 +8,97 @@ use App\Models\Ledger;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Transporter;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Material;
+
 class InvoiceController extends Controller
 {
-    public function index()
+    private function resolveDates(?string $preset, ?string $dateFrom, ?string $dateTo): array
     {
-        $invoices = Invoice::with('customer', 'transporter')->latest()->paginate(50);
-        return view('invoices.index', compact('invoices'));
+        $today = Carbon::today();
+
+        if ($preset && $preset !== 'custom') {
+            return match ($preset) {
+                'today'        => [$today->toDateString(), $today->toDateString()],
+                'yesterday'    => [Carbon::yesterday()->toDateString(), Carbon::yesterday()->toDateString()],
+                'this_month'   => [$today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
+                'last_month'   => [$today->copy()->subMonth()->startOfMonth()->toDateString(), $today->copy()->subMonth()->endOfMonth()->toDateString()],
+                'last_3months' => [$today->copy()->subMonths(3)->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
+                'this_year'    => [$today->copy()->startOfYear()->toDateString(), $today->copy()->endOfYear()->toDateString()],
+                'last_year'    => [$today->copy()->subYear()->startOfYear()->toDateString(), $today->copy()->subYear()->endOfYear()->toDateString()],
+                default        => [$dateFrom ? Carbon::parse($dateFrom)->toDateString() : '', $dateTo ? Carbon::parse($dateTo)->toDateString() : ''],
+            };
+        }
+
+        $from = $dateFrom ? Carbon::parse($dateFrom)->toDateString() : '';
+        $to   = $dateTo ? Carbon::parse($dateTo)->toDateString() : '';
+
+        return [$from, $to];
+    }
+
+    public function index(Request $request)
+    {
+        $preset   = $request->get('preset', '');
+        $dateFrom = $request->get('date_from', '');
+        $dateTo   = $request->get('date_to', '');
+        $status   = $request->get('status', '');
+        [$dateFrom, $dateTo] = $this->resolveDates($preset, $dateFrom, $dateTo);
+
+        $query = Invoice::with('customer', 'transporter')->latest('invoice_date')->latest('id');
+        if ($dateFrom) $query->whereDate('invoice_date', '>=', $dateFrom);
+        if ($dateTo)   $query->whereDate('invoice_date', '<=', $dateTo);
+        if ($status) {
+            if ($status === 'Unpaid') {
+                $query->where(function ($q) {
+                    $q->where('status', 'Unpaid')->orWhere('status', 'Partial');
+                });
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        $invoices = $query->paginate(50)->appends($request->query());
+
+        // Summary totals
+        $sumQuery = Invoice::query();
+        if ($dateFrom) $sumQuery->whereDate('invoice_date', '>=', $dateFrom);
+        if ($dateTo)   $sumQuery->whereDate('invoice_date', '<=', $dateTo);
+        if ($status) {
+            if ($status === 'Unpaid') {
+                $sumQuery->where(function ($q) {
+                    $q->where('status', 'Unpaid')->orWhere('status', 'Partial');
+                });
+            } else {
+                $sumQuery->where('status', $status);
+            }
+        }
+        $totalAmount  = (clone $sumQuery)->sum('grand_total');
+        $totalPaid    = (clone $sumQuery)->sum('paid_amount');
+        $totalCount   = (clone $sumQuery)->count();
+
+        return view('invoices.index', compact('invoices', 'preset', 'dateFrom', 'dateTo', 'status', 'totalAmount', 'totalPaid', 'totalCount'));
     }
 
     public function create()
     {
+        // Auto-sync any Final Products from Material Inventory to Products table
+        $finalMaterials = Material::where('type', 'Final Product')->get();
+        foreach ($finalMaterials as $fm) {
+            Product::firstOrCreate(
+                ['name' => $fm->name],
+                [
+                    'price' => 0,
+                    'gst_rate' => 18,
+                    'stock_quantity' => $fm->stock_quantity ?? 0,
+                    'image' => $fm->image,
+                    'description' => 'Final Product (' . ($fm->unit ?? '') . ')'
+                ]
+            );
+        }
+
         $customers    = Customer::orderBy('name')->get();
         $products     = Product::orderBy('name')->get();
         $transporters = Transporter::orderBy('name')->get();
@@ -31,6 +109,7 @@ class InvoiceController extends Controller
     {
         $request->validate([
             'customer_id'        => 'required|exists:customers,id',
+            'invoice_date'       => 'nullable|date',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity'   => 'required|numeric|min:0.01',
@@ -49,6 +128,10 @@ class InvoiceController extends Controller
         try {
             $customer     = Customer::findOrFail($request->customer_id);
             $isInterState = !empty($customer->state) && strtolower(trim($customer->state)) !== 'gujarat';
+
+            $invoiceDate  = $request->filled('invoice_date')
+                ? Carbon::parse($request->invoice_date)->toDateString()
+                : session('working_date', now()->toDateString());
 
             $subtotal  = 0;
             $cgst      = 0;
@@ -88,7 +171,7 @@ class InvoiceController extends Controller
                 'customer_id'     => $customer->id,
                 'transporter_id'  => $request->transporter_id ?: null,
                 'lr_number'       => $request->lr_number ?: null,
-                'invoice_date'    => now()->toDateString(),
+                'invoice_date'    => $invoiceDate,
                 'subtotal'        => $subtotal,
                 'cgst'            => $cgst,
                 'sgst'            => $sgst,
@@ -121,7 +204,7 @@ class InvoiceController extends Controller
             Ledger::create([
                 'entity_type'      => 'Customer',
                 'entity_id'        => $customer->id,
-                'transaction_date' => now()->toDateString(),
+                'transaction_date' => $invoiceDate,
                 'type'             => 'Debit',
                 'amount'           => $grandTotal,
                 'description'      => 'Sales Invoice #' . $invoice->invoice_number,

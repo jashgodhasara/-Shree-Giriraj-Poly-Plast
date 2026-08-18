@@ -3,6 +3,9 @@
 @section('page-title', 'Raw Material Transactions (IN / OUT)')
 
 @section('content')
+{{-- Date Filter Bar --}}
+@include('partials.date-filter', ['action' => route('material-transactions.index')])
+
 <div class="card">
     <div class="card-header">
         <h3><i class="fa fa-right-left"></i> Material Transactions</h3>

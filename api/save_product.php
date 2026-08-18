@@ -1,14 +1,17 @@
 <?php
 error_reporting(0);
 require_once '../config/db.php';
+require_once '../config/auth.php';
+requireAuth();
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'] ?? '';
-    $description = $_POST['description'] ?? '';
-    $price = $_POST['price'] ?? 0;
-    $hsn_code = $_POST['hsn_code'] ?? '';
-    $gst_rate = $_POST['gst_rate'] ?? 18;
+    $name = trim($_POST['name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $price = floatval($_POST['price'] ?? 0);
+    $hsn_code = trim($_POST['hsn_code'] ?? '');
+    $gst_rate = floatval($_POST['gst_rate'] ?? 18);
     $imagePath = null;
 
     if (empty($name) || empty($price)) {
@@ -32,8 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO products (name, description, image, price, hsn_code, gst_rate) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $description, $imagePath, $price, $hsn_code, $gst_rate]);
+        $currentUser = getCurrentUser();
+        $createdBy = $currentUser['id'] ?? null;
+
+        $stmt = $pdo->prepare("INSERT INTO products (name, description, image, price, hsn_code, gst_rate, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$name, $description, $imagePath, $price, $hsn_code, $gst_rate, $createdBy]);
+
+        logActivity($pdo, 'CREATE', 'Products', "Added Product: '$name' (Price: ₹" . number_format($price, 2) . ", GST: $gst_rate%)");
+
         echo json_encode(['success' => true, 'message' => 'Product added successfully']);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);

@@ -1,5 +1,7 @@
 <?php
 require_once 'config/db.php';
+require_once 'config/auth.php';
+requireAuth();
 $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
 $products = $stmt->fetchAll();
 ?>

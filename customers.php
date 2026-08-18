@@ -1,6 +1,13 @@
 <?php
 require_once 'config/db.php';
-$stmt = $pdo->query("SELECT * FROM customers ORDER BY id DESC");
+require_once 'config/auth.php';
+requireAuth();
+$stmt = $pdo->query("
+    SELECT c.*, u.full_name as creator_name, u.username as creator_username 
+    FROM customers c 
+    LEFT JOIN users u ON c.created_by = u.id 
+    ORDER BY c.id DESC
+");
 $customers = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -30,6 +37,7 @@ $customers = $stmt->fetchAll();
                             <th>Phone</th>
                             <th>State</th>
                             <th>GSTIN</th>
+                            <th>Created By</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -40,6 +48,11 @@ $customers = $stmt->fetchAll();
                             <td><?= htmlspecialchars($c['phone']) ?></td>
                             <td><?= htmlspecialchars($c['state']) ?></td>
                             <td><?= htmlspecialchars($c['gstin']) ?></td>
+                            <td>
+                                <small style="color:var(--text-muted); font-weight:600;">
+                                    <i class='bx bx-user'></i> <?= htmlspecialchars(!empty($c['creator_name']) ? $c['creator_name'] : (!empty($c['creator_username']) ? $c['creator_username'] : 'System')) ?>
+                                </small>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

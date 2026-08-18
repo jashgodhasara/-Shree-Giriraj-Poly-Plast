@@ -7,8 +7,9 @@ CREATE TABLE IF NOT EXISTS suppliers (
     email VARCHAR(255),
     gstin VARCHAR(15),
     address TEXT,
+    created_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS materials (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -19,8 +20,9 @@ CREATE TABLE IF NOT EXISTS materials (
     temp VARCHAR(50), -- For Final Product
     size VARCHAR(50), -- For Final Product
     stock_quantity DECIMAL(10, 2) DEFAULT 0,
+    created_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS production_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,19 +35,21 @@ CREATE TABLE IF NOT EXISTS production_logs (
     final_product_qty_pcs INT,
     salvage_qty_kg DECIMAL(10, 2),
     notes TEXT,
+    created_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (raw_material_id) REFERENCES materials(id),
     FOREIGN KEY (additive_id) REFERENCES materials(id),
     FOREIGN KEY (final_product_id) REFERENCES materials(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS transporters (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     vehicle_no VARCHAR(50),
     phone VARCHAR(20),
+    created_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS ledgers (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -57,5 +61,8 @@ CREATE TABLE IF NOT EXISTS ledgers (
     hsn_code VARCHAR(50),
     csm_code VARCHAR(50),
     description TEXT,
+    created_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+

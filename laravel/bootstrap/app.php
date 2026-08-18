@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
             \App\Http\Middleware\PrettyPrintJson::class,
         ]);
+        $middleware->alias([
+            'admin'     => \App\Http\Middleware\AdminMiddleware::class,
+            'api.admin' => \App\Http\Middleware\ApiAdminMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (\Illuminate\Validation\ValidationException $e, $request) {

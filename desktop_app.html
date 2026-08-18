@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shree Giriraj Poly Plast ERP - Desktop Application</title>
+    <!-- Modern Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --secondary: #0f172a;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-lg: 14px;
+            --radius-md: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LOGIN OVERLAY */
+        #login-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 18px;
+            width: 420px;
+            padding: 35px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+
+        .login-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .login-brand i {
+            font-size: 40px;
+            color: var(--primary);
+        }
+
+        .login-brand h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--secondary);
+        }
+
+        .quick-user-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-quick-user {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-body);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick-user:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: var(--secondary);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-header {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .brand-header i {
+            font-size: 32px;
+            color: #818cf8;
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 15px 12px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            margin-bottom: 4px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+        }
+
+        .nav-link i {
+            font-size: 20px;
+        }
+
+        .user-profile-bar {
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .user-details h4 {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .user-details span {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: capitalize;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-navbar {
+            height: 65px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .page-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 25px 30px;
+            overflow-y: auto;
+        }
+
+        /* TAB SECTIONS */
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* DASHBOARD GRID & STAT CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-number {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-top: 6px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .stat-icon.indigo { background: #eef2ff; color: #4f46e5; }
+        .stat-icon.emerald { background: #ecfdf5; color: #10b981; }
+        .stat-icon.amber { background: #fffbeb; color: #f59e0b; }
+        .stat-icon.purple { background: #f3e8ff; color: #a855f7; }
+
+        /* TABLES & CARDS */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef3c7; color: #b45309; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-purple { background: #f3e8ff; color: #7e22ce; }
+
+        /* BUTTONS & FORMS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-secondary { background: #e2e8f0; color: var(--text-main); }
+        .btn-secondary:hover { background: #cbd5e1; }
+
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        /* MODAL POPUPS */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        /* PRINT INVOICE MODAL FORMAT */
+        @media print {
+            body * { visibility: hidden; }
+            #printable-invoice, #printable-invoice * { visibility: visible; }
+            #printable-invoice { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN MODAL -->
+    <div id="login-modal">
+        <div class="login-card">
+            <div class="login-brand">
+                <i class='bx bxs-factory'></i>
+                <h2>Shree Giriraj Poly Plast</h2>
+            </div>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:20px;">Windows Desktop ERP Portal - Select Account to Login</p>
+            
+            <div class="quick-user-select">
+                <button class="btn-quick-user" onclick="selectUser('admin', 'admin123')">
+                    <i class='bx bxs-user-badge'></i> Login Admin
+                </button>
+                <button class="btn-quick-user" onclick="selectUser('operator', 'operator123')">
+                    <i class='bx bxs-cog'></i> Login Operator
+                </button>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group" style="text-align:left;">
+                    <label>Username</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="Enter username" required>
+                </div>
+                <div class="form-group" style="text-align:left;">
+                    <label>Password</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Enter password" required>
+                </div>
+                <div id="login-error" style="color:var(--danger); font-size:13px; margin-bottom:12px; display:none;"></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                    <i class='bx bx-log-in-circle'></i> Sign In to Desktop ERP
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <div class="sidebar">
+        <div class="brand-header">
+            <i class='bx bxs-layer'></i>
+            <div>
+                <div class="brand-title">Shree Giriraj</div>
+                <div style="font-size:11px; color:#94a3b8;">Poly Plast ERP v2.0</div>
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link active" onclick="switchTab('dashboard', this)">
+                    <i class='bx bxs-dashboard'></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="switchTab('materials', this)">
+                    <i class='bx bxs-box'></i> Materials & Stock
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="switchTab('production', this)">
+                    <i class='bx bxs-cog'></i> Production Logs
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="switchTab('invoices', this)">
+                    <i class='bx bxs-receipt'></i> Invoices & Billing
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="switchTab('customers', this)">
+                    <i class='bx bxs-user-detail'></i> Customers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="switchTab('suppliers', this)">
+                    <i class='bx bxs-truck'></i> Suppliers
+                </a>
+            </li>
+            <li class="nav-item admin-only">
+                <a class="nav-link" onclick="switchTab('ledgers', this)">
+                    <i class='bx bxs-book-content'></i> Ledgers
+                </a>
+            </li>
+            <li class="nav-item admin-only">
+                <a class="nav-link" onclick="switchTab('transporters', this)">
+                    <i class='bx bxs-car'></i> Transporters
+                </a>
+            </li>
+            <li class="nav-item admin-only">
+                <a class="nav-link" onclick="switchTab('logs', this)">
+                    <i class='bx bxs-shield-alt-2'></i> Activity Audit Log
+                </a>
+            </li>
+        </ul>
+
+        <div class="user-profile-bar">
+            <div class="user-info">
+                <div class="user-avatar" id="current-user-avatar">A</div>
+                <div class="user-details">
+                    <h4 id="current-user-name">Admin</h4>
+                    <span id="current-user-role">admin</span>
+                </div>
+            </div>
+            <i class='bx bx-power-off' style="font-size:20px; cursor:pointer; color:#ef4444;" title="Switch Account / Logout" onclick="logout()"></i>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-wrapper">
+        <div class="top-navbar">
+            <div class="page-title" id="active-tab-title">Dashboard Overview</div>
+            <div class="top-actions">
+                <button class="btn btn-secondary btn-sm" onclick="fetchStats(); loadAllData();">
+                    <i class='bx bx-refresh'></i> Refresh Data
+                </button>
+                <span class="badge badge-success" style="font-size:12px;"><i class='bx bx-check-circle'></i> Desktop Connected</span>
+            </div>
+        </div>
+
+        <div class="content-body">
+            
+            <!-- DASHBOARD TAB -->
+            <div id="tab-dashboard" class="tab-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Raw Material Stock</div>
+                            <div class="stat-number" id="stat-raw-stock">0.00 Kg</div>
+                        </div>
+                        <div class="stat-icon amber"><i class='bx bxs-component'></i></div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Final Product Stock</div>
+                            <div class="stat-number" id="stat-final-stock">0 Pcs</div>
+                        </div>
+                        <div class="stat-icon emerald"><i class='bx bxs-package'></i></div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Customers</div>
+                            <div class="stat-number" id="stat-cust-count">0</div>
+                        </div>
+                        <div class="stat-icon indigo"><i class='bx bxs-group'></i></div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Total Suppliers</div>
+                            <div class="stat-number" id="stat-supp-count">0</div>
+                        </div>
+                        <div class="stat-icon purple"><i class='bx bxs-store'></i></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Recent Production Runs</div>
+                        <button class="btn btn-primary btn-sm" onclick="switchTab('production')"><i class='bx bx-plus'></i> Log Production</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Raw Material Used</th>
+                                    <th>Final Product Produced</th>
+                                    <th>Salvage Waste</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-production-tbody">
+                                <tr><td colspan="5" style="text-align:center;">Loading production logs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Recent Invoices</div>
+                        <button class="btn btn-primary btn-sm" onclick="switchTab('invoices')"><i class='bx bx-plus'></i> Create Invoice</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-invoices-tbody">
+                                <tr><td colspan="5" style="text-align:center;">Loading invoices...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MATERIALS & STOCK TAB -->
+            <div id="tab-materials" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Materials & Inventory Directory</div>
+                        <button class="btn btn-primary" onclick="openModal('add-material-modal')"><i class='bx bx-plus'></i> Add Material</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Material Name</th>
+                                    <th>Unit</th>
+                                    <th>Variation / Temp / Size</th>
+                                    <th>Available Stock</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materials-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCTION LOGS TAB -->
+            <div id="tab-production" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Production Logging & History</div>
+                        <button class="btn btn-primary" onclick="openModal('add-production-modal')"><i class='bx bx-cog'></i> Record New Production</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Raw Material (Kg)</th>
+                                    <th>Additive (Kg)</th>
+                                    <th>Final Product (Pcs)</th>
+                                    <th>Salvage Waste (Kg)</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="production-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INVOICES TAB -->
+            <div id="tab-invoices" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Invoices & Tax Billing</div>
+                        <button class="btn btn-primary" onclick="openModal('add-invoice-modal')"><i class='bx bx-receipt'></i> New Tax Invoice</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Customer</th>
+                                    <th>GSTIN</th>
+                                    <th>Date</th>
+                                    <th>Grand Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoices-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CUSTOMERS TAB -->
+            <div id="tab-customers" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Customer Directory</div>
+                        <button class="btn btn-primary" onclick="openModal('add-customer-modal')"><i class='bx bx-user-plus'></i> Add Customer</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>GSTIN</th>
+                                    <th>State / Address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUPPLIERS TAB -->
+            <div id="tab-suppliers" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Suppliers Directory</div>
+                        <button class="btn btn-primary" onclick="openModal('add-supplier-modal')"><i class='bx bx-plus'></i> Add Supplier</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Supplier Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>GSTIN</th>
+                                    <th>Address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliers-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEDGERS TAB -->
+            <div id="tab-ledgers" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Ledgers & Financial Transactions</div>
+                        <button class="btn btn-primary" onclick="openModal('add-ledger-modal')"><i class='bx bx-plus'></i> Record Ledger Entry</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Entity Type</th>
+                                    <th>Entity Name</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgers-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSPORTERS TAB -->
+            <div id="tab-transporters" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Transporters Registry</div>
+                        <button class="btn btn-primary" onclick="openModal('add-transporter-modal')"><i class='bx bx-plus'></i> Add Transporter</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transporter Name</th>
+                                    <th>Vehicle Number</th>
+                                    <th>Phone</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transporters-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVITY LOGS TAB -->
+            <div id="tab-logs" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">User Audit & Activity Log</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Action Type</th>
+                                    <th>Module</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL: ADD MATERIAL -->
+    <div id="add-material-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add New Material / Product</div>
+                <button class="close-modal" onclick="closeModal('add-material-modal')">&times;</button>
+            </div>
+            <form id="form-add-material">
+                <div class="form-group">
+                    <label>Material Type</label>
+                    <select id="mat-type" class="form-control" required>
+                        <option value="Raw Material">Raw Material</option>
+                        <option value="Additive">Additive</option>
+                        <option value="Final Product">Final Product</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Material Name</label>
+                    <input type="text" id="mat-name" class="form-control" placeholder="e.g. HDPE Granules" required>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <select id="mat-unit" class="form-control" required>
+                            <option value="Kg">Kg</option>
+                            <option value="Pcs">Pcs</option>
+                            <option value="Mtr">Mtr</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Stock</label>
+                        <input type="number" step="0.01" id="mat-stock" class="form-control" value="0.00" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Grade / Temp / Size Info</label>
+                    <input type="text" id="mat-variation" class="form-control" placeholder="Optional details">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">
+                    Save Material
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RECORD PRODUCTION -->
+    <div id="add-production-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Record Production Run</div>
+                <button class="close-modal" onclick="closeModal('add-production-modal')">&times;</button>
+            </div>
+            <form id="form-add-production">
+                <div class="form-group">
+                    <label>Production Date</label>
+                    <input type="date" id="prod-date" class="form-control" required>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Raw Material Used</label>
+                        <select id="prod-raw-mat" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Raw Material Qty (Kg)</label>
+                        <input type="number" step="0.01" id="prod-raw-qty" class="form-control" placeholder="0.00" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Additive (Optional)</label>
+                        <select id="prod-additive" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Additive Qty (Kg)</label>
+                        <input type="number" step="0.01" id="prod-add-qty" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Final Product Produced</label>
+                        <select id="prod-final-mat" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Output Quantity (Pcs)</label>
+                        <input type="number" id="prod-final-qty" class="form-control" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Salvage Waste (Kg)</label>
+                    <input type="number" step="0.01" id="prod-salvage" class="form-control" value="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="prod-notes" class="form-control" rows="2" placeholder="Shift / Machine notes"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">
+                    Record Production & Update Inventory
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD INVOICE -->
+    <div id="add-invoice-modal" class="modal">
+        <div class="modal-content" style="width:750px;">
+            <div class="modal-header">
+                <div class="modal-title">Create Tax Invoice</div>
+                <button class="close-modal" onclick="closeModal('add-invoice-modal')">&times;</button>
+            </div>
+            <form id="form-add-invoice">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Customer</label>
+                        <select id="inv-customer" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date</label>
+                        <input type="date" id="inv-date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>GST Supply Type</label>
+                    <select id="inv-interstate" class="form-control" onchange="calculateInvoiceTotal()">
+                        <option value="0">Intra-State (CGST 9% + SGST 9%)</option>
+                        <option value="1">Inter-State (IGST 18%)</option>
+                    </select>
+                </div>
+
+                <div style="margin:20px 0; border-top:1px solid var(--border); padding-top:15px;">
+                    <div style="font-weight:700; margin-bottom:10px;">Invoice Line Items</div>
+                    <div id="invoice-items-container"></div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addInvoiceItemRow()"><i class='bx bx-plus'></i> Add Item Row</button>
+                </div>
+
+                <div style="background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Subtotal:</span> <strong id="inv-subtotal-display">₹0.00</strong></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Tax (CGST+SGST/IGST):</span> <strong id="inv-tax-display">₹0.00</strong></div>
+                    <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:var(--primary);"><span>Grand Total:</span> <strong id="inv-grand-display">₹0.00</strong></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                    Generate Invoice & Save
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CUSTOMER -->
+    <div id="add-customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Customer</div>
+                <button class="close-modal" onclick="closeModal('add-customer-modal')">&times;</button>
+            </div>
+            <form id="form-add-customer">
+                <div class="form-group"><label>Customer Name</label><input type="text" id="cust-name" class="form-control" required></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Phone</label><input type="text" id="cust-phone" class="form-control"></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="cust-email" class="form-control"></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label>GSTIN</label><input type="text" id="cust-gstin" class="form-control"></div>
+                    <div class="form-group"><label>State</label><input type="text" id="cust-state" class="form-control" value="Gujarat"></div>
+                </div>
+                <div class="form-group"><label>Address</label><textarea id="cust-address" class="form-control" rows="2"></textarea></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Save Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD SUPPLIER -->
+    <div id="add-supplier-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Supplier</div>
+                <button class="close-modal" onclick="closeModal('add-supplier-modal')">&times;</button>
+            </div>
+            <form id="form-add-supplier">
+                <div class="form-group"><label>Supplier Name</label><input type="text" id="supp-name" class="form-control" required></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Phone</label><input type="text" id="supp-phone" class="form-control"></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="supp-email" class="form-control"></div>
+                </div>
+                <div class="form-group"><label>GSTIN</label><input type="text" id="supp-gstin" class="form-control"></div>
+                <div class="form-group"><label>Address</label><textarea id="supp-address" class="form-control" rows="2"></textarea></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Save Supplier</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD LEDGER -->
+    <div id="add-ledger-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Record Ledger Transaction</div>
+                <button class="close-modal" onclick="closeModal('add-ledger-modal')">&times;</button>
+            </div>
+            <form id="form-add-ledger">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Entity Type</label>
+                        <select id="ledger-entity-type" class="form-control">
+                            <option value="Customer">Customer</option>
+                            <option value="Supplier">Supplier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Entity Name</label>
+                        <input type="text" id="ledger-entity-name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Date</label><input type="date" id="ledger-date" class="form-control" required></div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="ledger-type" class="form-control">
+                            <option value="Credit">Credit</option>
+                            <option value="Debit">Debit</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" step="0.01" id="ledger-amount" class="form-control" required></div>
+                <div class="form-group"><label>Description</label><textarea id="ledger-desc" class="form-control" rows="2"></textarea></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Record Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD TRANSPORTER -->
+    <div id="add-transporter-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Transporter</div>
+                <button class="close-modal" onclick="closeModal('add-transporter-modal')">&times;</button>
+            </div>
+            <form id="form-add-transporter">
+                <div class="form-group"><label>Transporter Name</label><input type="text" id="trans-name" class="form-control" required></div>
+                <div class="form-group"><label>Vehicle Number</label><input type="text" id="trans-vehicle" class="form-control" required></div>
+                <div class="form-group"><label>Phone</label><input type="text" id="trans-phone" class="form-control"></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Save Transporter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PRINTABLE INVOICE VIEW MODAL -->
+    <div id="view-invoice-modal" class="modal">
+        <div class="modal-content" style="width:800px;">
+            <div class="modal-header">
+                <div class="modal-title">Invoice Preview</div>
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="window.print()"><i class='bx bx-printer'></i> Print Invoice</button>
+                    <button class="close-modal" onclick="closeModal('view-invoice-modal')">&times;</button>
+                </div>
+            </div>
+            <div id="printable-invoice" style="padding:20px; background:#fff;">
+                <div style="display:flex; justify-content:space-between; border-bottom:2px solid #4f46e5; padding-bottom:15px; margin-bottom:20px;">
+                    <div>
+                        <h2 style="color:#4f46e5; font-family:'Outfit',sans-serif; font-size:24px; font-weight:800;">SHREE GIRIRAJ POLY PLAST</h2>
+                        <div style="font-size:12px; color:#64748b;">Manufacturers of High Quality Poly Pipes & Sheets</div>
+                        <div style="font-size:12px; color:#64748b;">GIDC Industrial Area, Rajkot, Gujarat | GSTIN: 24SGPP12345Z1</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <h3 style="font-size:18px; font-weight:700;">TAX INVOICE</h3>
+                        <div style="font-weight:700; color:#4f46e5;" id="view-inv-num">SGP-2026-0001</div>
+                        <div style="font-size:13px;" id="view-inv-date">Date: 2026-08-14</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:13px;">
+                    <div>
+                        <strong>Billed To:</strong>
+                        <div id="view-inv-customer" style="font-weight:600; font-size:15px;">Customer Name</div>
+                        <div id="view-inv-gstin">GSTIN: -</div>
+                        <div id="view-inv-phone">Phone: -</div>
+                        <div id="view-inv-address">Address: -</div>
+                    </div>
+                </div>
+
+                <table style="margin-bottom:20px;">
+                    <thead>
+                        <tr>
+                            <th>Item Description</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="view-inv-items-tbody"></tbody>
+                </table>
+
+                <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+                    <div style="width:280px; font-size:13px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Subtotal:</span> <span id="view-inv-subtotal">₹0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>CGST (9%):</span> <span id="view-inv-cgst">₹0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>SGST (9%):</span> <span id="view-inv-sgst">₹0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>IGST (18%):</span> <span id="view-inv-igst">₹0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; border-top:2px solid #4f46e5; padding-top:8px; margin-top:5px; color:#4f46e5;"><span>Grand Total:</span> <span id="view-inv-grand">₹0.00</span></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:40px; border-top:1px solid #e2e8f0; padding-top:15px; display:flex; justify-content:space-between; font-size:12px; color:#64748b;">
+                    <div>Thank you for doing business with Shree Giriraj Poly Plast!</div>
+                    <div style="text-align:right;">Authorized Signatory</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let currentUser = null;
+        let productsCache = [];
+        let materialsCache = [];
+        let customersCache = [];
+
+        // INITIALIZATION & AUTH
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('prod-date').value = today;
+            document.getElementById('inv-date').value = today;
+            document.getElementById('ledger-date').value = today;
+
+            // Handle login submit
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-username').value;
+                const p = document.getElementById('login-password').value;
+                await doLogin(u, p);
+            });
+
+            // Forms submissions
+            setupFormListeners();
+        });
+
+        function selectUser(username, password) {
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').value = password;
+            doLogin(username, password);
+        }
+
+        async function doLogin(username, password) {
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = data.user;
+                    document.getElementById('login-modal').style.display = 'none';
+                    document.getElementById('login-error').style.display = 'none';
+
+                    // Update UI User info
+                    document.getElementById('current-user-name').innerText = currentUser.full_name;
+                    document.getElementById('current-user-role').innerText = currentUser.role;
+                    document.getElementById('current-user-avatar').innerText = currentUser.full_name.charAt(0);
+
+                    // Role permissions
+                    if (currentUser.role === 'operator') {
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                    } else {
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    }
+
+                    fetchStats();
+                    loadAllData();
+                } else {
+                    document.getElementById('login-error').innerText = data.message;
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (err) {
+                alert("Connection failed to desktop backend server!");
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-modal').style.display = 'flex';
+        }
+
+        // TAB NAVIGATION
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            if (element) {
+                element.classList.add('active');
+            } else {
+                const activeNav = Array.from(document.querySelectorAll('.nav-link')).find(a => a.getAttribute('onclick')?.includes(tabId));
+                if (activeNav) activeNav.classList.add('active');
+            }
+
+            const titles = {
+                dashboard: 'Dashboard Overview',
+                materials: 'Materials & Stock Inventory',
+                production: 'Production Logging & History',
+                invoices: 'Invoices & Billing',
+                customers: 'Customer Directory',
+                suppliers: 'Suppliers Directory',
+                ledgers: 'Ledgers & Financial Accounts',
+                transporters: 'Transporters Registry',
+                logs: 'User Activity Logs'
+            };
+            document.getElementById('active-tab-title').innerText = titles[tabId] || 'Shree Giriraj ERP';
+        }
+
+        // FETCH STATS
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API_URL}/stats`);
+                const data = await res.json();
+
+                document.getElementById('stat-raw-stock').innerText = `${parseFloat(data.rawStock).toFixed(2)} Kg`;
+                document.getElementById('stat-final-stock').innerText = `${parseInt(data.finalStock)} Pcs`;
+                document.getElementById('stat-cust-count').innerText = data.custCount;
+                document.getElementById('stat-supp-count').innerText = data.suppCount;
+
+                // Recent Production
+                const prodTbody = document.getElementById('recent-production-tbody');
+                if (data.recentProd.length === 0) {
+                    prodTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No recent production logs found.</td></tr>';
+                } else {
+                    prodTbody.innerHTML = data.recentProd.map(p => `
+                        <tr>
+                            <td>${p.date}</td>
+                            <td>${p.rm_name || 'Raw Material'} (${p.raw_material_used_kg} Kg)</td>
+                            <td><strong>${p.fp_name || 'Final Product'} (${p.final_product_qty_pcs} Pcs)</strong></td>
+                            <td>${p.salvage_qty_kg} Kg</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Recent Invoices
+                const invTbody = document.getElementById('recent-invoices-tbody');
+                if (data.recentInvoices.length === 0) {
+                    invTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No recent invoices found.</td></tr>';
+                } else {
+                    invTbody.innerHTML = data.recentInvoices.map(i => `
+                        <tr>
+                            <td><strong>${i.invoice_number}</strong></td>
+                            <td>${i.customer_name}</td>
+                            <td>${i.invoice_date}</td>
+                            <td>₹${parseFloat(i.grand_total).toFixed(2)}</td>
+                            <td><span class="badge badge-success">${i.status}</span></td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // LOAD ALL DATA
+        async function loadAllData() {
+            loadMaterials();
+            loadProduction();
+            loadCustomers();
+            loadSuppliers();
+            loadProducts();
+            loadInvoices();
+            loadLedgers();
+            loadTransporters();
+            loadLogs();
+        }
+
+        // MATERIALS
+        async function loadMaterials() {
+            const res = await fetch(`${API_URL}/materials`);
+            materialsCache = await res.json();
+            
+            const tbody = document.getElementById('materials-tbody');
+            tbody.innerHTML = materialsCache.map(m => `
+                <tr>
+                    <td><span class="badge ${m.type==='Raw Material'?'badge-warning':(m.type==='Final Product'?'badge-success':'badge-info')}">${m.type}</span></td>
+                    <td><strong>${m.name}</strong></td>
+                    <td>${m.unit}</td>
+                    <td>${m.grade_variation || m.temp || m.size || '-'}</td>
+                    <td><strong>${m.stock_quantity} ${m.unit}</strong></td>
+                    <td>${m.stock_quantity > 50 ? '<span class="badge badge-success">In Stock</span>' : '<span class="badge badge-warning">Low Stock</span>'}</td>
+                </tr>
+            `).join('');
+
+            // Populate Production Modal Selects
+            const rawSelect = document.getElementById('prod-raw-mat');
+            const addSelect = document.getElementById('prod-additive');
+            const finalSelect = document.getElementById('prod-final-mat');
+
+            rawSelect.innerHTML = materialsCache.filter(m => m.type === 'Raw Material').map(m => `<option value="${m.id}">${m.name} (Stock: ${m.stock_quantity} Kg)</option>`).join('');
+            addSelect.innerHTML = `<option value="">None</option>` + materialsCache.filter(m => m.type === 'Additive').map(m => `<option value="${m.id}">${m.name} (Stock: ${m.stock_quantity} Kg)</option>`).join('');
+            finalSelect.innerHTML = materialsCache.filter(m => m.type === 'Final Product').map(m => `<option value="${m.id}">${m.name} (Stock: ${m.stock_quantity} Pcs)</option>`).join('');
+        }
+
+        // PRODUCTION
+        async function loadProduction() {
+            const res = await fetch(`${API_URL}/production`);
+            const logs = await res.json();
+            const tbody = document.getElementById('production-tbody');
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td>${l.date}</td>
+                    <td>${l.rm_name || 'Raw Material'} (${l.raw_material_used_kg} Kg)</td>
+                    <td>${l.additive_name ? `${l.additive_name} (${l.additive_used_kg} Kg)` : '-'}</td>
+                    <td><strong>${l.fp_name || 'Final Product'} (${l.final_product_qty_pcs} Pcs)</strong></td>
+                    <td>${l.salvage_qty_kg} Kg</td>
+                    <td>${l.notes || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // CUSTOMERS
+        async function loadCustomers() {
+            const res = await fetch(`${API_URL}/customers`);
+            customersCache = await res.json();
+            const tbody = document.getElementById('customers-tbody');
+            tbody.innerHTML = customersCache.map(c => `
+                <tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.phone || '-'}</td>
+                    <td>${c.email || '-'}</td>
+                    <td><span class="badge badge-info">${c.gstin || 'N/A'}</span></td>
+                    <td>${c.address || c.state}</td>
+                </tr>
+            `).join('');
+
+            // Populate Invoice Modal Customer select
+            const invCustSelect = document.getElementById('inv-customer');
+            invCustSelect.innerHTML = customersCache.map(c => `<option value="${c.id}">${c.name} (${c.gstin || 'No GSTIN'})</option>`).join('');
+        }
+
+        // SUPPLIERS
+        async function loadSuppliers() {
+            const res = await fetch(`${API_URL}/suppliers`);
+            const suppliers = await res.json();
+            const tbody = document.getElementById('suppliers-tbody');
+            tbody.innerHTML = suppliers.map(s => `
+                <tr>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.phone || '-'}</td>
+                    <td>${s.email || '-'}</td>
+                    <td><span class="badge badge-purple">${s.gstin || 'N/A'}</span></td>
+                    <td>${s.address || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // PRODUCTS FOR BILLING
+        async function loadProducts() {
+            const res = await fetch(`${API_URL}/products`);
+            productsCache = await res.json();
+            if (document.querySelectorAll('.inv-item-product').length === 0) {
+                addInvoiceItemRow();
+            }
+        }
+
+        // INVOICES
+        async function loadInvoices() {
+            const res = await fetch(`${API_URL}/invoices`);
+            const invoices = await res.json();
+            const tbody = document.getElementById('invoices-tbody');
+            tbody.innerHTML = invoices.map(i => `
+                <tr>
+                    <td><strong>${i.invoice_number}</strong></td>
+                    <td>${i.customer_name}</td>
+                    <td>${i.customer_gstin || '-'}</td>
+                    <td>${i.invoice_date}</td>
+                    <td><strong>₹${parseFloat(i.grand_total).toFixed(2)}</strong></td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="viewInvoice(${i.id})"><i class='bx bx-show'></i> View / Print</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function viewInvoice(id) {
+            const res = await fetch(`${API_URL}/invoices/${id}`);
+            const data = await res.json();
+            const inv = data.invoice;
+            const items = data.items;
+
+            document.getElementById('view-inv-num').innerText = inv.invoice_number;
+            document.getElementById('view-inv-date').innerText = `Date: ${inv.invoice_date}`;
+            document.getElementById('view-inv-customer').innerText = inv.customer_name;
+            document.getElementById('view-inv-gstin').innerText = `GSTIN: ${inv.customer_gstin || 'N/A'}`;
+            document.getElementById('view-inv-phone').innerText = `Phone: ${inv.customer_phone || 'N/A'}`;
+            document.getElementById('view-inv-address').innerText = `Address: ${inv.customer_address || 'N/A'}`;
+
+            document.getElementById('view-inv-subtotal').innerText = `₹${parseFloat(inv.subtotal).toFixed(2)}`;
+            document.getElementById('view-inv-cgst').innerText = `₹${parseFloat(inv.cgst).toFixed(2)}`;
+            document.getElementById('view-inv-sgst').innerText = `₹${parseFloat(inv.sgst).toFixed(2)}`;
+            document.getElementById('view-inv-igst').innerText = `₹${parseFloat(inv.igst).toFixed(2)}`;
+            document.getElementById('view-inv-grand').innerText = `₹${parseFloat(inv.grand_total).toFixed(2)}`;
+
+            const tbody = document.getElementById('view-inv-items-tbody');
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.product_name}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${parseFloat(item.unit_price).toFixed(2)}</td>
+                    <td>₹${parseFloat(item.total_price).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            openModal('view-invoice-modal');
+        }
+
+        // LEDGERS
+        async function loadLedgers() {
+            const res = await fetch(`${API_URL}/ledgers`);
+            const ledgers = await res.json();
+            const tbody = document.getElementById('ledgers-tbody');
+            tbody.innerHTML = ledgers.map(l => `
+                <tr>
+                    <td>${l.transaction_date}</td>
+                    <td><span class="badge ${l.entity_type==='Customer'?'badge-info':'badge-purple'}">${l.entity_type}</span></td>
+                    <td><strong>${l.entity_name}</strong></td>
+                    <td><span class="badge ${l.type==='Credit'?'badge-success':'badge-warning'}">${l.type}</span></td>
+                    <td><strong>₹${parseFloat(l.amount).toFixed(2)}</strong></td>
+                    <td>${l.description || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // TRANSPORTERS
+        async function loadTransporters() {
+            const res = await fetch(`${API_URL}/transporters`);
+            const transporters = await res.json();
+            const tbody = document.getElementById('transporters-tbody');
+            tbody.innerHTML = transporters.map(t => `
+                <tr>
+                    <td><strong>${t.name}</strong></td>
+                    <td><span class="badge badge-info">${t.vehicle_no}</span></td>
+                    <td>${t.phone || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // LOGS
+        async function loadLogs() {
+            const res = await fetch(`${API_URL}/logs`);
+            const logs = await res.json();
+            const tbody = document.getElementById('logs-tbody');
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td style="font-size:12px; color:var(--text-muted);">${l.created_at}</td>
+                    <td><strong>${l.full_name || l.username}</strong></td>
+                    <td><span class="badge badge-purple">${l.action_type}</span></td>
+                    <td>${l.module}</td>
+                    <td>${l.details}</td>
+                </tr>
+            `).join('');
+        }
+
+        // INVOICE ITEM ROWS LOGIC
+        function addInvoiceItemRow() {
+            const container = document.getElementById('invoice-items-container');
+            const rowId = Date.now();
+            const div = document.createElement('div');
+            div.className = 'form-grid inv-item-row';
+            div.style.marginBottom = '10px';
+            div.innerHTML = `
+                <div style="grid-column: span 2;">
+                    <select class="form-control inv-item-product" onchange="updateItemPrice(this)" required>
+                        <option value="">Select Product...</option>
+                        ${productsCache.map(p => `<option value="${p.id}" data-price="${p.price}">${p.name} - ₹${p.price}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <input type="number" class="form-control inv-item-qty" placeholder="Qty" value="1" min="1" onchange="calculateInvoiceTotal()" oninput="calculateInvoiceTotal()" required>
+                </div>
+                <div>
+                    <input type="number" step="0.01" class="form-control inv-item-price" placeholder="Price" onchange="calculateInvoiceTotal()" oninput="calculateInvoiceTotal()" required>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.parentElement.remove(); calculateInvoiceTotal();"><i class='bx bx-trash' style="color:#ef4444;"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function updateItemPrice(selectEl) {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            const price = selectedOpt.getAttribute('data-price') || 0;
+            const priceInput = selectEl.parentElement.parentElement.querySelector('.inv-item-price');
+            priceInput.value = price;
+            calculateInvoiceTotal();
+        }
+
+        function calculateInvoiceTotal() {
+            let subtotal = 0;
+            document.querySelectorAll('.inv-item-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.inv-item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.inv-item-price').value) || 0;
+                subtotal += qty * price;
+            });
+
+            const isInterstate = document.getElementById('inv-interstate').value === '1';
+            let tax = subtotal * 0.18;
+            let grand = subtotal + tax;
+
+            document.getElementById('inv-subtotal-display').innerText = `₹${subtotal.toFixed(2)}`;
+            document.getElementById('inv-tax-display').innerText = `₹${tax.toFixed(2)}`;
+            document.getElementById('inv-grand-display').innerText = `₹${grand.toFixed(2)}`;
+        }
+
+        // FORMS SUBMISSIONS SETUP
+        function setupFormListeners() {
+            // Material
+            document.getElementById('form-add-material').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const body = {
+                    type: document.getElementById('mat-type').value,
+                    name: document.getElementById('mat-name').value,
+                    unit: document.getElementById('mat-unit').value,
+                    grade_variation: document.getElementById('mat-variation').value,
+                    stock_quantity: parseFloat(document.getElementById('mat-stock').value),
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+                await fetch(`${API_URL}/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                closeModal('add-material-modal');
+                fetchStats(); loadMaterials();
+            });
+
+            // Production
+            document.getElementById('form-add-production').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const body = {
+                    date: document.getElementById('prod-date').value,
+                    raw_material_id: document.getElementById('prod-raw-mat').value,
+                    raw_material_used_kg: parseFloat(document.getElementById('prod-raw-qty').value),
+                    additive_id: document.getElementById('prod-additive').value || null,
+                    additive_used_kg: parseFloat(document.getElementById('prod-add-qty').value) || 0,
+                    final_product_id: document.getElementById('prod-final-mat').value,
+                    final_product_qty_pcs: parseInt(document.getElementById('prod-final-qty').value),
+                    salvage_qty_kg: parseFloat(document.getElementById('prod-salvage').value) || 0,
+                    notes: document.getElementById('prod-notes').value,
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+                await fetch(`${API_URL}/production`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                closeModal('add-production-modal');
+                fetchStats(); loadMaterials(); loadProduction();
+            });
+
+            // Customer
+            document.getElementById('form-add-customer').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const body = {
+                    name: document.getElementById('cust-name').value,
+                    phone: document.getElementById('cust-phone').value,
+                    email: document.getElementById('cust-email').value,
+                    gstin: document.getElementById('cust-gstin').value,
+                    state: document.getElementById('cust-state').value,
+                    address: document.getElementById('cust-address').value,
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+                await fetch(`${API_URL}/customers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                closeModal('add-customer-modal');
+                fetchStats(); loadCustomers();
+            });
+
+            // Supplier
+            document.getElementById('form-add-supplier').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const body = {
+                    name: document.getElementById('supp-name').value,
+                    phone: document.getElementById('supp-phone').value,
+                    email: document.getElementById('supp-email').value,
+                    gstin: document.getElementById('supp-gstin').value,
+                    address: document.getElementById('supp-address').value,
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+                await fetch(`${API_URL}/suppliers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                closeModal('add-supplier-modal');
+                fetchStats(); loadSuppliers();
+            });
+
+            // Invoice
+            document.getElementById('form-add-invoice').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const items = [];
+                document.querySelectorAll('.inv-item-row').forEach(row => {
+                    const select = row.querySelector('.inv-item-product');
+                    const prodId = select.value;
+                    const prodName = select.options[select.selectedIndex].text.split(' - ')[0];
+                    const qty = parseInt(row.querySelector('.inv-item-qty').value);
+                    const unitPrice = parseFloat(row.querySelector('.inv-item-price').value);
+                    if (prodId && qty > 0) {
+                        items.push({ product_id: prodId, product_name: prodName, quantity: qty, unit_price: unitPrice });
+                    }
+                });
+
+                if (items.length === 0) {
+                    alert("Please add at least one line item!");
+                    return;
+                }
+
+                const body = {
+                    customer_id: document.getElementById('inv-customer').value,
+                    invoice_date: document.getElementById('inv-date').value,
+                    is_interstate: document.getElementById('inv-interstate').value === '1',
+                    items: items,
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+
+                const res = await fetch(`${API_URL}/invoices`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const data = await res.json();
+                closeModal('add-invoice-modal');
+                fetchStats(); loadInvoices();
+                if (data.success) {
+                    viewInvoice(data.invoice_id);
+                }
+            });
+
+            // Ledger
+            document.getElementById('form-add-ledger').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const body = {
+                    entity_type: document.getElementById('ledger-entity-type').value,
+                    entity_name: document.getElementById('ledger-entity-name').value,
+                    transaction_date: document.getElementById('ledger-date').value,
+                    type: document.getElementById('ledger-type').value,
+                    amount: parseFloat(document.getElementById('ledger-amount').value),
+                    description: document.getElementById('ledger-desc').value,
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+                await fetch(`${API_URL}/ledgers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                closeModal('add-ledger-modal');
+                loadLedgers();
+            });
+
+            // Transporter
+            document.getElementById('form-add-transporter').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const body = {
+                    name: document.getElementById('trans-name').value,
+                    vehicle_no: document.getElementById('trans-vehicle').value,
+                    phone: document.getElementById('trans-phone').value,
+                    user_id: currentUser.id, username: currentUser.username, full_name: currentUser.full_name
+                };
+                await fetch(`${API_URL}/transporters`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                closeModal('add-transporter-modal');
+                loadTransporters();
+            });
+        }
+
+        // MODAL HELPERS
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+    </script>
+</body>
+</html>

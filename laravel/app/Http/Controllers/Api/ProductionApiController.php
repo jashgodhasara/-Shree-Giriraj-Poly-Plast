@@ -17,7 +17,7 @@ class ProductionApiController extends Controller
             ->get()
             ->map(fn($log) => [
                 'id'                    => $log->id,
-                'date'                  => $log->date->format('Y-m-d'),
+                'date'                  => $log->date?->format('Y-m-d') ?? ($log->created_at?->format('Y-m-d') ?? now()->format('Y-m-d')),
                 'raw_material'          => $log->rawMaterial?->name,
                 'raw_material_used_kg'  => (float) $log->raw_material_used_kg,
                 'additive'              => $log->additive?->name,

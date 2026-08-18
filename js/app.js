@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Register PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .catch(err => console.log('SW registration failed:', err));
+    }
+
     // Modal Logic
     const modals = document.querySelectorAll('.modal-backdrop');
     const closeBtns = document.querySelectorAll('.close-btn');

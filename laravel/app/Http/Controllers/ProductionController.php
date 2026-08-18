@@ -4,22 +4,61 @@ namespace App\Http\Controllers;
 
 use App\Models\Material;
 use App\Models\ProductionLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProductionController extends Controller
 {
-    public function index()
+    private function resolveDates(?string $preset, ?string $dateFrom, ?string $dateTo): array
     {
-        $logs = ProductionLog::with(['rawMaterial', 'additive', 'finalProduct'])
-            ->latest()
-            ->get();
+        $today = Carbon::today();
+
+        if ($preset && $preset !== 'custom') {
+            return match ($preset) {
+                'today'        => [$today->toDateString(), $today->toDateString()],
+                'yesterday'    => [Carbon::yesterday()->toDateString(), Carbon::yesterday()->toDateString()],
+                'this_month'   => [$today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
+                'last_month'   => [$today->copy()->subMonth()->startOfMonth()->toDateString(), $today->copy()->subMonth()->endOfMonth()->toDateString()],
+                'last_3months' => [$today->copy()->subMonths(3)->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
+                'this_year'    => [$today->copy()->startOfYear()->toDateString(), $today->copy()->endOfYear()->toDateString()],
+                'last_year'    => [$today->copy()->subYear()->startOfYear()->toDateString(), $today->copy()->subYear()->endOfYear()->toDateString()],
+                default        => [$dateFrom ? Carbon::parse($dateFrom)->toDateString() : '', $dateTo ? Carbon::parse($dateTo)->toDateString() : ''],
+            };
+        }
+
+        $from = $dateFrom ? Carbon::parse($dateFrom)->toDateString() : '';
+        $to   = $dateTo ? Carbon::parse($dateTo)->toDateString() : '';
+
+        return [$from, $to];
+    }
+
+    public function index(Request $request)
+    {
+        $preset   = $request->get('preset', '');
+        $dateFrom = $request->get('date_from', '');
+        $dateTo   = $request->get('date_to', '');
+        [$dateFrom, $dateTo] = $this->resolveDates($preset, $dateFrom, $dateTo);
+
+        $query = ProductionLog::with(['rawMaterial', 'additive', 'finalProduct'])->latest('date')->latest('id');
+        if ($dateFrom) $query->whereDate('date', '>=', $dateFrom);
+        if ($dateTo)   $query->whereDate('date', '<=', $dateTo);
+        $logs = $query->get();
+
+        // Summary
+        $totalRawKg   = $logs->sum('raw_material_used_kg');
+        $totalPieces  = $logs->sum('final_product_qty_pcs');
+        $totalSalvage = $logs->sum('salvage_qty_kg');
+        $totalCount   = $logs->count();
 
         $rawMaterials  = Material::where('type', 'Raw Material')->orderBy('name')->get();
         $additives     = Material::where('type', 'Additive')->orderBy('name')->get();
         $finalProducts = Material::where('type', 'Final Product')->orderBy('name')->get();
 
-        return view('production.index', compact('logs', 'rawMaterials', 'additives', 'finalProducts'));
+        return view('production.index', compact(
+            'logs', 'rawMaterials', 'additives', 'finalProducts',
+            'preset', 'dateFrom', 'dateTo', 'totalRawKg', 'totalPieces', 'totalSalvage', 'totalCount'
+        ));
     }
 
     public function store(Request $request)

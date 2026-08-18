@@ -23,6 +23,31 @@
 }
 </style>
 
+{{-- Date Filter Bar --}}
+@include('partials.date-filter', ['action' => route('invoices.index')])
+
+{{-- Summary Cards --}}
+@if($preset || $dateFrom)
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:18px;">
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Total Invoices</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--primary);">{{ number_format($totalCount) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Grand Total</div>
+        <div style="font-size:1.4rem;font-weight:800;color:var(--primary);">₹{{ number_format($totalAmount, 2) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Total Paid</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#10b981;">₹{{ number_format($totalPaid, 2) }}</div>
+    </div>
+    <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Pending</div>
+        <div style="font-size:1.4rem;font-weight:800;color:#ef4444;">₹{{ number_format($totalAmount - $totalPaid, 2) }}</div>
+    </div>
+</div>
+@endif
+
 <div class="card">
     <div class="card-header">
         <h3><i class="fa fa-receipt"></i> Invoice History</h3>
@@ -34,7 +59,8 @@
         @if($invoices->isEmpty())
         <div class="empty-state">
             <div class="empty-icon"><i class="fa fa-receipt"></i></div>
-            <p>No invoices yet</p><small>Create your first bill</small>
+            <p>No invoices{{ $preset ? ' found for this period' : ' yet' }}</p>
+            @if(!$preset)<small>Create your first bill</small>@endif
         </div>
         @else
 

@@ -11,13 +11,46 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderController extends Controller
 {
-    public function index()
+    private function resolveDates(?string $preset, ?string $dateFrom, ?string $dateTo): array
     {
-        $purchaseOrders = PurchaseOrder::with('supplier', 'items.material')
-            ->latest()
-            ->paginate(50);
+        $today = \Carbon\Carbon::today();
 
-        return view('purchase-orders.index', compact('purchaseOrders'));
+        if ($preset && $preset !== 'custom') {
+            return match ($preset) {
+                'today'        => [$today->toDateString(), $today->toDateString()],
+                'yesterday'    => [\Carbon\Carbon::yesterday()->toDateString(), \Carbon\Carbon::yesterday()->toDateString()],
+                'this_month'   => [$today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
+                'last_month'   => [$today->copy()->subMonth()->startOfMonth()->toDateString(), $today->copy()->subMonth()->endOfMonth()->toDateString()],
+                'last_3months' => [$today->copy()->subMonths(3)->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
+                'this_year'    => [$today->copy()->startOfYear()->toDateString(), $today->copy()->endOfYear()->toDateString()],
+                'last_year'    => [$today->copy()->subYear()->startOfYear()->toDateString(), $today->copy()->subYear()->endOfYear()->toDateString()],
+                default        => [$dateFrom ? \Carbon\Carbon::parse($dateFrom)->toDateString() : '', $dateTo ? \Carbon\Carbon::parse($dateTo)->toDateString() : ''],
+            };
+        }
+
+        $from = $dateFrom ? \Carbon\Carbon::parse($dateFrom)->toDateString() : '';
+        $to   = $dateTo ? \Carbon\Carbon::parse($dateTo)->toDateString() : '';
+
+        return [$from, $to];
+    }
+
+    public function index(Request $request)
+    {
+        $preset   = $request->get('preset', '');
+        $dateFrom = $request->get('date_from', '');
+        $dateTo   = $request->get('date_to', '');
+        $status   = $request->get('status', '');
+        [$dateFrom, $dateTo] = $this->resolveDates($preset, $dateFrom, $dateTo);
+
+        $query = PurchaseOrder::with('supplier', 'items.material')->latest('po_date')->latest('id');
+
+        if ($dateFrom) $query->whereDate('po_date', '>=', $dateFrom);
+        if ($dateTo)   $query->whereDate('po_date', '<=', $dateTo);
+        if ($status)   $query->where('status', $status);
+
+        $purchaseOrders = $query->paginate(50)->appends($request->query());
+
+        return view('purchase-orders.index', compact('purchaseOrders', 'preset', 'dateFrom', 'dateTo', 'status'));
     }
 
     public function create()

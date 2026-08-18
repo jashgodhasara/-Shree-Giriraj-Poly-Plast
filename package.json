@@ -1,0 +1,28 @@
+{
+  "name": "shree-giriraj-polyplast-erp",
+  "version": "2.0.0",
+  "description": "Desktop ERP Application for Shree Giriraj Poly Plast",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "launch": "electron ."
+  },
+  "keywords": [
+    "erp",
+    "poly-plast",
+    "desktop-app",
+    "inventory",
+    "billing"
+  ],
+  "author": "Shree Giriraj Poly Plast",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron": "^34.2.0"
+  }
+}
