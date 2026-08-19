@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\ProductionApiController;
 use App\Http\Controllers\Api\PurchaseOrderApiController;
 use App\Http\Controllers\Api\ReportsApiController;
+use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\SupplierApiController;
 use App\Http\Controllers\Api\TransporterApiController;
 use Illuminate\Support\Facades\Route;
@@ -80,7 +81,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('transporters', TransporterApiController::class)->names('api.transporters');
     Route::apiResource('materials',    MaterialApiController::class)->names('api.materials');
     Route::apiResource('investors',    InvestorApiController::class)->names('api.investors');
+    Route::post('/job-works/calculate', [JobWorkApiController::class, 'calculate'])->name('api.job-works.calculate');
+    Route::get('/products/{product}/weight', [JobWorkApiController::class, 'getProductWeight'])->name('api.products.weight');
     Route::apiResource('job-works',    JobWorkApiController::class)->names('api.job-works');
+    Route::apiResource('branches',     BranchApiController::class)->names('api.branches');
 
     // Invoices (Sales)
     Route::get('/invoices',              [InvoiceApiController::class, 'index'])->name('api.invoices.index');

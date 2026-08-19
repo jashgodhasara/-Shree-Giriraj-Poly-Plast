@@ -99,6 +99,27 @@
                 </tr>
                 @endforeach
                 </tbody>
+                <tfoot>
+                    <tr style="background:#f8fafc; border-top:2px solid #cbd5e1;">
+                        <th colspan="3" style="text-align:right; font-weight:800; font-size:13.5px; color:var(--text-color, #1e293b); padding:14px;">
+                            <i class="fa fa-calculator" style="color:var(--primary); margin-right:5px;"></i> TOTAL ({{ number_format($totalCount) }} Invoices):
+                        </th>
+                        <th style="font-weight:800; font-size:14.5px; color:var(--primary); padding:14px;">
+                            ₹{{ number_format($totalAmount, 2) }}
+                        </th>
+                        <th style="font-weight:800; font-size:14.5px; color:#10b981; padding:14px;">
+                            ₹{{ number_format($totalPaid, 2) }}
+                        </th>
+                        <th style="font-weight:800; font-size:14.5px; color:#ef4444; padding:14px;">
+                            ₹{{ number_format($totalAmount - $totalPaid, 2) }}
+                        </th>
+                        <th colspan="3" style="padding:14px; text-align:right;">
+                            <span class="badge badge-purple" style="font-size:12px; font-weight:700; padding:6px 12px;">
+                                Total Pending: ₹{{ number_format($totalAmount - $totalPaid, 2) }}
+                            </span>
+                        </th>
+                    </tr>
+                </tfoot>
             </table>
         </div>
 
@@ -137,6 +158,26 @@
                 </div>
             </div>
             @endforeach
+
+            {{-- Mobile Bottom Total Card --}}
+            <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:12px; padding:14px 16px; margin-top:10px; margin-bottom:8px;">
+                <div style="font-weight:800; font-size:13px; color:var(--text-color, #1e293b); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+                    <span><i class="fa fa-calculator text-primary"></i> TOTAL SUMMARY</span>
+                    <span class="badge badge-gray">{{ number_format($totalCount) }} Invoices</span>
+                </div>
+                <div class="inv-card-row">
+                    <span class="inv-card-label" style="font-weight:700;">Total Invoiced:</span>
+                    <span class="inv-card-val" style="color:var(--primary); font-size:14px;">₹{{ number_format($totalAmount, 2) }}</span>
+                </div>
+                <div class="inv-card-row">
+                    <span class="inv-card-label" style="font-weight:700;">Total Paid:</span>
+                    <span class="inv-card-val" style="color:#10b981; font-size:14px;">₹{{ number_format($totalPaid, 2) }}</span>
+                </div>
+                <div class="inv-card-row" style="padding-top:6px; border-top:1px dashed #e2e8f0;">
+                    <span class="inv-card-label" style="font-weight:800; color:#ef4444;">Total Pending:</span>
+                    <span class="inv-card-val" style="color:#ef4444; font-size:15px; font-weight:800;">₹{{ number_format($totalAmount - $totalPaid, 2) }}</span>
+                </div>
+            </div>
         </div>
 
         <div style="padding:12px 16px;border-top:1px solid var(--border)">

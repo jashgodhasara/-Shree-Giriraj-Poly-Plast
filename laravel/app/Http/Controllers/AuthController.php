@@ -216,5 +216,40 @@ class AuthController extends Controller
 
         return back()->with('success', 'Password changed successfully!');
     }
+
+    public function switchUser(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        $targetUser = User::findOrFail($request->user_id);
+
+        if (!$targetUser->is_active) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'This account is inactive.'], 403);
+            }
+            return back()->withErrors(['user' => 'This account is inactive.']);
+        }
+
+        Auth::login($targetUser);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Switched to ' . $targetUser->name . ' (' . ucfirst($targetUser->role) . ')',
+                'user' => [
+                    'id'   => $targetUser->id,
+                    'name' => $targetUser->name,
+                    'role' => $targetUser->role,
+                ]
+            ]);
+        }
+
+        return back()->with('success', 'Switched user to ' . $targetUser->name);
+    }
 }
 

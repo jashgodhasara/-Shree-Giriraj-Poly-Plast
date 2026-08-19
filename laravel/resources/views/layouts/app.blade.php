@@ -728,14 +728,26 @@
     </a>
 
     <div class="sidebar-divider"></div>
-    <div class="sidebar-section">Job Work</div>
-    <a href="{{ route('jobworks.index') }}" class="{{ request()->routeIs('jobworks.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-right-to-bracket"></i></span>
-        <span class="nav-label">Job Work In</span>
+    <div class="sidebar-section">Job Work Module</div>
+    <a href="{{ route('jobworks.dashboard') }}" class="{{ request()->routeIs('jobworks.dashboard') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-chart-pie"></i></span>
+        <span class="nav-label">JW Dashboard</span>
     </a>
-    <a href="{{ route('jobworks.index') }}" class="{{ request()->routeIs('jobworks.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-right-from-bracket"></i></span>
-        <span class="nav-label">Job Work Out</span>
+    <a href="{{ route('jobworks.create') }}" class="{{ request()->routeIs('jobworks.create') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-circle-plus"></i></span>
+        <span class="nav-label">New Job Work</span>
+    </a>
+    <a href="{{ route('jobworks.index') }}" class="{{ request()->routeIs('jobworks.index') || request()->routeIs('jobworks.show') || request()->routeIs('jobworks.edit') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-scale-balanced"></i></span>
+        <span class="nav-label">Job Work Orders</span>
+    </a>
+    <a href="{{ route('jobworks.clients.index') }}" class="{{ request()->routeIs('jobworks.clients.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-users"></i></span>
+        <span class="nav-label">Job Work Clients</span>
+    </a>
+    <a href="{{ route('jobworks.reports') }}" class="{{ request()->routeIs('jobworks.reports') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-file-invoice-dollar"></i></span>
+        <span class="nav-label">JW Reports</span>
     </a>
 
     <div class="sidebar-divider"></div>
@@ -822,12 +834,94 @@
                 <i class="fa fa-location-dot"></i> {{ session('current_branch', 'Ahmedabad, Gujarat') }}
             </a>
             @auth
-            <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text-muted);">
-                <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;">
-                    <span style="font-size:10px;font-weight:700;color:#fff;">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
+            <div style="position:relative;" id="userMenuWrapper">
+                <button type="button" 
+                    id="userMenuBtn" 
+                    onclick="toggleUserDropdown(event)"
+                    style="display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--bg-surface, #ffffff);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text-muted);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,0.05);"
+                    title="Click to switch active user account or manage profile">
+                    <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(99,102,241,0.3);">
+                        <span style="font-size:10px;font-weight:700;color:#fff;">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
+                    </div>
+                    <span style="font-weight:600;color:var(--text);">{{ auth()->user()->name }}</span>
+                    <span style="padding:2px 7px;background:{{ auth()->user()->isAdmin() ? 'rgba(99,102,241,.12)' : 'rgba(16,185,129,.12)' }};color:{{ auth()->user()->isAdmin() ? 'var(--primary)' : 'var(--accent2)' }};border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;">{{ auth()->user()->role }}</span>
+                    <i class="fa fa-chevron-down" id="userMenuChevron" style="font-size:9px;color:var(--text-muted);margin-left:2px;transition:transform .2s;"></i>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="userDropdownMenu" style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:290px;background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 15px 35px rgba(0,0,0,0.18), 0 5px 15px rgba(0,0,0,0.08);z-index:1050;overflow:hidden;">
+                    <!-- User Header -->
+                    <div style="padding:14px 16px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;">
+                        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;flex-shrink:0;">
+                            {{ strtoupper(substr(auth()->user()->name,0,1)) }}
+                        </div>
+                        <div style="overflow:hidden;flex:1;">
+                            <div style="font-weight:700;font-size:13.5px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->name }}</div>
+                            <div style="font-size:11.5px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ auth()->user()->email }}</div>
+                        </div>
+                        <span style="padding:2px 7px;background:{{ auth()->user()->isAdmin() ? 'rgba(99,102,241,.15)' : 'rgba(16,185,129,.15)' }};color:{{ auth()->user()->isAdmin() ? '#4338ca' : '#047857' }};border-radius:12px;font-size:10px;font-weight:800;text-transform:uppercase;">
+                            {{ auth()->user()->role }}
+                        </span>
+                    </div>
+
+                    <!-- Switch Account Section -->
+                    <div style="padding:10px 14px 6px 14px;border-bottom:1px solid #f1f5f9;">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:0.5px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+                            <span><i class="fa fa-users-viewfinder" style="color:var(--primary);"></i> Switch User Account</span>
+                            <span style="font-size:10px;font-weight:600;color:var(--primary);">ઝડપી બદલો</span>
+                        </div>
+                        @php
+                            $availableUsers = \App\Models\User::where('is_active', true)->orderBy('role')->orderBy('name')->get();
+                        @endphp
+                        <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+                            @foreach($availableUsers as $u)
+                            <div onclick="switchUserAccount({{ $u->id }})"
+                                style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;transition:background .15s;{{ $u->id === auth()->id() ? 'background:#f0fdf4;border:1px solid #bbf7d0;' : 'background:#ffffff;' }}"
+                                onmouseover="if({{ $u->id }} !== {{ auth()->id() }}) this.style.background='#f8fafc';"
+                                onmouseout="if({{ $u->id }} !== {{ auth()->id() }}) this.style.background='#ffffff';">
+                                <div style="width:26px;height:26px;border-radius:50%;background:{{ $u->isAdmin() ? '#6366f1' : '#10b981' }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">
+                                    {{ strtoupper(substr($u->name,0,1)) }}
+                                </div>
+                                <div style="flex:1;overflow:hidden;">
+                                    <div style="font-size:12px;font-weight:{{ $u->id === auth()->id() ? '700' : '600' }};color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                        {{ $u->name }}
+                                    </div>
+                                    <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:600;">
+                                        {{ $u->role }}
+                                    </div>
+                                </div>
+                                @if($u->id === auth()->id())
+                                    <span style="font-size:10px;font-weight:700;color:#16a34a;display:flex;align-items:center;gap:3px;background:#dcfce7;padding:2px 6px;border-radius:6px;">
+                                        <i class="fa fa-check"></i> Active
+                                    </span>
+                                @else
+                                    <span style="font-size:11px;color:var(--primary);font-weight:600;opacity:0.8;">
+                                        <i class="fa fa-arrow-right-to-bracket"></i>
+                                    </span>
+                                @endif
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="padding:6px 8px;background:#fafafa;">
+                        @if(auth()->user()->isAdmin())
+                        <a href="{{ route('users.index') }}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;color:#334155;text-decoration:none;font-size:12px;font-weight:500;border-radius:6px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                            <i class="fa fa-users-gear" style="color:var(--primary);width:16px;"></i> Manage All Users
+                        </a>
+                        @endif
+                        <a href="{{ route('change-password') }}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;color:#334155;text-decoration:none;font-size:12px;font-weight:500;border-radius:6px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                            <i class="fa fa-key" style="color:#f59e0b;width:16px;"></i> Change Password
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                            @csrf
+                            <button type="submit" style="width:100%;text-align:left;background:none;border:none;display:flex;align-items:center;gap:8px;padding:8px 10px;color:#ef4444;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">
+                                <i class="fa fa-arrow-right-from-bracket" style="width:16px;"></i> Sign Out / Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <span style="font-weight:500;color:var(--text);">{{ auth()->user()->name }}</span>
-                <span style="padding:2px 7px;background:{{ auth()->user()->isAdmin() ? 'rgba(99,102,241,.12)' : 'rgba(16,185,129,.12)' }};color:{{ auth()->user()->isAdmin() ? 'var(--primary)' : 'var(--accent2)' }};border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;">{{ auth()->user()->role }}</span>
             </div>
             @endauth
         </div>
@@ -1224,6 +1318,52 @@
             document.body.style.overflow = '';
         }
     });
+
+    /* ── User Switcher Dropdown ── */
+    function toggleUserDropdown(event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById('userDropdownMenu');
+        const chevron = document.getElementById('userMenuChevron');
+        if (!menu) return;
+        const isShown = menu.style.display === 'block';
+        menu.style.display = isShown ? 'none' : 'block';
+        if (chevron) {
+            chevron.style.transform = isShown ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('userMenuWrapper');
+        const menu = document.getElementById('userDropdownMenu');
+        const chevron = document.getElementById('userMenuChevron');
+        if (menu && wrapper && !wrapper.contains(e.target)) {
+            menu.style.display = 'none';
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+    });
+
+    async function switchUserAccount(userId) {
+        try {
+            const res = await fetch('{{ route("users.switch") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showToast(data.message || 'Error switching user', 'error');
+            }
+        } catch(e) {
+            showToast('Network error while switching user', 'error');
+        }
+    }
 </script>
 @yield('scripts')
 </body>

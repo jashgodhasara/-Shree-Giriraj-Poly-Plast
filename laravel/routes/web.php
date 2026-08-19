@@ -7,6 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvestorController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JobWorkController;
+use App\Http\Controllers\JobWorkOrderController;
+use App\Http\Controllers\JobWorkClientController;
 use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\MaterialTransactionController;
@@ -40,6 +42,7 @@ Route::middleware('auth')->group(function () {
     // Change Password
     Route::get('/change-password', [AuthController::class, 'showChangePassword'])->name('change-password');
     Route::post('/change-password', [AuthController::class, 'changePassword'])->name('change-password.update');
+    Route::post('/users/switch', [AuthController::class, 'switchUser'])->name('users.switch');
 
     // Dashboard & Working Date Switcher
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -56,7 +59,10 @@ Route::middleware('auth')->group(function () {
 
     // Multi-Location Branches
     Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+    Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+    Route::put('/branches/{branch}', [BranchController::class, 'update'])->name('branches.update');
     Route::post('/branches/switch', [BranchController::class, 'switchBranch'])->name('branches.switch');
+    Route::delete('/branches/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
 
     // Customers
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
@@ -123,11 +129,27 @@ Route::middleware('auth')->group(function () {
     Route::put('/investors/{investor}', [InvestorController::class, 'update'])->name('investors.update');
     Route::delete('/investors/{investor}', [InvestorController::class, 'destroy'])->name('investors.destroy');
 
-    // Job Works
-    Route::get('/job-works', [JobWorkController::class, 'index'])->name('jobworks.index');
-    Route::post('/job-works', [JobWorkController::class, 'store'])->name('jobworks.store');
-    Route::put('/job-works/{jobWork}', [JobWorkController::class, 'update'])->name('jobworks.update');
-    Route::delete('/job-works/{jobWork}', [JobWorkController::class, 'destroy'])->name('jobworks.destroy');
+    // Job Works (Automatic Weight & Quantity Module)
+    Route::get('/job-works/dashboard', [JobWorkOrderController::class, 'dashboard'])->name('jobworks.dashboard');
+    Route::get('/job-works', [JobWorkOrderController::class, 'index'])->name('jobworks.index');
+    Route::get('/job-works/create', [JobWorkOrderController::class, 'create'])->name('jobworks.create');
+    Route::post('/job-works', [JobWorkOrderController::class, 'store'])->name('jobworks.store');
+    Route::post('/job-works/calculate-ajax', [JobWorkOrderController::class, 'calculateAjax'])->name('jobworks.calculate-ajax');
+    Route::get('/job-works/reports', [JobWorkOrderController::class, 'reports'])->name('jobworks.reports');
+    Route::get('/job-works/{jobWorkOrder}', [JobWorkOrderController::class, 'show'])->name('jobworks.show');
+    Route::get('/job-works/{jobWorkOrder}/edit', [JobWorkOrderController::class, 'edit'])->name('jobworks.edit');
+    Route::put('/job-works/{jobWorkOrder}', [JobWorkOrderController::class, 'update'])->name('jobworks.update');
+    Route::delete('/job-works/{jobWorkOrder}', [JobWorkOrderController::class, 'destroy'])->name('jobworks.destroy');
+    Route::get('/job-works/{jobWorkOrder}/duplicate', [JobWorkOrderController::class, 'duplicate'])->name('jobworks.duplicate');
+    Route::post('/job-works/{jobWorkOrder}/status', [JobWorkOrderController::class, 'updateStatus'])->name('jobworks.status.update');
+    Route::post('/job-works/{jobWorkOrder}/delivery', [JobWorkOrderController::class, 'recordDelivery'])->name('jobworks.delivery.record');
+    Route::get('/job-works/{jobWorkOrder}/print', [JobWorkOrderController::class, 'print'])->name('jobworks.print');
+
+    // Job Work Clients / Parties
+    Route::get('/job-work-clients', [JobWorkClientController::class, 'index'])->name('jobworks.clients.index');
+    Route::post('/job-work-clients', [JobWorkClientController::class, 'store'])->name('jobworks.clients.store');
+    Route::put('/job-work-clients/{client}', [JobWorkClientController::class, 'update'])->name('jobworks.clients.update');
+    Route::delete('/job-work-clients/{client}', [JobWorkClientController::class, 'destroy'])->name('jobworks.clients.destroy');
 
     // Production
     Route::get('/production', [ProductionController::class, 'index'])->name('production.index');

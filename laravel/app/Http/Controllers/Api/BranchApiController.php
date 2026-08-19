@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use Illuminate\Http\Request;
 
-class BranchController extends Controller
+class BranchApiController extends Controller
 {
     public function index()
     {
-        // Seed initial default branches if table is empty
         if (Branch::count() === 0) {
             Branch::insert([
                 [
@@ -48,45 +48,7 @@ class BranchController extends Controller
             ]);
         }
 
-        // Backfill sample managers for any existing branches missing manager_name
-        Branch::where('name', 'Main Plant & HQ')->whereNull('manager_name')->update([
-            'manager_name'  => 'Rajeshbhai Patel (Plant Head)',
-            'manager_phone' => '+91 98250 12345',
-            'manager_email' => 'plant.head@shreegiriraj.com',
-        ]);
-        Branch::where('name', 'Branch Store #1')->whereNull('manager_name')->update([
-            'manager_name'  => 'Sureshbhai Shah (Depot Manager)',
-            'manager_phone' => '+91 98790 67890',
-            'manager_email' => 'surat.depot@shreegiriraj.com',
-        ]);
-        Branch::where('name', 'Branch Store #2')->whereNull('manager_name')->update([
-            'manager_name'  => 'Mukeshbhai Prajapati (Hub Manager)',
-            'manager_phone' => '+91 99090 54321',
-            'manager_email' => 'vadodara.hub@shreegiriraj.com',
-        ]);
-
-        $branches = Branch::orderBy('is_main', 'desc')->latest()->get();
-
-        $stockTransfers = [
-            [
-                'from_branch' => 'Main Plant & HQ (Ahmedabad)',
-                'to_branch'   => 'Branch Store #1 (Surat)',
-                'material'    => 'Polypropylene Granules Grade A',
-                'quantity'    => '250.00 Kg',
-                'reason'      => 'Surat Depot Low Stock Alert (Auto AI Recommendation)',
-                'status'      => 'Suggested by AI',
-            ],
-            [
-                'from_branch' => 'Branch Store #2 (Vadodara)',
-                'to_branch'   => 'Main Plant & HQ (Ahmedabad)',
-                'material'    => 'Plastic Soup Bowl (Finished Goods)',
-                'quantity'    => '500 Pcs',
-                'reason'      => 'Surat Depot Surplus Redistribution',
-                'status'      => 'In Transit',
-            ]
-        ];
-
-        return view('branches.index', compact('branches', 'stockTransfers'));
+        return response()->json(Branch::orderBy('is_main', 'desc')->latest()->get());
     }
 
     public function store(Request $request)
@@ -101,14 +63,18 @@ class BranchController extends Controller
         ]);
 
         $validated['is_main'] = false;
-
         $branch = Branch::create($validated);
 
         return response()->json([
             'success' => true,
-            'message' => 'Branch "' . $branch->name . '" created successfully.',
-            'branch'  => $branch,
-        ]);
+            'message' => 'Branch created successfully.',
+            'data'    => $branch,
+        ], 201);
+    }
+
+    public function show(Branch $branch)
+    {
+        return response()->json($branch);
     }
 
     public function update(Request $request, Branch $branch)
@@ -126,19 +92,8 @@ class BranchController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Branch "' . $branch->name . '" updated successfully.',
-            'branch'  => $branch,
-        ]);
-    }
-
-    public function switchBranch(Request $request)
-    {
-        $request->validate(['branch_name' => 'required|string']);
-        session(['current_branch' => $request->branch_name]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Switched active location to ' . $request->branch_name,
+            'message' => 'Branch updated successfully.',
+            'data'    => $branch,
         ]);
     }
 
@@ -151,19 +106,11 @@ class BranchController extends Controller
             ], 422);
         }
 
-        $branchName = $branch->name;
-
-        // If the user is currently operating in this branch, reset to main branch
-        if (session('current_branch') === $branchName) {
-            $mainBranch = Branch::where('is_main', true)->first();
-            session(['current_branch' => $mainBranch ? $mainBranch->name : 'Ahmedabad, Gujarat']);
-        }
-
         $branch->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Branch "' . $branchName . '" deleted successfully.',
+            'message' => 'Branch deleted successfully.',
         ]);
     }
 }
