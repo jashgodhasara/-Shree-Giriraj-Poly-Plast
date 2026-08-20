@@ -612,12 +612,11 @@
             .topbar-live-sync-btn { padding: 6px 10px; font-size: 11px; }
 
             #userMenuBtn {
-                padding: 3px 8px 3px 3px !important;
+                padding: 4px 6px 4px 4px !important;
                 border-radius: 20px;
-                gap: 6px;
+                gap: 0;
             }
-            #userMenuBtn span:nth-of-type(2) { display: none !important; } /* Hide role tag */
-            #userMenuChevron { display: none !important; }
+            .user-name-label, .user-role-badge, #userMenuChevron { display: none !important; }
 
             .content {
                 padding: 12px;
@@ -980,8 +979,8 @@
                     <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(99,102,241,0.3);">
                         <span style="font-size:10px;font-weight:700;color:#fff;">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
                     </div>
-                    <span style="font-weight:600;color:var(--text);">{{ auth()->user()->name }}</span>
-                    <span style="padding:2px 7px;background:{{ auth()->user()->isAdmin() ? 'rgba(99,102,241,.12)' : 'rgba(16,185,129,.12)' }};color:{{ auth()->user()->isAdmin() ? 'var(--primary)' : 'var(--accent2)' }};border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;">{{ auth()->user()->role }}</span>
+                    <span class="user-name-label" style="font-weight:600;color:var(--text);">{{ auth()->user()->name }}</span>
+                    <span class="user-role-badge" style="padding:2px 7px;background:{{ auth()->user()->isAdmin() ? 'rgba(99,102,241,.12)' : 'rgba(16,185,129,.12)' }};color:{{ auth()->user()->isAdmin() ? 'var(--primary)' : 'var(--accent2)' }};border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;">{{ auth()->user()->role }}</span>
                     <i class="fa fa-chevron-down" id="userMenuChevron" style="font-size:9px;color:var(--text-muted);margin-left:2px;transition:transform .2s;"></i>
                 </button>
 
