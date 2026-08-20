@@ -4,10 +4,14 @@
 
 @section('content')
 <style>
-.billing-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; }
-@media(max-width:900px){ .billing-grid { grid-template-columns:1fr; } }
+.billing-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; width: 100%; }
+@media(max-width:900px){
+    .billing-grid { grid-template-columns:1fr !important; width: 100%; }
+    .table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; width: 100%; }
+    #itemsTable { min-width: 500px; width: 100%; }
+    .card-header { flex-wrap: wrap; gap: 10px; }
+}
 .billing-grid > div:last-child .card { position:static !important; }
-@media(max-width:900px){ #itemsTable th:nth-child(5), #itemsTable th:nth-child(6), #itemsTable td:nth-child(5), #itemsTable td:nth-child(6) { display:none; } }
 
 /* ── SEARCHABLE COMBOBOX ── */
 .combo-wrap { position: relative; width: 100%; }
@@ -147,7 +151,7 @@
         </div>
 
         <!-- Items table -->
-        <div class="table-wrap" style="overflow:visible;">
+        <div class="table-wrap">
             <table id="itemsTable">
                 <thead>
                     <tr>
