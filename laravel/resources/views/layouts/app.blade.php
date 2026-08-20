@@ -1555,17 +1555,30 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                // Only update the table wrap / cards if present (preserve form elements)
-                const newTable = doc.querySelector('.table-wrap');
-                const curTable = document.querySelector('.table-wrap');
-                if (newTable && curTable) {
-                    curTable.innerHTML = newTable.innerHTML;
+                // 1. Update all .card-body containers (Tables, Lists, Empty States)
+                const newCards = doc.querySelectorAll('.card-body');
+                const curCards = document.querySelectorAll('.card-body');
+                if (newCards.length && newCards.length === curCards.length) {
+                    curCards.forEach((cur, idx) => {
+                        const newCard = newCards[idx];
+                        if (cur.innerHTML !== newCard.innerHTML) {
+                            cur.innerHTML = newCard.innerHTML;
+                        }
+                    });
+                } else {
+                    const newTable = doc.querySelector('.table-wrap');
+                    const curTable = document.querySelector('.table-wrap');
+                    if (newTable && curTable && newTable.innerHTML !== curTable.innerHTML) {
+                        curTable.innerHTML = newTable.innerHTML;
+                    }
                 }
 
-                // Update Stats / Badges if present
+                // 2. Update Stats Grid & Metrics if present
                 const newStats = doc.querySelector('.stats-grid');
                 const curStats = document.querySelector('.stats-grid');
-                if (newStats && curStats) curStats.innerHTML = newStats.innerHTML;
+                if (newStats && curStats && newStats.innerHTML !== curStats.innerHTML) {
+                    curStats.innerHTML = newStats.innerHTML;
+                }
 
                 if (!isSilent) showToast('Data synchronized in real-time!', 'success');
             }
@@ -1578,7 +1591,7 @@
         }
     }
 
-    // Safe & non-intrusive real-time live sync (Loads updates every 5s without manual refresh)
+    // Safe & ultra-fast real-time live sync across devices (every 3.5s)
     setInterval(() => {
         if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
             const isTyping = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
@@ -1586,7 +1599,7 @@
                 triggerLiveSync(true);
             }
         }
-    }, 5000);
+    }, 3500);
 
     // SPA Navigation Engine (Smooth load without page refresh)
     async function navigateSpa(url, push = true) {
