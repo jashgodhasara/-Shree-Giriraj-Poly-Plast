@@ -22,10 +22,10 @@ class CustomerApiController extends Controller
     {
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email',
+            'phone'   => 'nullable|string|max:30',
+            'email'   => 'nullable|string|max:255',
             'address' => 'nullable|string',
-            'gstin'   => 'nullable|string|max:15',
+            'gstin'   => 'nullable|string|max:20',
             'state'   => 'nullable|string|max:50',
         ]);
         return new CustomerResource(Customer::create($validated));
@@ -40,10 +40,10 @@ class CustomerApiController extends Controller
     {
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email',
+            'phone'   => 'nullable|string|max:30',
+            'email'   => 'nullable|string|max:255',
             'address' => 'nullable|string',
-            'gstin'   => 'nullable|string|max:15',
+            'gstin'   => 'nullable|string|max:20',
             'state'   => 'nullable|string|max:50',
         ]);
         $customer->update($validated);

@@ -58,6 +58,7 @@ Route::get('/', function () {
 });
 
 // ─── Public Auth Routes (no token required) ──────────────────────────────────
+Route::post('/login', [ApiAuthController::class, 'login'])->name('api.login');
 Route::prefix('auth')->group(function () {
     Route::post('/login', [ApiAuthController::class, 'login'])->name('api.auth.login');
 });

@@ -41,6 +41,10 @@ export const ProductsScreen: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    const timer = setInterval(() => {
+      fetchData();
+    }, 15000);
+    return () => clearInterval(timer);
   }, [fetchData]);
 
   const filteredProducts = products.filter(

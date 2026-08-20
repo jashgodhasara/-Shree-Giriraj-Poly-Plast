@@ -604,11 +604,36 @@
             .btn { padding: 8px 12px; font-size: 12px; }
             .btn-sm { padding: 5px 10px; font-size: 11px; }
 
-            .card-header h3 { font-size: 13px; }
+        /* ── SPA PROGRESS BAR & LIVE SYNC ── */
+        #spaProgressBar {
+            position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+            background: linear-gradient(90deg, #6366f1, #10b981, #f59e0b);
+            z-index: 99999; transition: width .2s ease, opacity .3s ease; opacity: 0; pointer-events: none;
         }
+        .topbar-live-sync-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 6px 14px; background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.3); border-radius: 20px;
+            font-size: 12px; font-weight: 600; color: #047857;
+            cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif;
+            text-decoration: none;
+        }
+        .topbar-live-sync-btn:hover {
+            background: rgba(16,185,129,0.15); border-color: #10b981; transform: translateY(-1px);
+        }
+        .live-pulse-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #10b981; box-shadow: 0 0 6px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+        .sync-spinning {
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+<div id="spaProgressBar"></div>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <nav class="sidebar">
@@ -816,6 +841,11 @@
             </div>
         </div>
         <div class="topbar-right">
+            <button type="button" class="topbar-live-sync-btn" id="liveSyncBtn" onclick="triggerLiveSync()" title="Auto-Sync Active (Loads updates without full page refresh)">
+                <span class="live-pulse-dot" id="liveSyncDot"></span>
+                <span id="liveSyncText">Live Sync</span>
+                <i class="fa fa-rotate" id="liveSyncIcon" style="font-size:11px;"></i>
+            </button>
             <a href="{{ route('onboard.index') }}" class="btn btn-outline btn-sm" style="font-size:11px; border-color:var(--primary); color:var(--primary);">
                 <i class="fa fa-wand-magic-sparkles"></i> AI Setup Configurator
             </a>
@@ -1364,6 +1394,158 @@
             showToast('Network error while switching user', 'error');
         }
     }
+
+    /* ─── REAL-TIME NO-REFRESH ENGINE (SPA + LIVE SYNC) ─── */
+    let isSyncing = false;
+
+    // Trigger instant background sync without reloading page
+    async function triggerLiveSync(isSilent = false) {
+        if (isSyncing) return;
+        isSyncing = true;
+        const icon = document.getElementById('liveSyncIcon');
+        const text = document.getElementById('liveSyncText');
+        if (icon) icon.classList.add('sync-spinning');
+        if (text && !isSilent) text.textContent = 'Syncing...';
+
+        try {
+            const res = await fetch(window.location.href, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+            });
+            if (res.ok) {
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const newContent = doc.querySelector('.content');
+                const curContent = document.querySelector('.content');
+                if (newContent && curContent) {
+                    // Only update if not currently typing in an input
+                    const activeInput = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+                    const modalOpen = document.querySelector('.modal-overlay.open');
+                    if (!activeInput && !modalOpen) {
+                        curContent.innerHTML = newContent.innerHTML;
+                        reexecuteScripts(curContent);
+                    }
+                }
+
+                // Update Stats / Badges if present
+                const newStats = doc.querySelector('.stats-grid');
+                const curStats = document.querySelector('.stats-grid');
+                if (newStats && curStats) curStats.innerHTML = newStats.innerHTML;
+
+                if (!isSilent) showToast('Data synchronized in real-time!', 'success');
+            }
+        } catch (e) {
+            if (!isSilent) showToast('Sync failed. Please check connection.', 'error');
+        } finally {
+            isSyncing = false;
+            if (icon) icon.classList.remove('sync-spinning');
+            if (text) text.textContent = 'Live Sync';
+        }
+    }
+
+    // Auto-sync polling every 15 seconds in background when tab is active
+    setInterval(() => {
+        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
+            triggerLiveSync(true);
+        }
+    }, 15000);
+
+    // SPA Navigation Engine (Smooth load without page refresh)
+    async function navigateSpa(url, push = true) {
+        const bar = document.getElementById('spaProgressBar');
+        if (bar) { bar.style.opacity = '1'; bar.style.width = '35%'; }
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+            });
+            if (bar) bar.style.width = '75%';
+
+            if (res.ok) {
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const newContent = doc.querySelector('.content');
+                const curContent = document.querySelector('.content');
+                if (newContent && curContent) {
+                    curContent.innerHTML = newContent.innerHTML;
+                    reexecuteScripts(curContent);
+                }
+
+                // Update page title & breadcrumbs
+                const newTitle = doc.querySelector('title');
+                if (newTitle) document.title = newTitle.innerText;
+                const newTopbarTitle = doc.querySelector('.topbar-title');
+                const curTopbarTitle = document.querySelector('.topbar-title');
+                if (newTopbarTitle && curTopbarTitle) curTopbarTitle.innerHTML = newTopbarTitle.innerHTML;
+                const newBreadcrumb = doc.querySelector('.topbar-breadcrumb');
+                const curBreadcrumb = document.querySelector('.topbar-breadcrumb');
+                if (newBreadcrumb && curBreadcrumb) curBreadcrumb.innerHTML = newBreadcrumb.innerHTML;
+
+                // Update active sidebar nav
+                document.querySelectorAll('.sidebar a').forEach(a => {
+                    const href = a.getAttribute('href');
+                    if (href && (href === url || url.startsWith(href) && href !== '/')) {
+                        a.classList.add('active');
+                    } else {
+                        a.classList.remove('active');
+                    }
+                });
+
+                if (push) window.history.pushState({ url: url }, '', url);
+                window.scrollTo({ top: 0, behavior: 'instant' });
+
+                if (bar) {
+                    bar.style.width = '100%';
+                    setTimeout(() => { bar.style.opacity = '0'; bar.style.width = '0%'; }, 250);
+                }
+            } else {
+                window.location.href = url;
+            }
+        } catch (e) {
+            window.location.href = url;
+        }
+    }
+
+    // Helper to re-execute embedded scripts in swapped content
+    function reexecuteScripts(container) {
+        const scripts = container.querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+    }
+
+    // Intercept clicks for internal links to prevent full page reloads
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('tel:') || href.startsWith('mailto:') || link.getAttribute('target') === '_blank') return;
+        if (link.closest('#userDropdownMenu') && href.includes('logout')) return;
+        if (href.includes('export') || href.includes('download') || href.includes('print')) return;
+
+        // Check if same origin
+        try {
+            const targetUrl = new URL(href, window.location.origin);
+            if (targetUrl.origin === window.location.origin) {
+                e.preventDefault();
+                navigateSpa(targetUrl.href);
+            }
+        } catch {}
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.url) {
+            navigateSpa(e.state.url, false);
+        } else {
+            navigateSpa(window.location.href, false);
+        }
+    });
 </script>
 @yield('scripts')
 </body>

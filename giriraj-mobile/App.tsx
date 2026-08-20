@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { View, ActivityIndicator, StyleSheet, StatusBar } from 'react-native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { MainApp } from './src/screens/MainApp';
@@ -23,7 +22,7 @@ const RootNavigator: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
+      <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
       <RootNavigator />
     </AuthProvider>
   );

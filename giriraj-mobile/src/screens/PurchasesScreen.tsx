@@ -34,6 +34,10 @@ export const PurchasesScreen: React.FC = () => {
 
   useEffect(() => {
     fetchPurchases();
+    const timer = setInterval(() => {
+      fetchPurchases();
+    }, 15000);
+    return () => clearInterval(timer);
   }, [fetchPurchases]);
 
   const handleMarkReceived = async (po: PurchaseOrder) => {

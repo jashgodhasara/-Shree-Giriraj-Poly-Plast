@@ -14,7 +14,7 @@ curl -s -m 2 http://127.0.0.1:8000/login >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo [Shree Giriraj ERP] Starting backend service on port 8000...
     cd /d "%SCRIPT_DIR%laravel"
-    start "Shree Giriraj ERP Backend" /min "%PHP_BIN%" artisan serve --host=127.0.0.1 --port=8000
+    start "Shree Giriraj ERP Backend" /min "%PHP_BIN%" artisan serve --host=0.0.0.0 --port=8000
     timeout /t 2 /nobreak >nul
 )
 

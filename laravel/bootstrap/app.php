@@ -24,8 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (\Illuminate\Validation\ValidationException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json(['errors' => $e->errors()], 422);
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $firstError = collect($e->errors())->flatten()->first();
+                return response()->json([
+                    'success' => false,
+                    'message' => $firstError ?: 'Validation error.',
+                    'errors'  => $e->errors(),
+                ], 422);
             }
         });
     })->create();

@@ -13,6 +13,7 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/d
 
 # Run database migrations and cache optimizations
 php artisan migrate --force || true
+php artisan db:seed --class=AdminUserSeeder --force || true
 php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true

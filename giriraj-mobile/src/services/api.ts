@@ -88,10 +88,19 @@ async function request<T = any>(
       throw new Error('Session expired. Please login again.');
     }
 
-    const data = await response.json();
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch {
+      // response is not JSON
+    }
 
     if (!response.ok) {
-      const msg = data?.message || data?.error || `Request failed (${response.status})`;
+      let msg = data?.message || data?.error;
+      if (!msg && data?.errors && typeof data.errors === 'object') {
+        msg = Object.values(data.errors).flat().join('\n');
+      }
+      msg = msg || `Request failed (${response.status})`;
       throw new Error(msg);
     }
 

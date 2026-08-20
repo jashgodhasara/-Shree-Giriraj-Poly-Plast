@@ -18,9 +18,9 @@ class SupplierApiController extends Controller
     {
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email',
-            'gstin'   => 'nullable|string|max:15',
+            'phone'   => 'nullable|string|max:30',
+            'email'   => 'nullable|string|max:255',
+            'gstin'   => 'nullable|string|max:20',
             'address' => 'nullable|string',
         ]);
         return new SupplierResource(Supplier::create($validated));
@@ -35,9 +35,9 @@ class SupplierApiController extends Controller
     {
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email',
-            'gstin'   => 'nullable|string|max:15',
+            'phone'   => 'nullable|string|max:30',
+            'email'   => 'nullable|string|max:255',
+            'gstin'   => 'nullable|string|max:20',
             'address' => 'nullable|string',
         ]);
         $supplier->update($validated);

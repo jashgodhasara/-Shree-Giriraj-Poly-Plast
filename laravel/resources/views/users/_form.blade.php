@@ -24,6 +24,16 @@
 </div>
 
 <div style="margin-bottom:16px;">
+    <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;">Phone Number</label>
+    <input type="text" name="phone" id="{{ $isEdit ? 'edit_phone' : 'create_phone' }}"
+        value="{{ old('phone', $user->phone ?? '') }}"
+        placeholder="e.g. +91 98765 43210"
+        style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;outline:none;color:var(--text);"
+        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+    @error('phone')<p style="font-size:12px;color:var(--danger);margin-top:4px;">{{ $message }}</p>@enderror
+</div>
+
+<div style="margin-bottom:16px;">
     <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;">Role <span style="color:var(--danger);">*</span></label>
     <select name="role" id="{{ $isEdit ? 'edit_role' : 'create_role' }}"
         style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;outline:none;color:var(--text);background:#fff;cursor:pointer;"

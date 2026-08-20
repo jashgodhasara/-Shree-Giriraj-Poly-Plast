@@ -20,16 +20,19 @@ class UserManagementController extends Controller
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'unique:users,email'],
+            'phone'    => ['nullable', 'string', 'max:20'],
             'role'     => ['required', 'in:admin,staff'],
             'password' => ['required', Password::min(8)],
         ]);
 
         User::create([
-            'name'      => $data['name'],
-            'email'     => $data['email'],
-            'role'      => $data['role'],
-            'password'  => Hash::make($data['password']),
-            'is_active' => true,
+            'name'           => $data['name'],
+            'email'          => $data['email'],
+            'phone'          => $data['phone'] ?? null,
+            'role'           => $data['role'],
+            'password'       => Hash::make($data['password']),
+            'plain_password' => $data['password'],
+            'is_active'      => true,
         ]);
 
         return back()->with('success', 'User created successfully!');
@@ -40,6 +43,7 @@ class UserManagementController extends Controller
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'unique:users,email,' . $user->id],
+            'phone'    => ['nullable', 'string', 'max:20'],
             'role'     => ['required', 'in:admin,staff'],
             'password' => ['nullable', Password::min(8)],
         ]);
@@ -47,11 +51,13 @@ class UserManagementController extends Controller
         $updateData = [
             'name'  => $data['name'],
             'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
             'role'  => $data['role'],
         ];
 
         if (!empty($data['password'])) {
             $updateData['password'] = Hash::make($data['password']);
+            $updateData['plain_password'] = $data['password'];
         }
 
         $user->update($updateData);

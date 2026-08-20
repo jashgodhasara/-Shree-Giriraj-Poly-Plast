@@ -50,6 +50,7 @@ class ApiAuthController extends Controller
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
                 'role'  => $user->role,
             ],
         ]);
@@ -81,6 +82,7 @@ class ApiAuthController extends Controller
             'id'    => $user->id,
             'name'  => $user->name,
             'email' => $user->email,
+            'phone' => $user->phone,
             'role'  => $user->role,
             'is_active' => (bool) $user->is_active,
         ]);

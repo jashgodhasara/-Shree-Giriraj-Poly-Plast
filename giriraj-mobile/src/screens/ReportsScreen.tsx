@@ -33,6 +33,10 @@ export const ReportsScreen: React.FC = () => {
 
   useEffect(() => {
     fetchReports();
+    const timer = setInterval(() => {
+      fetchReports();
+    }, 15000);
+    return () => clearInterval(timer);
   }, [fetchReports]);
 
   const sales = data?.sales;

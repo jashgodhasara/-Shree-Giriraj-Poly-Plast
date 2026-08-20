@@ -71,24 +71,39 @@ class ProductionController extends Controller
             'additive_used_kg'       => 'nullable|numeric|min:0',
             'final_product_id'       => 'required|exists:materials,id',
             'final_product_qty_pcs'  => 'required|integer|min:1',
+            // Salvage: either enter % (2–5) OR manual Kg — % takes priority
+            'salvage_pct'            => 'nullable|numeric|min:0|max:100',
             'salvage_qty_kg'         => 'nullable|numeric|min:0',
             'notes'                  => 'nullable|string',
         ]);
 
+        $rawKg      = (float) $validated['raw_material_used_kg'];
+        $salvagePct = isset($validated['salvage_pct']) && $validated['salvage_pct'] > 0
+                        ? (float) $validated['salvage_pct']
+                        : 2.0;   // default 2 % if not provided
+
+        // Auto-calculate salvage Kg from %
+        $salvageKg  = ProductionLog::calcSalvageKg($rawKg, $salvagePct);
+        $yieldKg    = ProductionLog::calcYieldKg($rawKg, $salvageKg);
+
+        $validated['salvage_pct']        = $salvagePct;
+        $validated['salvage_qty_kg']     = $salvageKg;
+        $validated['effective_yield_kg'] = $yieldKg;
+
         $rm = Material::findOrFail($validated['raw_material_id']);
-        if ($rm->stock_quantity < $validated['raw_material_used_kg']) {
+        if ((float)$rm->stock_quantity < $rawKg) {
             return response()->json([
                 'success' => false,
-                'message' => "Insufficient stock for raw material '{$rm->name}'. Available: {$rm->stock_quantity} {$rm->unit}, Requested: {$validated['raw_material_used_kg']} {$rm->unit}"
+                'message' => "Insufficient stock for '{$rm->name}'. Available: {$rm->stock_quantity} {$rm->unit}, Requested: {$rawKg} {$rm->unit}",
             ], 422);
         }
 
         if (!empty($validated['additive_id']) && !empty($validated['additive_used_kg'])) {
             $ad = Material::findOrFail($validated['additive_id']);
-            if ($ad->stock_quantity < $validated['additive_used_kg']) {
+            if ((float)$ad->stock_quantity < (float)$validated['additive_used_kg']) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Insufficient stock for additive '{$ad->name}'. Available: {$ad->stock_quantity} {$ad->unit}, Requested: {$validated['additive_used_kg']} {$ad->unit}"
+                    'message' => "Insufficient stock for additive '{$ad->name}'. Available: {$ad->stock_quantity} {$ad->unit}",
                 ], 422);
             }
         }
@@ -97,10 +112,10 @@ class ProductionController extends Controller
         try {
             $log = ProductionLog::create($validated);
 
-            // Deduct raw material stock
-            $rm->decrement('stock_quantity', $validated['raw_material_used_kg']);
+            // Deduct raw material
+            $rm->decrement('stock_quantity', $rawKg);
 
-            // Deduct additive stock if used
+            // Deduct additive
             if (!empty($validated['additive_id']) && !empty($validated['additive_used_kg'])) {
                 Material::where('id', $validated['additive_id'])
                     ->decrement('stock_quantity', $validated['additive_used_kg']);
@@ -112,7 +127,13 @@ class ProductionController extends Controller
 
             DB::commit();
 
-            return response()->json(['success' => true, 'message' => 'Production log saved successfully.']);
+            return response()->json([
+                'success'     => true,
+                'message'     => 'Production log saved successfully.',
+                'salvage_kg'  => $salvageKg,
+                'salvage_pct' => $salvagePct,
+                'yield_kg'    => $yieldKg,
+            ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

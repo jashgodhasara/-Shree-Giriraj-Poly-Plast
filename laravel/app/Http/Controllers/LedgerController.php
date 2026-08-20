@@ -35,7 +35,7 @@ class LedgerController extends Controller
         $investors = Investor::orderBy('name')->get();
         $jobWorks  = JobWork::orderBy('party_name')->get();
 
-        // Summary totals for filtered result (all matching, not just current page)
+        // Summary totals — always calculated (no date filter = all-time)
         $allQuery   = Ledger::query();
         if ($dateFrom) $allQuery->whereDate('transaction_date', '>=', $dateFrom);
         if ($dateTo)   $allQuery->whereDate('transaction_date', '<=', $dateTo);

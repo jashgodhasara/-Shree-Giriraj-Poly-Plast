@@ -63,6 +63,10 @@ export const InvoicesScreen: React.FC<Props> = () => {
 
   useEffect(() => {
     loadData();
+    const timer = setInterval(() => {
+      loadData();
+    }, 15000);
+    return () => clearInterval(timer);
   }, [loadData]);
 
   const handleOpenDetail = async (id: number) => {
