@@ -1429,7 +1429,7 @@
     /* ─── REAL-TIME NO-REFRESH ENGINE (SPA + LIVE SYNC) ─── */
     let isSyncing = false;
 
-    // Trigger instant background sync without reloading page
+    // Trigger manual or post-action sync without page reload
     async function triggerLiveSync(isSilent = false) {
         if (isSyncing) return;
         isSyncing = true;
@@ -1447,16 +1447,11 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                const newContent = doc.querySelector('.content');
-                const curContent = document.querySelector('.content');
-                if (newContent && curContent) {
-                    // Only update if not currently typing in an input
-                    const activeInput = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
-                    const modalOpen = document.querySelector('.modal-overlay.open');
-                    if (!activeInput && !modalOpen) {
-                        curContent.innerHTML = newContent.innerHTML;
-                        reexecuteScripts(curContent);
-                    }
+                // Only update the table wrap / cards if present (preserve form elements)
+                const newTable = doc.querySelector('.table-wrap');
+                const curTable = document.querySelector('.table-wrap');
+                if (newTable && curTable) {
+                    curTable.innerHTML = newTable.innerHTML;
                 }
 
                 // Update Stats / Badges if present
@@ -1474,13 +1469,6 @@
             if (text) text.textContent = 'Live Sync';
         }
     }
-
-    // Auto-sync polling every 4 seconds in background when tab is active
-    setInterval(() => {
-        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
-            triggerLiveSync(true);
-        }
-    }, 4000);
 
     // SPA Navigation Engine (Smooth load without page refresh)
     async function navigateSpa(url, push = true) {
@@ -1557,14 +1545,17 @@
         }
     }
 
-    // Helper to re-execute embedded scripts in swapped content
+    // Helper to execute embedded scripts in swapped content cleanly
     function reexecuteScripts(container) {
         const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-            oldScript.parentNode.replaceChild(newScript, oldScript);
+            if (!oldScript.src && oldScript.innerHTML) {
+                try {
+                    window.eval(oldScript.innerHTML);
+                } catch (e) {
+                    console.warn('Script execution warning:', e);
+                }
+            }
         });
     }
 
