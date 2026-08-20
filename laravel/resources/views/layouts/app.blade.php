@@ -947,23 +947,25 @@
                 <span id="liveSyncText">Live Sync</span>
                 <i class="fa fa-rotate" id="liveSyncIcon" style="font-size:11px;"></i>
             </button>
-            <a href="{{ route('onboard.index') }}" class="btn btn-outline btn-sm" style="font-size:11px; border-color:var(--primary); color:var(--primary);">
-                <i class="fa fa-wand-magic-sparkles"></i> AI Setup Configurator
-            </a>
-            @php
-                $currentFilter = \App\Http\Controllers\DashboardController::resolveDateFilter();
-            @endphp
-            <button type="button" class="topbar-date-btn {{ $currentFilter['is_filtered'] ? 'is-custom' : '' }}" onclick="openDateSelectorModal()" id="topbarDateBtn" title="Click to filter ERP data by date range or single day">
-                <i class="fa fa-calendar-days" style="color:var(--primary)"></i>
-                <span id="topbar-date-text">{{ $currentFilter['label'] }}</span>
-                @if($currentFilter['is_filtered'])
-                    <span class="date-badge-custom">Filter Active</span>
-                @endif
-                <i class="fa fa-chevron-down" style="font-size:10px; opacity:0.6;"></i>
-            </button>
-            <a href="{{ route('branches.index') }}" class="topbar-company" style="text-decoration:none;" title="Click to manage multi-location branches">
-                <i class="fa fa-location-dot"></i> {{ session('current_branch', 'Ahmedabad, Gujarat') }}
-            </a>
+            <div class="topbar-desktop-only" style="display:flex;align-items:center;gap:8px;">
+                <a href="{{ route('onboard.index') }}" class="btn btn-outline btn-sm" style="font-size:11px; border-color:var(--primary); color:var(--primary);">
+                    <i class="fa fa-wand-magic-sparkles"></i> AI Setup Configurator
+                </a>
+                @php
+                    $currentFilter = \App\Http\Controllers\DashboardController::resolveDateFilter();
+                @endphp
+                <button type="button" class="topbar-date-btn {{ $currentFilter['is_filtered'] ? 'is-custom' : '' }}" onclick="openDateSelectorModal()" id="topbarDateBtn" title="Click to filter ERP data by date range or single day">
+                    <i class="fa fa-calendar-days" style="color:var(--primary)"></i>
+                    <span id="topbar-date-text">{{ $currentFilter['label'] }}</span>
+                    @if($currentFilter['is_filtered'])
+                        <span class="date-badge-custom">Filter Active</span>
+                    @endif
+                    <i class="fa fa-chevron-down" style="font-size:10px; opacity:0.6;"></i>
+                </button>
+                <a href="{{ route('branches.index') }}" class="topbar-company" style="text-decoration:none;" title="Click to manage multi-location branches">
+                    <i class="fa fa-location-dot"></i> {{ session('current_branch', 'Ahmedabad, Gujarat') }}
+                </a>
+            </div>
             @auth
             <div style="position:relative;" id="userMenuWrapper">
                 <button type="button" 
