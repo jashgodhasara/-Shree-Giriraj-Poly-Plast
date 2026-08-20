@@ -541,6 +541,8 @@
         .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+        .topbar-desktop-only { display: flex; align-items: center; gap: 8px; }
+
         /* ── SIDEBAR OVERLAY ── */
         .sidebar-overlay {
             display: none; position: fixed; inset: 0;
@@ -950,7 +952,7 @@
                 <span id="liveSyncText">Live Sync</span>
                 <i class="fa fa-rotate" id="liveSyncIcon" style="font-size:11px;"></i>
             </button>
-            <div class="topbar-desktop-only" style="display:flex;align-items:center;gap:8px;">
+            <div class="topbar-desktop-only">
                 <a href="{{ route('onboard.index') }}" class="btn btn-outline btn-sm" style="font-size:11px; border-color:var(--primary); color:var(--primary);">
                     <i class="fa fa-wand-magic-sparkles"></i> AI Setup Configurator
                 </a>
