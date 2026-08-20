@@ -28,16 +28,24 @@ class CustomerController extends Controller
             'image'   => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:4096',
         ]);
 
-        if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/customers'), $filename);
-            $validated['image'] = 'uploads/customers/' . $filename;
+        try {
+            if ($request->hasFile('image')) {
+                $dest = public_path('uploads/customers');
+                if (!file_exists($dest)) {
+                    @mkdir($dest, 0777, true);
+                }
+                $file = $request->file('image');
+                $filename = time() . '_' . uniqid() . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+                $file->move($dest, $filename);
+                $validated['image'] = 'uploads/customers/' . $filename;
+            }
+
+            Customer::create($validated);
+            return response()->json(['success' => true, 'message' => 'Customer added successfully.']);
+        } catch (\Throwable $e) {
+            \Log::error('Customer Store Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error adding customer: ' . $e->getMessage()], 500);
         }
-
-        Customer::create($validated);
-
-        return response()->json(['success' => true, 'message' => 'Customer added successfully.']);
     }
 
     public function update(Request $request, Customer $customer)
@@ -52,24 +60,32 @@ class CustomerController extends Controller
             'image'   => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:4096',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($customer->image && file_exists(public_path($customer->image))) {
-                @unlink(public_path($customer->image));
+        try {
+            if ($request->hasFile('image')) {
+                $dest = public_path('uploads/customers');
+                if (!file_exists($dest)) {
+                    @mkdir($dest, 0777, true);
+                }
+                if ($customer->image && file_exists(public_path($customer->image))) {
+                    @unlink(public_path($customer->image));
+                }
+                $file = $request->file('image');
+                $filename = time() . '_' . uniqid() . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+                $file->move($dest, $filename);
+                $validated['image'] = 'uploads/customers/' . $filename;
+            } elseif ($request->boolean('remove_image')) {
+                if ($customer->image && file_exists(public_path($customer->image))) {
+                    @unlink(public_path($customer->image));
+                }
+                $validated['image'] = null;
             }
-            $file = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/customers'), $filename);
-            $validated['image'] = 'uploads/customers/' . $filename;
-        } elseif ($request->boolean('remove_image')) {
-            if ($customer->image && file_exists(public_path($customer->image))) {
-                @unlink(public_path($customer->image));
-            }
-            $validated['image'] = null;
+
+            $customer->update($validated);
+            return response()->json(['success' => true, 'message' => 'Customer updated successfully.']);
+        } catch (\Throwable $e) {
+            \Log::error('Customer Update Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error updating customer: ' . $e->getMessage()], 500);
         }
-
-        $customer->update($validated);
-
-        return response()->json(['success' => true, 'message' => 'Customer updated successfully.']);
     }
 
     public function destroy(Customer $customer)

@@ -49,9 +49,13 @@ class ProductController extends Controller
         $validated['weight_in_grams']     = $calcService->convertToGrams($validated['weight_per_piece'], $validated['weight_unit']);
 
         if ($request->hasFile('image')) {
+            $dest = public_path('uploads/products');
+            if (!file_exists($dest)) {
+                @mkdir($dest, 0777, true);
+            }
             $file = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/products'), $filename);
+            $filename = time() . '_' . uniqid() . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+            $file->move($dest, $filename);
             $validated['image'] = 'uploads/products/' . $filename;
         }
 
@@ -64,7 +68,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name'                => 'required|string|max:255',
-            'sku'                 => 'nullable|string|max:100',
+            'sku'                 => 'required|string|max:100|unique:products,sku,' . $product->id,
             'unit_type'           => 'nullable|string|max:50',
             'weight_per_piece'    => 'nullable|numeric|min:0',
             'weight_unit'         => 'nullable|in:Gram,KG,Milligram,Ton',
@@ -87,12 +91,16 @@ class ProductController extends Controller
         $validated['weight_in_grams']     = $calcService->convertToGrams($validated['weight_per_piece'], $validated['weight_unit']);
 
         if ($request->hasFile('image')) {
+            $dest = public_path('uploads/products');
+            if (!file_exists($dest)) {
+                @mkdir($dest, 0777, true);
+            }
             if ($product->image && file_exists(public_path($product->image))) {
                 @unlink(public_path($product->image));
             }
             $file = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/products'), $filename);
+            $filename = time() . '_' . uniqid() . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+            $file->move($dest, $filename);
             $validated['image'] = 'uploads/products/' . $filename;
         } elseif ($request->boolean('remove_image')) {
             if ($product->image && file_exists(public_path($product->image))) {

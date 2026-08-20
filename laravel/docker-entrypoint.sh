@@ -6,17 +6,19 @@ if [ -n "$PORT" ]; then
     sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 fi
 
-# Ensure all framework storage folders exist
+# Ensure all framework storage and upload folders exist
 mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/storage/framework/views \
          /var/www/html/storage/framework/cache/data \
          /var/www/html/storage/logs \
          /var/www/html/bootstrap/cache \
-         /var/www/html/database
+         /var/www/html/database \
+         /var/www/html/public/uploads/customers \
+         /var/www/html/public/uploads/products
 
 touch /var/www/html/database/database.sqlite
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
-chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
 
 # Run database migrations and seed admin
 php artisan key:generate --force || true
