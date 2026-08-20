@@ -958,6 +958,9 @@
     </div>
     <div class="content">
         @yield('content')
+        <div id="spaSectionScripts" style="display:none;">
+            @yield('scripts')
+        </div>
     </div>
 </div>
 
@@ -1472,6 +1475,23 @@
                 if (newContent && curContent) {
                     curContent.innerHTML = newContent.innerHTML;
                     reexecuteScripts(curContent);
+
+                    // Also evaluate any scripts that were rendered in doc body
+                    const docScripts = doc.querySelectorAll('script');
+                    docScripts.forEach(oldScript => {
+                        const code = oldScript.innerHTML;
+                        if (code && !code.includes('navigateSpa') && !code.includes('spaProgressBar')) {
+                            try {
+                                const newScript = document.createElement('script');
+                                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                                newScript.appendChild(document.createTextNode(code));
+                                document.body.appendChild(newScript);
+                                setTimeout(() => newScript.remove(), 150);
+                            } catch (e) {
+                                console.warn('Script execution warning:', e);
+                            }
+                        }
+                    });
                 }
 
                 // Update page title & breadcrumbs

@@ -228,43 +228,50 @@
 <script>
 let editUrl = '';
 
-function openAddCustomerModal() {
-    document.getElementById('addCustomerForm').reset();
-    document.getElementById('add_cust_preview_container').style.display = 'none';
-    document.getElementById('add_gst_status').style.display = 'none';
+window.openAddCustomerModal = function() {
+    const form = document.getElementById('addCustomerForm');
+    if (form) form.reset();
+    const previewContainer = document.getElementById('add_cust_preview_container');
+    if (previewContainer) previewContainer.style.display = 'none';
+    const gstStatus = document.getElementById('add_gst_status');
+    if (gstStatus) gstStatus.style.display = 'none';
     openModal('addCustomerModal');
-}
+};
 
-function previewCustImage(input, previewId) {
+window.previewCustImage = function(input, previewId) {
     const preview = document.getElementById(previewId);
+    if (!preview) return;
     const container = preview.parentElement;
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             preview.src = e.target.result;
             preview.style.display = 'block';
-            container.style.display = 'flex';
+            if (container) container.style.display = 'flex';
         };
         reader.readAsDataURL(input.files[0]);
     }
-}
+};
 
-function viewPhoto(url, title) {
-    document.getElementById('photoModalImg').src = url;
-    document.getElementById('photoModalTitle').innerHTML = '<i class="fa fa-image"></i> ' + (title || 'Customer Photo');
+window.viewPhoto = function(url, title) {
+    const img = document.getElementById('photoModalImg');
+    const titleEl = document.getElementById('photoModalTitle');
+    if (img) img.src = url;
+    if (titleEl) titleEl.innerHTML = '<i class="fa fa-image"></i> ' + (title || 'Customer Photo');
     openModal('photoModal');
-}
+};
 
-function closePhotoModal(e) {
+window.closePhotoModal = function(e) {
     if (e.target.id === 'photoModal') {
         closeModal('photoModal');
     }
-}
+};
 
-async function verifyGst(mode) {
+window.verifyGst = async function(mode) {
     const input = document.getElementById(mode + '_gstin');
     const btn = document.getElementById(mode + '_gst_btn');
     const statusDiv = document.getElementById(mode + '_gst_status');
+    if (!input) return;
     const gstin = (input.value || '').trim().toUpperCase();
 
     if (!gstin || gstin.length < 15) {
@@ -272,18 +279,24 @@ async function verifyGst(mode) {
         return;
     }
 
-    const oldBtnText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
-    btn.disabled = true;
-    statusDiv.style.display = 'block';
-    statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying with GST portal...</span>';
+    const oldBtnText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+        btn.disabled = true;
+    }
+    if (statusDiv) {
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying with GST portal...</span>';
+    }
 
     try {
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = tokenMeta ? tokenMeta.content : '{{ csrf_token() }}';
         const res = await fetch('{{ route('gstin.verify') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': token,
                 'Accept': 'application/json'
             },
             body: JSON.stringify({ gstin: gstin })
@@ -292,46 +305,51 @@ async function verifyGst(mode) {
         const data = await res.json();
 
         if (data.success && data.valid) {
-            statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status} • ${data.trade_name || data.legal_name}</span>`;
+            if (statusDiv) statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status} • ${data.trade_name || data.legal_name}</span>`;
             
             // Auto-fill fields
-            if (data.name) {
+            if (data.name && document.getElementById(mode + '_name')) {
                 document.getElementById(mode + '_name').value = data.name;
             }
-            if (data.state) {
+            if (data.state && document.getElementById(mode + '_state')) {
                 document.getElementById(mode + '_state').value = data.state;
             }
-            if (data.address) {
+            if (data.address && document.getElementById(mode + '_address')) {
                 document.getElementById(mode + '_address').value = data.address;
             }
 
             showToast('✅ GSTIN Verified & Form Auto-filled!', 'success');
         } else {
-            statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Invalid GSTIN'}</span>`;
+            if (statusDiv) statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Invalid GSTIN'}</span>`;
             showToast(data.message || 'GSTIN verification failed', 'error');
         }
     } catch (err) {
-        statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error verifying GSTIN</span>`;
+        if (statusDiv) statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error verifying GSTIN</span>`;
         showToast('Error connecting to GST API', 'error');
     } finally {
-        btn.innerHTML = oldBtnText;
-        btn.disabled = false;
+        if (btn) {
+            btn.innerHTML = oldBtnText;
+            btn.disabled = false;
+        }
     }
+};
+
+const addForm = document.getElementById('addCustomerForm');
+if (addForm) {
+    addForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitForm(this, '{{ route('customers.store') }}', 'POST');
+    });
 }
 
-document.getElementById('addCustomerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    submitForm(this, '{{ route('customers.store') }}', 'POST');
-});
-
-function editCustomer(id, name, phone, email, address, gstin, state, imageUrl) {
+window.editCustomer = function(id, name, phone, email, address, gstin, state, imageUrl) {
     editUrl = `/customers/${id}`;
-    document.getElementById('edit_name').value = name || '';
-    document.getElementById('edit_phone').value = phone || '';
-    document.getElementById('edit_email').value = email || '';
-    document.getElementById('edit_address').value = address || '';
-    document.getElementById('edit_gstin').value = gstin || '';
-    document.getElementById('edit_state').value = state || '';
+    if (document.getElementById('edit_name')) document.getElementById('edit_name').value = name || '';
+    if (document.getElementById('edit_phone')) document.getElementById('edit_phone').value = phone || '';
+    if (document.getElementById('edit_email')) document.getElementById('edit_email').value = email || '';
+    if (document.getElementById('edit_address')) document.getElementById('edit_address').value = address || '';
+    if (document.getElementById('edit_gstin')) document.getElementById('edit_gstin').value = gstin || '';
+    if (document.getElementById('edit_state')) document.getElementById('edit_state').value = state || '';
     
     const statusDiv = document.getElementById('edit_gst_status');
     if (statusDiv) statusDiv.style.display = 'none';
@@ -341,22 +359,25 @@ function editCustomer(id, name, phone, email, address, gstin, state, imageUrl) {
     const removeChk = document.getElementById('edit_cust_remove_chk');
     if (removeChk) removeChk.checked = false;
 
-    if (imageUrl) {
+    if (imageUrl && preview && container) {
         preview.src = imageUrl;
         preview.style.display = 'block';
         container.style.display = 'flex';
-    } else {
+    } else if (preview && container) {
         preview.src = '';
         preview.style.display = 'none';
         container.style.display = 'none';
     }
 
     openModal('editCustomerModal');
-}
+};
 
-document.getElementById('editCustomerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    submitForm(this, editUrl, 'PUT');
-});
+const editForm = document.getElementById('editCustomerForm');
+if (editForm) {
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitForm(this, editUrl, 'PUT');
+    });
+}
 </script>
 @endsection
