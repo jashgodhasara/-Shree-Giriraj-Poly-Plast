@@ -1578,6 +1578,16 @@
         }
     }
 
+    // Safe & non-intrusive real-time live sync (Loads updates every 5s without manual refresh)
+    setInterval(() => {
+        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
+            const isTyping = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+            if (!isTyping) {
+                triggerLiveSync(true);
+            }
+        }
+    }, 5000);
+
     // SPA Navigation Engine (Smooth load without page refresh)
     async function navigateSpa(url, push = true) {
         const bar = document.getElementById('spaProgressBar');
