@@ -49,10 +49,10 @@ export const CustomersScreen: React.FC = () => {
 
   useEffect(() => {
     fetchCustomers();
-    // Live auto-sync in background every 15 seconds
+    // Live auto-sync in background every 5 seconds
     const timer = setInterval(() => {
       fetchCustomers();
-    }, 15000);
+    }, 5000);
     return () => clearInterval(timer);
   }, [fetchCustomers]);
 

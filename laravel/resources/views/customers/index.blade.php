@@ -99,7 +99,7 @@
                                 <i class="fa fa-pen"></i>
                             </button>
                             <button class="btn btn-danger btn-sm btn-icon"
-                                onclick="deleteRecord('{{ route('customers.destroy', $c) }}', 'customer')">
+                                onclick="deleteRecord('{{ route('customers.destroy', $c) }}', 'customer', this)">
                                 <i class="fa fa-trash"></i>
                             </button>
                         </div>

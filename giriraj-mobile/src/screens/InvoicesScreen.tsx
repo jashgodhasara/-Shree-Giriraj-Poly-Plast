@@ -65,7 +65,7 @@ export const InvoicesScreen: React.FC<Props> = () => {
     loadData();
     const timer = setInterval(() => {
       loadData();
-    }, 15000);
+    }, 5000);
     return () => clearInterval(timer);
   }, [loadData]);
 

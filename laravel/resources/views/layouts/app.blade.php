@@ -1294,8 +1294,15 @@
             if (btn) { btn.disabled = false; btn.innerHTML = origText; }
             if (res.success) {
                 showToast(res.message, 'success');
-                if (onSuccess) onSuccess(res);
-                else location.reload();
+                // Close modal immediately
+                document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+                formEl.reset();
+                if (onSuccess) {
+                    onSuccess(res);
+                } else {
+                    // Instantly sync the page without refreshing
+                    triggerLiveSync(true);
+                }
             } else {
                 showToast(res.message || 'An error occurred.', 'error');
             }
@@ -1307,8 +1314,16 @@
     }
 
     /* ── Delete Record ── */
-    function deleteRecord(url, label) {
+    function deleteRecord(url, label, btnEl) {
         if (!confirm(`Delete this ${label}?\n\nThis action cannot be undone.`)) return;
+        
+        // Optimistic UI update: fade out row immediately
+        const tr = btnEl ? btnEl.closest('tr') : null;
+        if (tr) {
+            tr.style.transition = 'all 0.3s ease';
+            tr.style.opacity = '0.3';
+        }
+
         fetch(url, {
             method: 'DELETE',
             headers: {
@@ -1318,8 +1333,21 @@
         })
         .then(r => r.json())
         .then(res => {
-            if (res.success) { showToast(res.message, 'success'); location.reload(); }
-            else showToast(res.message, 'error');
+            if (res.success) {
+                showToast(res.message, 'success');
+                if (tr) {
+                    tr.style.transform = 'scaleY(0)';
+                    setTimeout(() => tr.remove(), 250);
+                }
+                triggerLiveSync(true);
+            } else {
+                if (tr) tr.style.opacity = '1';
+                showToast(res.message, 'error');
+            }
+        })
+        .catch(() => {
+            if (tr) tr.style.opacity = '1';
+            showToast('Network error. Could not delete.', 'error');
         });
     }
 
@@ -1447,12 +1475,12 @@
         }
     }
 
-    // Auto-sync polling every 15 seconds in background when tab is active
+    // Auto-sync polling every 4 seconds in background when tab is active
     setInterval(() => {
         if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
             triggerLiveSync(true);
         }
-    }, 15000);
+    }, 4000);
 
     // SPA Navigation Engine (Smooth load without page refresh)
     async function navigateSpa(url, push = true) {

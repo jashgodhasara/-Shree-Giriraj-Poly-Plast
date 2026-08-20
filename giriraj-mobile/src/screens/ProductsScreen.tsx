@@ -43,7 +43,7 @@ export const ProductsScreen: React.FC = () => {
     fetchData();
     const timer = setInterval(() => {
       fetchData();
-    }, 15000);
+    }, 5000);
     return () => clearInterval(timer);
   }, [fetchData]);
 
