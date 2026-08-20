@@ -32,10 +32,16 @@ COPY . /var/www/html
 # Install composer dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Create sqlite database and set permissions
-RUN touch /var/www/html/database/database.sqlite \
+# Create storage framework directories and set 777 permissions
+RUN mkdir -p /var/www/html/storage/framework/sessions \
+             /var/www/html/storage/framework/views \
+             /var/www/html/storage/framework/cache/data \
+             /var/www/html/storage/logs \
+             /var/www/html/bootstrap/cache \
+             /var/www/html/database \
+    && touch /var/www/html/database/database.sqlite \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
