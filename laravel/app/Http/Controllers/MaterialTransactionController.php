@@ -63,7 +63,7 @@ class MaterialTransactionController extends Controller
         $validated = $request->validate([
             'material_id'      => 'required|exists:materials,id',
             'type'             => 'required|in:IN,OUT',
-            'unit_type'        => 'required|in:Kg,Pcs',   // NEW: which unit is quantity in
+            'unit_type'        => 'nullable|in:Kg,Pcs',
             'quantity'         => 'required|numeric|min:0.001',
             'rate'             => 'nullable|numeric|min:0',
             'supplier_id'      => 'nullable|exists:suppliers,id',
@@ -74,7 +74,8 @@ class MaterialTransactionController extends Controller
         ]);
 
         $material   = Material::findOrFail($validated['material_id']);
-        $unitType   = $validated['unit_type'];        // 'Kg' or 'Pcs'
+        $unitType   = $validated['unit_type'] ?? ($material->unit === 'Pcs' ? 'Pcs' : 'Kg');
+        $validated['unit_type'] = $unitType;
         $qty        = (float) $validated['quantity'];
         $kgPerPcs   = (float) ($material->kg_per_pcs ?? 0);
         $hasDual    = $kgPerPcs > 0;

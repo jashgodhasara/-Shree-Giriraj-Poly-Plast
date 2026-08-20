@@ -40,7 +40,7 @@
                     <td>{{ $txn->vehicle_no ?? '—' }}</td>
                     <td>
                         <button class="btn btn-danger btn-sm btn-icon"
-                            onclick="deleteRecord('{{ route('material-transactions.destroy', $txn) }}', 'transaction')">
+                            onclick="deleteRecord('{{ route('material-transactions.destroy', $txn) }}', 'transaction', this)">
                             <i class="fa fa-trash"></i>
                         </button>
                     </td>
@@ -85,10 +85,17 @@
                 </div>
                 <div class="form-row cols-3">
                     <div class="form-group"><label>Quantity *</label><input type="number" name="quantity" step="0.01" min="0.01" required></div>
+                    <div class="form-group">
+                        <label>Unit Type</label>
+                        <select name="unit_type">
+                            <option value="Kg">Kg (Kilograms)</option>
+                            <option value="Pcs">Pcs (Pieces)</option>
+                        </select>
+                    </div>
                     <div class="form-group"><label>Rate per unit (₹)</label><input type="number" name="rate" step="0.01" min="0"></div>
-                    <div class="form-group"><label>Date *</label><input type="date" name="transaction_date" value="{{ date('Y-m-d') }}" required></div>
                 </div>
                 <div class="form-row cols-2">
+                    <div class="form-group"><label>Date *</label><input type="date" name="transaction_date" value="{{ date('Y-m-d') }}" required></div>
                     <div class="form-group">
                         <label>Supplier (for IN)</label>
                         <select name="supplier_id">
@@ -98,9 +105,9 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="form-group"><label>Challan / Bill No.</label><input type="text" name="reference_no"></div>
                 </div>
-                <div class="form-row cols-2">
+                <div class="form-row cols-3">
+                    <div class="form-group"><label>Challan / Bill No.</label><input type="text" name="reference_no"></div>
                     <div class="form-group"><label>Vehicle No.</label><input type="text" name="vehicle_no"></div>
                     <div class="form-group"><label>Remarks</label><input type="text" name="remarks"></div>
                 </div>
