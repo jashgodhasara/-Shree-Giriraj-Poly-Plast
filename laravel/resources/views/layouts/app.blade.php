@@ -1371,11 +1371,22 @@
         }
     });
 
-    /* ── AJAX Form Submit ── */
+    /* ── AJAX Form Submit with Double-Click Protection ── */
     function submitForm(formEl, url, method, onSuccess) {
+        if (!formEl) return;
+        if (formEl.dataset.submitting === 'true') {
+            console.warn('Submission already in progress. Ignoring duplicate click.');
+            return;
+        }
+        formEl.dataset.submitting = 'true';
+
         const btn = formEl.querySelector('[type=submit]');
         const origText = btn ? btn.innerHTML : '';
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...'; }
+        if (btn) {
+            btn.disabled = true;
+            btn.style.pointerEvents = 'none';
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+        }
 
         const hasFiles = !!formEl.querySelector('input[type="file"]') || formEl.getAttribute('enctype') === 'multipart/form-data';
 
@@ -1409,7 +1420,6 @@
         })
         .then(r => r.json())
         .then(res => {
-            if (btn) { btn.disabled = false; btn.innerHTML = origText; }
             if (res.success) {
                 showToast(res.message, 'success');
                 // Close modal immediately
@@ -1426,8 +1436,15 @@
             }
         })
         .catch(() => {
-            if (btn) { btn.disabled = false; btn.innerHTML = origText; }
             showToast('Network error. Please try again.', 'error');
+        })
+        .finally(() => {
+            delete formEl.dataset.submitting;
+            if (btn) {
+                btn.disabled = false;
+                btn.style.pointerEvents = '';
+                btn.innerHTML = origText;
+            }
         });
     }
 
