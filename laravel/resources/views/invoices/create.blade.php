@@ -14,6 +14,10 @@
 .billing-grid > div:last-child .card { position:static !important; }
 
 /* ── SEARCHABLE COMBOBOX ── */
+.card.billing-card { overflow: visible !important; }
+.card-body.billing-card-body { overflow: visible !important; }
+.table-wrap.billing-table-wrap { overflow: visible !important; }
+
 .combo-wrap { position: relative; width: 100%; }
 .combo-input {
     width: 100%; padding: 8px 30px 8px 10px;
@@ -29,31 +33,35 @@
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
     font-size: 11px; color: #94a3b8; pointer-events: none; transition: transform .2s;
 }
+.combo-wrap.open { z-index: 999999 !important; position: relative; }
 .combo-wrap.open .combo-arrow { transform: translateY(-50%) rotate(180deg); color: #6366f1; }
 .combo-dropdown {
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    max-height: 240px; overflow-y: auto;
-    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    z-index: 1000; display: none; padding: 4px;
+    position: absolute; top: calc(100% + 4px); left: 0;
+    min-width: 360px; width: max-content; max-width: 520px;
+    max-height: 320px; overflow-y: auto;
+    background: #ffffff; border: 1.5px solid #6366f1; border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.22), 0 4px 14px rgba(99,102,241,0.18);
+    z-index: 999999 !important; display: none; padding: 6px;
 }
 .combo-wrap.open .combo-dropdown { display: block; animation: dropIn .15s ease-out; }
 @keyframes dropIn { from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:translateY(0)} }
 
 .combo-item {
-    padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    padding: 8px 12px; border-radius: 6px; cursor: pointer;
     font-size: 13px; color: #1e293b;
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
     transition: background .15s;
+    border-bottom: 1px solid #f1f5f9;
 }
-.combo-item:hover, .combo-item.active { background: #f1f5f9; color: #4338ca; }
-.combo-item.selected { background: #e0e7ff; color: #3730a3; font-weight: 600; }
+.combo-item:last-child { border-bottom: none; }
+.combo-item:hover, .combo-item.active { background: #eef2ff; color: #3730a3; }
+.combo-item.selected { background: #e0e7ff; color: #3730a3; font-weight: 700; }
 .combo-item-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; flex-shrink: 0; }
-.badge-stock { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-.badge-price { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-.badge-gst   { background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; }
+.badge-stock { background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+.badge-price { background: #e0e7ff; color: #4338ca; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+.badge-gst   { background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 11px; }
 .combo-empty {
-    padding: 12px 10px; font-size: 12px; color: #64748b; text-align: center;
+    padding: 14px 10px; font-size: 12.5px; color: #64748b; text-align: center;
 }
 .combo-add-btn {
     display: block; width: 100%; padding: 8px; text-align: center;
@@ -67,7 +75,7 @@
 <div class="billing-grid">
 
 <div>
-<div class="card">
+<div class="card billing-card" style="overflow:visible !important;">
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
         <h3><i class="fa fa-file-invoice-dollar"></i> Bill Items</h3>
         <div class="d-flex gap-2">
@@ -79,10 +87,10 @@
             </button>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body billing-card-body" style="overflow:visible !important;">
         <!-- Customer, Invoice Date & Transport -->
         <div class="form-row cols-3" style="margin-bottom:8px">
-            <div class="form-group">
+            <div class="form-group" style="position:relative;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <label style="margin-bottom:0">Customer * <small style="color:var(--primary);font-weight:normal;">(Type to search)</small></label>
                     <a href="javascript:void(0)" onclick="openQuickAddCustomerModal()" style="font-size:11px; color:var(--primary); text-decoration:underline;">+ New Customer</a>
@@ -99,18 +107,20 @@
             </div>
             <div class="form-group">
                 <label>Invoice Date *</label>
-                <input type="date" id="invoiceDate" value="{{ session('working_date', date('Y-m-d')) }}" style="padding:8px 10px; border-radius:6px; border:1.5px solid #cbd5e1; font-size:13px; font-weight:600; color:#1e293b;" required>
+                <input type="date" id="invoiceDate" value="{{ session('working_date', date('Y-m-d')) }}" style="padding:8px 10px; border-radius:6px; border:1.5px solid #cbd5e1; font-size:13px; font-weight:600; color:#1e293b;" required onchange="recalc()">
             </div>
             <div class="form-group">
                 <label>Transporter</label>
                 <select id="transporterSelect" style="padding:8px 10px; border-radius:6px; border:1.5px solid #cbd5e1; font-size:13px;">
                     <option value="">-- None --</option>
                     @foreach($transporters as $t)
-                    <option value="{{ $t->id }}">{{ $t->name }}@if($t->vehicle_no) ({{ $t->vehicle_no }})@endif</option>
+                        <option value="{{ $t->id }}">{{ $t->name }}@if($t->vehicle_no) ({{ $t->vehicle_no }})@endif</option>
                     @endforeach
                 </select>
             </div>
         </div>
+
+        <!-- Secondary Invoice Details -->
         <div class="form-row cols-3" style="margin-bottom:8px">
             <div class="form-group">
                 <label>Payment Terms</label>
@@ -151,8 +161,8 @@
         </div>
 
         <!-- Items table -->
-        <div class="table-wrap">
-            <table id="itemsTable">
+        <div class="table-wrap billing-table-wrap" style="overflow:visible !important;">
+            <table id="itemsTable" style="overflow:visible !important;">
                 <thead>
                     <tr>
                         <th style="width:36%">Product (Type to search)</th>
@@ -164,7 +174,7 @@
                         <th style="width:4%"></th>
                     </tr>
                 </thead>
-                <tbody id="itemsBody">
+                <tbody id="itemsBody" style="overflow:visible !important;">
                     <!-- Row 1 will be initialized by JS -->
                 </tbody>
             </table>
