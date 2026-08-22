@@ -51,4 +51,9 @@ return [
         'redirect' => env('FACEBOOK_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/facebook/callback'),
     ],
 
+    'plastic_pricing' => [
+        'url' => env('PLASTIC_API_URL', 'https://api.3minapi.com/api/v1/data/ywlci8ttl5h35fyadebua'),
+        'key' => env('PLASTIC_API_KEY', 'tm_test_ca04999d0dd5fc015391a2693b9da987516231ea86d03cfa'),
+    ],
+
 ];

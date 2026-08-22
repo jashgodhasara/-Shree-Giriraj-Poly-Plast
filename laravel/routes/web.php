@@ -53,6 +53,9 @@ Route::middleware('auth')->group(function () {
     // GSTIN Live Verification
     Route::post('/verify-gstin', [\App\Http\Controllers\GstVerificationController::class, 'verify'])->name('gstin.verify');
 
+    // Live Plastic Pricing Feed
+    Route::get('/plastic-prices', [App\Http\Controllers\Api\PlasticPricingApiController::class, 'index'])->name('plastic-prices.index');
+
     // Onboarding Configurator
     Route::get('/onboard', [OnboardingController::class, 'index'])->name('onboard.index');
     Route::post('/onboard', [OnboardingController::class, 'saveConfig'])->name('onboard.save');
@@ -67,6 +70,7 @@ Route::middleware('auth')->group(function () {
     // Customers
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
     Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
@@ -108,6 +112,7 @@ Route::middleware('auth')->group(function () {
 
     // Materials
     Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+    Route::post('/materials/sync-api', [MaterialController::class, 'syncFromApi'])->name('materials.sync-api');
     Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
     Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
     Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');

@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { api } from '../services/api';
+import { api, getCachedData } from '../services/api';
 import { ENDPOINTS } from '../config/api';
 import { Product, Material } from '../types';
 import { Colors, Shadows } from '../components/Theme';
@@ -40,24 +40,41 @@ export const ProductsScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    Promise.all([
+      getCachedData<Product[]>(ENDPOINTS.PRODUCTS),
+      getCachedData<Material[]>(ENDPOINTS.MATERIALS),
+    ]).then(([cP, cM]) => {
+      if (cP && cP.length > 0) setProducts(cP);
+      if (cM && cM.length > 0) setMaterials(cM);
+      if (cP || cM) setLoading(false);
+    });
     fetchData();
-    const timer = setInterval(() => {
+
+    const interval = setInterval(() => {
       fetchData();
-    }, 5000);
-    return () => clearInterval(timer);
+    }, 6000);
+    return () => clearInterval(interval);
   }, [fetchData]);
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.hsn_code && p.hsn_code.includes(search))
-  );
+  const filteredProducts = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.hsn_code && p.hsn_code.includes(q))
+    );
+  }, [products, search]);
 
-  const filteredMaterials = materials.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.type.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredMaterials = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return materials;
+    return materials.filter(
+      (m) =>
+        m.name.toLowerCase().includes(q) ||
+        m.type.toLowerCase().includes(q)
+    );
+  }, [materials, search]);
 
   return (
     <View style={styles.container}>
@@ -98,6 +115,11 @@ export const ProductsScreen: React.FC = () => {
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item.id.toString()}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -141,6 +163,11 @@ export const ProductsScreen: React.FC = () => {
         <FlatList
           data={filteredMaterials}
           keyExtractor={(item) => item.id.toString()}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

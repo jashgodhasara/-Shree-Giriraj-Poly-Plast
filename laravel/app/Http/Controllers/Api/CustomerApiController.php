@@ -33,7 +33,28 @@ class CustomerApiController extends Controller
 
     public function show(Customer $customer)
     {
-        return new CustomerResource($customer);
+        $invoices = $customer->invoices()
+            ->with(['items.product', 'payments'])
+            ->latest('invoice_date')
+            ->get();
+
+        $totalSales = (float) $invoices->sum('grand_total');
+        $totalPaid = (float) $invoices->sum(function ($inv) {
+            return $inv->payments->sum('amount');
+        });
+        if ($totalPaid == 0 && $invoices->sum('paid_amount') > 0) {
+            $totalPaid = (float) $invoices->sum('paid_amount');
+        }
+        $totalPending = max(0, $totalSales - $totalPaid);
+
+        return response()->json([
+            'customer'      => new CustomerResource($customer),
+            'total_sales'   => $totalSales,
+            'total_paid'    => $totalPaid,
+            'total_pending' => $totalPending,
+            'invoice_count' => $invoices->count(),
+            'invoices'      => $invoices,
+        ]);
     }
 
     public function update(Request $request, Customer $customer)

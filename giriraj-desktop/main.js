@@ -2,11 +2,15 @@ const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const { spawn } = require('child_process');
 
 const configPath = path.join(app.getPath('userData'), 'server_config.json');
 let phpProcess = null;
 let mainWindow = null;
+
+const ONLINE_URL = 'https://shreegiriraj-erp.onrender.com';
+const OFFLINE_URL = 'http://127.0.0.1:8000';
 
 function getServerUrl() {
   try {
@@ -17,7 +21,7 @@ function getServerUrl() {
   } catch (e) {
     // fallback
   }
-  return 'http://127.0.0.1:8000';
+  return ONLINE_URL;
 }
 
 function saveServerUrl(url) {
@@ -62,16 +66,17 @@ function findPhpPath() {
   return 'php';
 }
 
-// Check if port 8000 is open and responding
+// Check if server is reachable and responding (supports both HTTP & HTTPS)
 function checkServerRunning(url, callback) {
   try {
     const parsed = new URL(url);
-    const req = http.get(
+    const client = parsed.protocol === 'https:' ? https : http;
+    const req = client.get(
       {
         host: parsed.hostname,
         port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
         path: '/login',
-        timeout: 2500,
+        timeout: 6000,
       },
       (res) => {
         callback(res.statusCode >= 200 && res.statusCode < 500);
@@ -97,19 +102,21 @@ function startLocalBackend(callback) {
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('connection-status', {
         status: 'starting',
-        message: 'Starting local Laravel backend...'
+        message: 'Starting local Laravel offline engine on port 8000...'
       });
     }
 
     try {
-      phpProcess = spawn(phpBin, ['artisan', 'serve', '--host=127.0.0.1', '--port=8000'], {
-        cwd: laravelPath,
-        shell: true,
-        detached: false,
-      });
+      if (!phpProcess) {
+        phpProcess = spawn(phpBin, ['artisan', 'serve', '--host=127.0.0.1', '--port=8000'], {
+          cwd: laravelPath,
+          shell: true,
+          detached: false,
+        });
 
-      phpProcess.stdout?.on('data', (data) => console.log(`[Laravel]: ${data}`));
-      phpProcess.stderr?.on('data', (data) => console.error(`[Laravel Err]: ${data}`));
+        phpProcess.stdout?.on('data', (data) => console.log(`[Laravel]: ${data}`));
+        phpProcess.stderr?.on('data', (data) => console.error(`[Laravel Err]: ${data}`));
+      }
     } catch (err) {
       console.error('Failed to spawn PHP artisan serve:', err);
     }
@@ -121,7 +128,7 @@ function startLocalBackend(callback) {
   let attempts = 0;
   const poll = setInterval(() => {
     attempts++;
-    checkServerRunning('http://127.0.0.1:8000', (isRunning) => {
+    checkServerRunning(OFFLINE_URL, (isRunning) => {
       if (isRunning || attempts >= 20) {
         clearInterval(poll);
         callback(isRunning);
@@ -133,51 +140,60 @@ function startLocalBackend(callback) {
 function loadApp() {
   if (!mainWindow) return;
   const url = getServerUrl();
+  const isOnlineMode = url.startsWith('https://') || url.includes('onrender.com');
 
-  // First load the sleek loading screen so the user never sees a blank white window
+  // Load sleek connecting / mode selector screen
   mainWindow.loadFile(path.join(__dirname, 'offline.html'));
+
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('current-mode', {
+      mode: isOnlineMode ? 'online' : 'offline',
+      url: url
+    });
+  }
 
   checkServerRunning(url, (isRunning) => {
     if (isRunning) {
       if (mainWindow && mainWindow.webContents) {
         mainWindow.webContents.send('connection-status', {
           status: 'connected',
-          message: 'Connected! Launching ERP...'
+          message: isOnlineMode ? 'Connected to Cloud Live ERP!' : 'Connected to Local Offline ERP!'
         });
       }
       setTimeout(() => {
         if (mainWindow) mainWindow.loadURL(url);
-      }, 400);
+      }, 500);
     } else {
-      // If it's localhost / 127.0.0.1, try auto-starting PHP server
-      if (url.includes('127.0.0.1') || url.includes('localhost')) {
+      if (isOnlineMode) {
+        // Online cloud server reachable? If not, offer fallback or wait
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send('connection-status', {
+            status: 'error',
+            message: 'Unable to reach Online Cloud Server. You can retry or switch to Offline Mode.'
+          });
+        }
+      } else {
+        // Local mode: Try auto-starting PHP server
         startLocalBackend((started) => {
           if (started) {
             if (mainWindow && mainWindow.webContents) {
               mainWindow.webContents.send('connection-status', {
                 status: 'connected',
-                message: 'Connected! Launching ERP...'
+                message: 'Local Offline ERP Ready! Launching...'
               });
             }
             setTimeout(() => {
               if (mainWindow) mainWindow.loadURL(url);
-            }, 400);
+            }, 500);
           } else {
             if (mainWindow && mainWindow.webContents) {
               mainWindow.webContents.send('connection-status', {
                 status: 'error',
-                message: 'Could not start ERP backend server on 127.0.0.1:8000. Please check PHP installation.'
+                message: 'Could not start Local ERP service on 127.0.0.1:8000. Please ensure PHP is installed.'
               });
             }
           }
         });
-      } else {
-        if (mainWindow && mainWindow.webContents) {
-          mainWindow.webContents.send('connection-status', {
-            status: 'error',
-            message: `Could not connect to ${url}. Please check the server address.`
-          });
-        }
       }
     }
   });
@@ -185,8 +201,8 @@ function loadApp() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1300,
-    height: 840,
+    width: 1320,
+    height: 860,
     minWidth: 1024,
     minHeight: 700,
     title: 'Shree Giriraj Poly Plast — ERP',
@@ -202,32 +218,46 @@ function createWindow() {
   // Custom Application Menu
   const menuTemplate = [
     {
-      label: 'ERP',
+      label: 'ERP Mode',
       submenu: [
         {
-          label: 'Dashboard / Home',
-          accelerator: 'CmdOrCtrl+H',
-          click: () => loadApp(),
+          label: '🌐 Switch to Online Mode (Cloud Live)',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => {
+            saveServerUrl(ONLINE_URL);
+            loadApp();
+          },
         },
         {
-          label: 'Reload Page',
-          accelerator: 'CmdOrCtrl+R',
-          click: () => loadApp(),
+          label: '💻 Switch to Offline Mode (Local PC)',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => {
+            saveServerUrl(OFFLINE_URL);
+            loadApp();
+          },
         },
         { type: 'separator' },
         {
-          label: 'Change Server URL...',
+          label: '🔄 Reload / Reconnect',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => loadApp(),
+        },
+        {
+          label: '⚙️ Custom Server URL...',
           click: async () => {
             const current = getServerUrl();
             const { response } = await dialog.showMessageBox(mainWindow, {
-              type: 'info',
-              buttons: ['Keep Current', 'Reset to 127.0.0.1:8000', 'Cancel'],
+              type: 'question',
+              buttons: ['Online Live (Cloud)', 'Offline Localhost', 'Cancel'],
               defaultId: 0,
-              title: 'Server Configuration',
-              message: `Current Server URL:\n${current}`,
+              title: 'Select ERP Environment',
+              message: `Current Server:\n${current}\n\nChoose connection mode:`,
             });
-            if (response === 1) {
-              saveServerUrl('http://127.0.0.1:8000');
+            if (response === 0) {
+              saveServerUrl(ONLINE_URL);
+              loadApp();
+            } else if (response === 1) {
+              saveServerUrl(OFFLINE_URL);
               loadApp();
             }
           },
@@ -269,6 +299,13 @@ function createWindow() {
   });
 }
 
+ipcMain.on('switch-mode', (event, targetUrl) => {
+  if (targetUrl) {
+    saveServerUrl(targetUrl);
+  }
+  loadApp();
+});
+
 ipcMain.on('retry-connection', (event, customUrl) => {
   if (customUrl && customUrl.trim().length > 0) {
     saveServerUrl(customUrl.trim());
@@ -292,4 +329,3 @@ app.on('activate', () => {
     createWindow();
   }
 });
-

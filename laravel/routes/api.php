@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ReportsApiController;
 use App\Http\Controllers\Api\BranchApiController;
 use App\Http\Controllers\Api\SupplierApiController;
 use App\Http\Controllers\Api\TransporterApiController;
+use App\Http\Controllers\Api\PlasticPricingApiController;
 use Illuminate\Support\Facades\Route;
 
 // ─── API Documentation (public) ─────────────────────────────────────────────
@@ -57,11 +58,12 @@ Route::get('/', function () {
     ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
 
-// ─── Public Auth Routes (no token required) ──────────────────────────────────
+// ─── Public Auth & Live Data Routes (no token required) ──────────────────────────────────
 Route::post('/login', [ApiAuthController::class, 'login'])->name('api.login');
 Route::prefix('auth')->group(function () {
     Route::post('/login', [ApiAuthController::class, 'login'])->name('api.auth.login');
 });
+Route::get('/plastic-prices', [PlasticPricingApiController::class, 'index'])->name('api.plastic-prices.public');
 
 // ─── Protected Routes (Sanctum token required) ───────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {

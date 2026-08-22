@@ -145,3 +145,25 @@ export interface DashboardStats {
     unit: string;
   }>;
 }
+
+export interface PlasticPriceItem {
+  id: string;
+  material_name: string;
+  category: string;
+  current_price: number;
+  currency: string;
+  unit: string;
+  effective_date?: string;
+  change?: string;
+  trend?: 'up' | 'down' | 'neutral' | string;
+  is_live?: boolean;
+}
+
+export interface PlasticPricesResponse {
+  status: string;
+  source: string;
+  is_connected: boolean;
+  last_updated: string;
+  items: PlasticPriceItem[];
+}
+

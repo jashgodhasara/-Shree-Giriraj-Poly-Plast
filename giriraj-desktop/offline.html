@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shree Giriraj ERP — Connecting...</title>
+  <title>Shree Giriraj ERP — Environment Switcher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -29,40 +29,40 @@
       pointer-events: none;
     }
     .box {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 42px 46px;
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 38px 44px;
       border-radius: 24px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
       text-align: center;
-      max-width: 480px;
-      width: 90%;
+      max-width: 520px;
+      width: 92%;
       position: relative;
       z-index: 10;
-      animation: fadeIn 0.4s ease-out;
+      animation: fadeIn 0.35s ease-out;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(12px) scale(0.98); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .logo-wrap {
-      width: 76px;
-      height: 76px;
+      width: 72px;
+      height: 72px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 18px;
-      font-size: 32px;
+      margin: 0 auto 16px;
+      font-size: 30px;
       color: #ffffff;
       box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
     }
     h2 {
-      margin: 0 0 6px 0;
+      margin: 0 0 4px 0;
       font-family: 'Outfit', sans-serif;
-      font-size: 24px;
+      font-size: 23px;
       font-weight: 800;
       letter-spacing: -0.3px;
       background: linear-gradient(135deg, #ffffff, #cbd5e1);
@@ -71,8 +71,8 @@
     }
     .sub {
       color: #94a3b8;
-      font-size: 13.5px;
-      margin-bottom: 24px;
+      font-size: 13px;
+      margin-bottom: 20px;
     }
     .status-badge {
       display: inline-flex;
@@ -85,7 +85,7 @@
       font-weight: 500;
       padding: 9px 18px;
       border-radius: 30px;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
     .spinner {
       width: 14px;
@@ -98,8 +98,48 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    .input-group {
+    .mode-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
       margin-bottom: 18px;
+    }
+    .mode-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 16px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .mode-card:hover {
+      border-color: #6366f1;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+    }
+    .mode-card.active {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.15);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+    }
+    .mode-icon {
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+    .mode-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .mode-desc {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+    .input-group {
+      margin-bottom: 16px;
       position: relative;
     }
     .input-group i {
@@ -112,11 +152,11 @@
     }
     input {
       width: 100%;
-      padding: 12px 14px 12px 38px;
+      padding: 11px 14px 11px 38px;
       background: rgba(15, 23, 42, 0.6);
       border: 1.5px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      font-size: 13.5px;
+      font-size: 13px;
       font-family: inherit;
       color: #f8fafc;
       outline: none;
@@ -140,10 +180,10 @@
       background: linear-gradient(135deg, #6366f1, #4f46e5);
       color: #ffffff;
       border: none;
-      padding: 12px 20px;
+      padding: 12px 18px;
       border-radius: 12px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13.5px;
       font-family: inherit;
       cursor: pointer;
       box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
@@ -153,12 +193,9 @@
       transform: translateY(-1px);
       box-shadow: 0 8px 22px rgba(99, 102, 241, 0.45);
     }
-    .btn:active {
-      transform: translateY(0);
-    }
     .footer-note {
-      margin-top: 24px;
-      font-size: 11.5px;
+      margin-top: 18px;
+      font-size: 11px;
       color: #64748b;
     }
   </style>
@@ -170,26 +207,40 @@
       <i class="fa-solid fa-industry"></i>
     </div>
     <h2>Shree Giriraj Poly Plast</h2>
-    <p class="sub">Enterprise Resource Planning (ERP)</p>
+    <p class="sub">Dual Mode ERP &bull; Online Cloud & Offline Desktop</p>
 
     <div class="status-badge" id="statusBadge">
       <div class="spinner" id="spinner"></div>
-      <span id="statusText">Starting backend server & connecting...</span>
+      <span id="statusText">Connecting to ERP service...</span>
+    </div>
+
+    <!-- Quick Mode Select Cards -->
+    <div class="mode-cards">
+      <div class="mode-card active" id="cardOnline" onclick="chooseMode('https://shreegiriraj-erp.onrender.com')">
+        <div class="mode-icon">🌐</div>
+        <div class="mode-title">Online Live</div>
+        <div class="mode-desc">Cloud Sync &bull; Multi-Device Access</div>
+      </div>
+      <div class="mode-card" id="cardOffline" onclick="chooseMode('http://127.0.0.1:8000')">
+        <div class="mode-icon">💻</div>
+        <div class="mode-title">Offline Local</div>
+        <div class="mode-desc">Runs without internet on this PC</div>
+      </div>
     </div>
 
     <div class="input-group">
       <i class="fa-solid fa-globe"></i>
-      <input type="text" id="serverInput" value="http://127.0.0.1:8000" spellcheck="false" />
+      <input type="text" id="serverInput" value="https://shreegiriraj-erp.onrender.com" spellcheck="false" />
     </div>
 
     <div class="actions">
-      <button class="btn" id="retryBtn" onclick="doRetry()">
-        <i class="fa-solid fa-arrows-rotate"></i> Connect / Retry
+      <button class="btn" id="connectBtn" onclick="doConnect()">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Launch ERP
       </button>
     </div>
 
     <div class="footer-note">
-      Automated local service management enabled &bull; v2.0
+      Switch modes anytime via Menu: <b>Ctrl + 1</b> (Online) or <b>Ctrl + 2</b> (Offline)
     </div>
   </div>
 
@@ -199,6 +250,14 @@
       const { ipcRenderer } = require('electron');
       ipc = ipcRenderer;
     } catch (e) {}
+
+    function chooseMode(url) {
+      document.getElementById('serverInput').value = url;
+      const isOnline = url.includes('onrender.com') || url.startsWith('https://');
+      document.getElementById('cardOnline').classList.toggle('active', isOnline);
+      document.getElementById('cardOffline').classList.toggle('active', !isOnline);
+      doConnect();
+    }
 
     function updateStatus(text, isError = false) {
       const statusBadge = document.getElementById('statusBadge');
@@ -219,28 +278,36 @@
       }
     }
 
-    function doRetry() {
-      const url = document.getElementById('serverInput').value.trim() || 'http://127.0.0.1:8000';
-      updateStatus('Connecting to ' + url + '...');
+    function doConnect() {
+      const url = document.getElementById('serverInput').value.trim() || 'https://shreegiriraj-erp.onrender.com';
+      updateStatus('Connecting to ' + (url.includes('onrender.com') ? 'Online Cloud' : 'Local Offline') + '...');
       if (ipc) {
-        ipc.send('retry-connection', url);
+        ipc.send('switch-mode', url);
       } else {
         window.location.href = url;
       }
     }
 
     if (ipc) {
+      ipc.on('current-mode', (event, data) => {
+        if (data.url) {
+          document.getElementById('serverInput').value = data.url;
+          const isOnline = data.mode === 'online';
+          document.getElementById('cardOnline').classList.toggle('active', isOnline);
+          document.getElementById('cardOffline').classList.toggle('active', !isOnline);
+        }
+      });
+
       ipc.on('connection-status', (event, data) => {
         if (data.status === 'error') {
-          updateStatus(data.message || 'Server not reachable. Please retry.', true);
+          updateStatus(data.message || 'Server not reachable. Please retry or switch mode.', true);
         } else if (data.status === 'starting') {
-          updateStatus(data.message || 'Starting ERP backend server...');
+          updateStatus(data.message || 'Starting Local Offline ERP engine...');
         } else if (data.status === 'connected') {
-          updateStatus('Connected! Launching ERP...');
+          updateStatus(data.message || 'Connected! Launching ERP...');
         }
       });
     }
   </script>
 </body>
 </html>
-

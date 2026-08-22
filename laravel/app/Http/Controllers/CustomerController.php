@@ -16,6 +16,95 @@ class CustomerController extends Controller
         return view('customers.index', compact('customers'));
     }
 
+    public function show(Request $request, Customer $customer)
+    {
+        $invoices = $customer->invoices()
+            ->with(['items.product', 'payments', 'transporter'])
+            ->latest('invoice_date')
+            ->latest('id')
+            ->get();
+
+        $totalSales = (float) $invoices->sum('grand_total');
+        $totalPaid = (float) $invoices->sum(function ($inv) {
+            return $inv->payments->sum('amount');
+        });
+        if ($totalPaid == 0 && $invoices->sum('paid_amount') > 0) {
+            $totalPaid = (float) $invoices->sum('paid_amount');
+        }
+        $totalPending = max(0, $totalSales - $totalPaid);
+        $invoiceCount = $invoices->count();
+        $paidCount = $invoices->where('status', 'Paid')->count();
+        $partialCount = $invoices->where('status', 'Partial')->count();
+        $unpaidCount = $invoices->where('status', 'Unpaid')->count();
+
+        // Product purchases summary
+        $productPurchases = \App\Models\InvoiceItem::whereHas('invoice', function ($q) use ($customer) {
+                $q->where('customer_id', $customer->id);
+            })
+            ->with('product')
+            ->get()
+            ->groupBy('product_id')
+            ->map(function ($items) {
+                $product = $items->first()->product;
+                return (object) [
+                    'product_id'   => $product?->id,
+                    'product_name' => $product?->name ?? 'Unknown Product',
+                    'hsn_code'     => $product?->hsn_code ?? '—',
+                    'unit'         => $product?->unit ?? 'PCS',
+                    'total_qty'    => $items->sum('quantity'),
+                    'total_amount' => $items->sum('total_price'),
+                    'orders_count' => $items->count(),
+                ];
+            })->values();
+
+        // All payments across customer invoices
+        $payments = \App\Models\Payment::whereHas('invoice', function ($q) use ($customer) {
+                $q->where('customer_id', $customer->id);
+            })
+            ->with('invoice')
+            ->latest('payment_date')
+            ->latest('id')
+            ->get();
+
+        // Ledgers
+        $ledgers = \App\Models\Ledger::where('entity_type', 'Customer')
+            ->where('entity_id', $customer->id)
+            ->orderBy('transaction_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'customer'          => $customer,
+                'total_sales'       => $totalSales,
+                'total_paid'        => $totalPaid,
+                'total_pending'     => $totalPending,
+                'invoice_count'     => $invoiceCount,
+                'paid_count'        => $paidCount,
+                'partial_count'     => $partialCount,
+                'unpaid_count'      => $unpaidCount,
+                'invoices'          => $invoices,
+                'product_purchases' => $productPurchases,
+                'payments'          => $payments,
+            ]);
+        }
+
+        return view('customers.show', compact(
+            'customer',
+            'invoices',
+            'totalSales',
+            'totalPaid',
+            'totalPending',
+            'invoiceCount',
+            'paidCount',
+            'partialCount',
+            'unpaidCount',
+            'productPurchases',
+            'payments',
+            'ledgers'
+        ));
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

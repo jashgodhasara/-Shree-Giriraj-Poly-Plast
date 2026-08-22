@@ -124,6 +124,144 @@ a.stat-card:hover .stat-arrow {
     </a>
 </div>
 
+{{-- Live Plastic Market Rates (3MinAPI Feed) --}}
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg,rgba(30,41,59,0.95),rgba(15,23,42,0.98));border:1px solid rgba(59,130,246,0.3);box-shadow:0 10px 25px -5px rgba(0,0,0,0.3),0 8px 10px -6px rgba(0,0,0,0.3);color:#fff;overflow:hidden;position:relative;">
+    <div style="position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:radial-gradient(circle,rgba(59,130,246,0.15),transparent 70%);border-radius:50%;pointer-events:none;"></div>
+    <div class="card-header" style="border-bottom:1px solid rgba(255,255,255,0.08);background:transparent;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(37,99,235,0.35);">
+                <i class="fa-solid fa-chart-line" style="color:#fff;font-size:16px;"></i>
+            </div>
+            <div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <h3 style="margin:0;font-size:15px;font-weight:700;letter-spacing:0.3px;color:#fff;">Live Polymer Market Rates</h3>
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3);">
+                        <span style="width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:pulse 1.8s infinite;"></span>
+                        ONLINE LIVE FEED
+                    </span>
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;" id="polymer-last-sync">
+                    Powered by 3MinAPI • Benchmarks updated today
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <a href="{{ route('materials.index') }}" class="btn btn-ghost btn-sm" style="color:#93c5fd;border:1px solid rgba(147,197,253,0.2);padding:5px 12px;border-radius:8px;font-size:12px;">
+                <i class="fa fa-boxes-stacked"></i> Materials Master
+            </a>
+            <button type="button" id="btn-refresh-polymer" onclick="refreshPolymerRates()" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);border:none;padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;">
+                <i class="fa-solid fa-arrows-rotate" id="polymer-spinner"></i> Refresh
+            </button>
+        </div>
+    </div>
+    <div class="card-body" style="padding:16px 20px;">
+        <div id="polymer-rates-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:12px;">
+            @if(isset($polymerRates['items']) && count($polymerRates['items']) > 0)
+                @foreach($polymerRates['items'] as $item)
+                    @php
+                        $isUp = ($item['trend'] ?? '') === 'up' || (isset($item['change']) && str_starts_with($item['change'], '+') && $item['change'] !== '+0.00');
+                        $isDown = ($item['trend'] ?? '') === 'down' || (isset($item['change']) && str_starts_with($item['change'], '-'));
+                        $trendColor = $isUp ? '#34d399' : ($isDown ? '#f87171' : '#94a3b8');
+                        $trendBg = $isUp ? 'rgba(52,211,153,0.12)' : ($isDown ? 'rgba(248,113,113,0.12)' : 'rgba(148,163,184,0.12)');
+                        $trendIcon = $isUp ? 'fa-arrow-trend-up' : ($isDown ? 'fa-arrow-trend-down' : 'fa-minus');
+                    @endphp
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;transition:all 0.2s ease;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                            <span style="font-size:11px;font-weight:600;color:#93c5fd;text-transform:uppercase;letter-spacing:0.5px;">{{ $item['category'] ?? 'Polymer' }}</span>
+                            <span style="font-size:10px;font-weight:700;color:{{ $trendColor }};background:{{ $trendBg }};padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;">
+                                <i class="fa-solid {{ $trendIcon }}" style="font-size:9px;"></i> {{ $item['change'] ?? '0.00' }}
+                            </span>
+                        </div>
+                        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ $item['material_name'] }}">
+                            {{ $item['material_name'] }}
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                            <div style="font-size:18px;font-weight:800;color:#f8fafc;letter-spacing:-0.3px;">
+                                <span style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;">₹</span>{{ number_format((float)($item['current_price'] ?? 0), 2) }}
+                            </div>
+                            <span style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:500;">/ {{ $item['unit'] ?? 'Kg' }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div style="color:rgba(255,255,255,0.6);text-align:center;grid-column:1/-1;">No pricing data available.</div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadPolymerRates(forceRefresh = false) {
+    const grid = document.getElementById('polymer-rates-grid');
+    const syncText = document.getElementById('polymer-last-sync');
+    const spinner = document.getElementById('polymer-spinner');
+    if (spinner) spinner.classList.add('fa-spin');
+
+    try {
+        const url = forceRefresh ? '/plastic-prices?refresh=1' : '/plastic-prices';
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+
+        if (data && data.items && data.items.length > 0) {
+            let html = '';
+            data.items.forEach(item => {
+                const isUp = item.trend === 'up' || (item.change && item.change.startsWith('+') && item.change !== '+0.00');
+                const isDown = item.trend === 'down' || (item.change && item.change.startsWith('-'));
+                const trendColor = isUp ? '#34d399' : (isDown ? '#f87171' : '#94a3b8');
+                const trendBg = isUp ? 'rgba(52,211,153,0.12)' : (isDown ? 'rgba(248,113,113,0.12)' : 'rgba(148,163,184,0.12)');
+                const trendIcon = isUp ? 'fa-arrow-trend-up' : (isDown ? 'fa-arrow-trend-down' : 'fa-minus');
+
+                html += `
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;transition:all 0.2s ease;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                        <span style="font-size:11px;font-weight:600;color:#93c5fd;text-transform:uppercase;letter-spacing:0.5px;">${item.category || 'Polymer'}</span>
+                        <span style="font-size:10px;font-weight:700;color:${trendColor};background:${trendBg};padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;">
+                            <i class="fa-solid ${trendIcon}" style="font-size:9px;"></i> ${item.change || '0.00'}
+                        </span>
+                    </div>
+                    <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.material_name}">
+                        ${item.material_name}
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                        <div style="font-size:18px;font-weight:800;color:#f8fafc;letter-spacing:-0.3px;">
+                            <span style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;">₹</span>${Number(item.current_price).toFixed(2)}
+                        </div>
+                        <span style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:500;">/ ${item.unit || 'Kg'}</span>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = html;
+
+            if (syncText && data.last_updated) {
+                const time = new Date(data.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                syncText.innerHTML = `Source: <b>${data.source || '3MinAPI'}</b> • Live Synced at ${time}`;
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load polymer prices:', e);
+    } finally {
+        if (spinner) spinner.classList.remove('fa-spin');
+    }
+}
+
+function refreshPolymerRates() {
+    loadPolymerRates(true);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto background refresh every 60s without disrupting the UI
+    setInterval(() => loadPolymerRates(false), 60000);
+});
+</script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+</style>
+
 <div class="dashboard-grid">
 
 {{-- Recent Invoices --}}

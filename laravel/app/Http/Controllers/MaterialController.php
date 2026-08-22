@@ -10,7 +10,8 @@ class MaterialController extends Controller
     public function index()
     {
         $materials = Material::latest()->get();
-        return view('materials.index', compact('materials'));
+        $polymerRates = app(\App\Services\PlasticPricingService::class)->getPrices();
+        return view('materials.index', compact('materials', 'polymerRates'));
     }
 
     public function store(Request $request)
@@ -122,5 +123,45 @@ class MaterialController extends Controller
         }
         $material->delete();
         return response()->json(['success' => true, 'message' => 'Material deleted.']);
+    }
+
+    public function syncFromApi(\App\Services\PlasticPricingService $pricingService)
+    {
+        $data = $pricingService->getPrices(true);
+        if (empty($data['items'])) {
+            return response()->json(['success' => false, 'message' => 'No materials returned from API.'], 422);
+        }
+
+        $created = 0;
+        foreach ($data['items'] as $item) {
+            $name = trim($item['material_name']);
+            $category = $item['category'] ?? 'Raw Material';
+            $unit = $item['unit'] ?? 'Kg';
+
+            $type = 'Raw Material';
+            if (stripos($category, 'Additive') !== false || stripos($name, 'Masterbatch') !== false) {
+                $type = 'Additive';
+            }
+
+            $exists = Material::where('name', $name)->exists();
+            if (!$exists) {
+                Material::create([
+                    'type'            => $type,
+                    'name'            => $name,
+                    'unit'            => $unit,
+                    'grade_variation' => $category,
+                    'stock_quantity'  => 0,
+                    'stock_kg'        => 0,
+                    'stock_pcs'       => 0,
+                ]);
+                $created++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully synchronized materials from live API. {$created} new materials added.",
+            'created' => $created,
+        ]);
     }
 }

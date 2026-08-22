@@ -132,7 +132,9 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        return view('dashboard', compact('stats', 'recentInvoices', 'lowStock', 'workingDate', 'isCustomDate', 'filter', 'dateLabel'));
+        $polymerRates = app(\App\Services\PlasticPricingService::class)->getPrices();
+
+        return view('dashboard', compact('stats', 'recentInvoices', 'lowStock', 'workingDate', 'isCustomDate', 'filter', 'dateLabel', 'polymerRates'));
     }
 
     public function setWorkingDate(Request $request)

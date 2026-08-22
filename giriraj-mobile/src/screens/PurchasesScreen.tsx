@@ -9,7 +9,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { api } from '../services/api';
+import { api, getCachedData } from '../services/api';
 import { ENDPOINTS } from '../config/api';
 import { PurchaseOrder } from '../types';
 import { Colors, Shadows } from '../components/Theme';
@@ -33,11 +33,18 @@ export const PurchasesScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    getCachedData<PurchaseOrder[]>(ENDPOINTS.PURCHASES).then((cached) => {
+      if (cached && cached.length > 0) {
+        setOrders(cached);
+        setLoading(false);
+      }
+    });
     fetchPurchases();
-    const timer = setInterval(() => {
+
+    const interval = setInterval(() => {
       fetchPurchases();
-    }, 15000);
-    return () => clearInterval(timer);
+    }, 6000);
+    return () => clearInterval(interval);
   }, [fetchPurchases]);
 
   const handleMarkReceived = async (po: PurchaseOrder) => {
@@ -70,6 +77,11 @@ export const PurchasesScreen: React.FC = () => {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id.toString()}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [serverUrl, setServerUrlState] = useState<string>('http://10.0.2.2:8000/api');
+  const [serverUrl, setServerUrlState] = useState<string>(DEFAULT_API_BASE_URL);
 
   useEffect(() => {
     bootstrapAuth();

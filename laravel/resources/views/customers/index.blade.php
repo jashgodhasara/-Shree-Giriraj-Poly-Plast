@@ -81,24 +81,34 @@
                 <tr>
                     <td>{{ $c->id }}</td>
                     <td>
-                        @if($c->image)
-                            <img src="{{ asset($c->image) }}" alt="{{ $c->name }}" class="customer-avatar" onclick="viewPhoto('{{ asset($c->image) }}', '{{ e($c->name) }}')">
-                        @else
-                            <div class="customer-initial-avatar">{{ strtoupper(substr($c->name, 0, 1)) }}</div>
-                        @endif
+                        <a href="{{ route('customers.show', $c) }}" title="View {{ $c->name }}'s details & bills">
+                            @if($c->image)
+                                <img src="{{ asset($c->image) }}" alt="{{ $c->name }}" class="customer-avatar">
+                            @else
+                                <div class="customer-initial-avatar">{{ strtoupper(substr($c->name, 0, 1)) }}</div>
+                            @endif
+                        </a>
                     </td>
-                    <td class="fw-bold">{{ $c->name }}</td>
+                    <td>
+                        <a href="{{ route('customers.show', $c) }}" class="fw-bold" style="color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:6px;" title="Click to view full details, bills & sales">
+                            <span>{{ $c->name }}</span>
+                            <i class="fa fa-arrow-up-right-from-square" style="font-size:11px;opacity:0.7;"></i>
+                        </a>
+                    </td>
                     <td>{{ $c->phone ?? '—' }}</td>
                     <td>{{ $c->email ?? '—' }}</td>
                     <td><code>{{ $c->gstin ?? '—' }}</code></td>
                     <td>{{ $c->state ?? '—' }}</td>
                     <td>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline btn-sm btn-icon"
+                            <a href="{{ route('customers.show', $c) }}" class="btn btn-outline btn-sm btn-icon" title="View Customer Profile, Bills & Sales" style="color:var(--primary);border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06);">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                            <button class="btn btn-outline btn-sm btn-icon" title="Edit Customer"
                                 onclick="editCustomer({{ $c->id }}, {{ json_encode($c->name) }}, {{ json_encode($c->phone) }}, {{ json_encode($c->email) }}, {{ json_encode($c->address) }}, {{ json_encode($c->gstin) }}, {{ json_encode($c->state) }}, {{ json_encode($c->image ? asset($c->image) : null) }})">
                                 <i class="fa fa-pen"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm btn-icon"
+                            <button class="btn btn-danger btn-sm btn-icon" title="Delete Customer"
                                 onclick="deleteRecord('{{ route('customers.destroy', $c) }}', 'customer', this)">
                                 <i class="fa fa-trash"></i>
                             </button>

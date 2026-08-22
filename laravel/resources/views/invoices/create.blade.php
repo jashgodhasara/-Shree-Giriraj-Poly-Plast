@@ -366,6 +366,28 @@ function initCustomerCombo() {
         renderCustomerOptions(this.value);
     });
 
+    input.addEventListener('click', function() {
+        document.querySelectorAll('.combo-wrap').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+        wrap.classList.add('open');
+        renderCustomerOptions(this.value);
+    });
+
+    const arrow = wrap.querySelector('.combo-arrow');
+    if (arrow) {
+        arrow.style.pointerEvents = 'auto';
+        arrow.style.cursor = 'pointer';
+        arrow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = wrap.classList.contains('open');
+            document.querySelectorAll('.combo-wrap').forEach(w => w.classList.remove('open'));
+            if (!isOpen) {
+                wrap.classList.add('open');
+                input.focus();
+                renderCustomerOptions(input.value);
+            }
+        });
+    }
+
     input.addEventListener('input', function() {
         wrap.classList.add('open');
         renderCustomerOptions(this.value);
@@ -759,11 +781,15 @@ function escapeHtml(text) {
     });
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize immediately (works with SPA and regular page loads)
+function initCreateBillPage() {
     initCustomerCombo();
-    // Add first row
-    addRow();
-});
+    if (document.querySelectorAll('.item-row').length === 0) {
+        addRow();
+    }
+}
+
+initCreateBillPage();
+document.addEventListener('DOMContentLoaded', initCreateBillPage);
 </script>
 @endsection

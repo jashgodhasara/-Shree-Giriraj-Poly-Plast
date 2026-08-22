@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { api } from '../services/api';
+import { api, getCachedData } from '../services/api';
 import { ENDPOINTS } from '../config/api';
 import { Colors, Shadows } from '../components/Theme';
 
@@ -32,12 +32,19 @@ export const ReportsScreen: React.FC = () => {
   }, [period]);
 
   useEffect(() => {
+    getCachedData<any>(`${ENDPOINTS.REPORTS}?period=${period}`).then((cached) => {
+      if (cached) {
+        setData(cached);
+        setLoading(false);
+      }
+    });
     fetchReports();
-    const timer = setInterval(() => {
+
+    const interval = setInterval(() => {
       fetchReports();
-    }, 15000);
-    return () => clearInterval(timer);
-  }, [fetchReports]);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [fetchReports, period]);
 
   const sales = data?.sales;
   const purchases = data?.purchases;

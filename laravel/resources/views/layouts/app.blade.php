@@ -129,7 +129,7 @@
         }
 
         /* ── MAIN LAYOUT ── */
-        .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; min-width: 0; max-width: calc(100vw - 260px); overflow-x: hidden; }
 
         .topbar {
             background: rgba(255,255,255,.85);
@@ -140,6 +140,8 @@
             display: flex; align-items: center; justify-content: space-between;
             position: sticky; top: 0; z-index: 100;
             box-shadow: 0 1px 0 rgba(0,0,0,.04);
+            box-sizing: border-box;
+            max-width: 100%;
         }
         .topbar-left { display: flex; align-items: center; gap: 12px; }
         .topbar-title {
@@ -187,7 +189,7 @@
             padding: 1px 6px; border-radius: 10px; text-transform: uppercase;
         }
 
-        .content { padding: 28px; flex: 1; }
+        .content { padding: 24px; flex: 1; min-width: 0; max-width: 100%; box-sizing: border-box; }
 
         /* ── CARDS ── */
         .card {
@@ -893,6 +895,14 @@
     </a>
 
     @auth
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">Download Apps</div>
+    <a href="http://192.168.1.13:8080" target="_blank" title="Download Desktop & Mobile App">
+        <span class="nav-icon"><i class="fa fa-cloud-arrow-down"></i></span>
+        <span class="nav-label">Download Apps</span>
+        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#34d399;">Laptop &amp; Mobile</span>
+    </a>
+
     @if(auth()->user()->isAdmin())
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">Administration</div>
@@ -1591,7 +1601,19 @@
         }
     }
 
-    // Safe & ultra-fast real-time live sync across devices (every 3.5s)
+    // Smart sync on window focus / tab switch
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
+            triggerLiveSync(true);
+        }
+    });
+    window.addEventListener('focus', () => {
+        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
+            triggerLiveSync(true);
+        }
+    });
+
+    // Real-time background sync every 6s (seamless cross-device updates)
     setInterval(() => {
         if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
             const isTyping = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
@@ -1599,7 +1621,7 @@
                 triggerLiveSync(true);
             }
         }
-    }, 3500);
+    }, 6000);
 
     // SPA Navigation Engine (Smooth load without page refresh)
     async function navigateSpa(url, push = true) {

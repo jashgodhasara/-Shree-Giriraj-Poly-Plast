@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, getCachedData } from '../services/api';
 import { ENDPOINTS } from '../config/api';
-import { DashboardStats } from '../types';
+import { DashboardStats, PlasticPricesResponse } from '../types';
 import { Colors, Shadows } from '../components/Theme';
 
 interface Props {
@@ -21,35 +21,65 @@ interface Props {
 export const DashboardScreen: React.FC<Props> = ({ onNavigate }) => {
   const { user } = useAuth();
   const [data, setData] = useState<DashboardStats | null>(null);
+  const [polymerPrices, setPolymerPrices] = useState<PlasticPricesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<string>('Just now');
 
+  const fetchPlasticRates = useCallback(async (isRefresh = false) => {
+    try {
+      const res = await api.get<PlasticPricesResponse>(ENDPOINTS.PLASTIC_PRICES + (isRefresh ? '?refresh=1' : ''));
+      if (res && res.items) {
+        setPolymerPrices(res);
+      }
+    } catch (e) {
+      console.warn('Failed to load polymer prices in mobile:', e);
+    }
+  }, []);
+
   const fetchDashboard = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const res = await api.get<DashboardStats>(ENDPOINTS.DASHBOARD);
-      setData(res);
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      setLastSync(time);
+      const [res] = await Promise.all([
+        api.get<DashboardStats>(ENDPOINTS.DASHBOARD),
+        fetchPlasticRates(isRefresh),
+      ]);
+      if (res) {
+        setData(res);
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setLastSync(time);
+      }
     } catch (e) {
       console.error('Error loading dashboard:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [fetchPlasticRates]);
 
-  // Initial load + live polling every 20 seconds for simultaneous multi-user updates!
+  // Instant Cache-First load + real-time 6s background auto-sync
   useEffect(() => {
+    getCachedData<DashboardStats>(ENDPOINTS.DASHBOARD).then((cached) => {
+      if (cached) {
+        setData(cached);
+        setLoading(false);
+      }
+    });
     fetchDashboard();
+
     const interval = setInterval(() => {
       fetchDashboard();
-    }, 20000);
+    }, 15000);
     return () => clearInterval(interval);
   }, [fetchDashboard]);
 
-  const stats = data?.stats;
+  const stats = data?.stats || {
+    total_revenue: 0,
+    invoices: 0,
+    customers: 0,
+    products: 0,
+    suppliers: 0,
+  };
 
   return (
     <ScrollView
@@ -65,10 +95,12 @@ export const DashboardScreen: React.FC<Props> = ({ onNavigate }) => {
     >
       {/* Live Sync Banner */}
       <View style={styles.syncBanner}>
-        <View style={styles.liveDot} />
-        <Text style={styles.syncText}>
-          Live Sync Active • Updated: <Text style={{ fontWeight: '700' }}>{lastSync}</Text>
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          <View style={styles.liveDot} />
+          <Text style={styles.syncText} numberOfLines={1}>
+            Synced: <Text style={{ fontWeight: '700' }}>{lastSync}</Text>
+          </Text>
+        </View>
         <TouchableOpacity onPress={() => fetchDashboard(true)} style={styles.refreshBtn}>
           <Text style={styles.refreshBtnText}>↻ Refresh</Text>
         </TouchableOpacity>
@@ -171,6 +203,65 @@ export const DashboardScreen: React.FC<Props> = ({ onNavigate }) => {
           </View>
         </View>
       )}
+
+      {/* Live Polymer Market Rates (3MinAPI) */}
+      <View style={styles.sectionTitleRow}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={styles.sectionHeader}>Live Polymer Rates</Text>
+          <View style={styles.livePulseBadge}>
+            <View style={styles.livePulseDot} />
+            <Text style={styles.livePulseText}>LIVE</Text>
+          </View>
+        </View>
+        <TouchableOpacity onPress={() => fetchPlasticRates(true)}>
+          <Text style={styles.viewAllText}>↻ Refresh</Text>
+        </TouchableOpacity>
+      </View>
+
+      {polymerPrices?.items && polymerPrices.items.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.polymerScroll}
+          contentContainerStyle={styles.polymerContainer}
+        >
+          {polymerPrices.items.map((item) => {
+            const isUp = item.trend === 'up' || (item.change && item.change.startsWith('+') && item.change !== '+0.00');
+            const isDown = item.trend === 'down' || (item.change && item.change.startsWith('-'));
+            const trendColor = isUp ? '#059669' : isDown ? '#DC2626' : Colors.textMuted;
+            const trendBg = isUp ? '#D1FAE5' : isDown ? '#FEE2E2' : '#F1F5F9';
+
+            return (
+              <View key={item.id} style={styles.polymerCard}>
+                <View style={styles.polymerTopRow}>
+                  <Text style={styles.polymerCategory} numberOfLines={1}>
+                    {item.category || 'Polymer'}
+                  </Text>
+                  {item.change ? (
+                    <View style={[styles.trendBadge, { backgroundColor: trendBg }]}>
+                      <Text style={[styles.trendText, { color: trendColor }]}>
+                        {item.change}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <Text style={styles.polymerName} numberOfLines={2}>
+                  {item.material_name}
+                </Text>
+
+                <View style={styles.polymerPriceRow}>
+                  <Text style={styles.polymerCurrency}>₹</Text>
+                  <Text style={styles.polymerPrice}>
+                    {Number(item.current_price).toFixed(2)}
+                  </Text>
+                  <Text style={styles.polymerUnit}>/ {item.unit || 'Kg'}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {/* Recent Invoices */}
       <View style={styles.sectionTitleRow}>
@@ -504,5 +595,97 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 13,
     color: Colors.textMuted,
+  },
+  livePulseBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  livePulseDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  livePulseText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#059669',
+    letterSpacing: 0.5,
+  },
+  polymerScroll: {
+    marginBottom: 20,
+    marginHorizontal: -16,
+  },
+  polymerContainer: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  polymerCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 14,
+    padding: 12,
+    width: 170,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.3)',
+    ...Shadows.md,
+  },
+  polymerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  polymerCategory: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#93C5FD',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    flex: 1,
+  },
+  trendBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  trendText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+  },
+  polymerName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#F8FAFC',
+    marginBottom: 8,
+    minHeight: 32,
+  },
+  polymerPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
+  polymerCurrency: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
+  polymerPrice: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  polymerUnit: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '500',
+    marginLeft: 2,
   },
 });

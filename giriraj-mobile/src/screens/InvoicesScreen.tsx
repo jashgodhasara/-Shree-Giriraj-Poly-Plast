@@ -12,7 +12,7 @@ import {
   ScrollView,
   RefreshControl,
 } from 'react-native';
-import { api } from '../services/api';
+import { api, getCachedData } from '../services/api';
 import { ENDPOINTS } from '../config/api';
 import { Invoice, Customer, Product } from '../types';
 import { Colors, Shadows } from '../components/Theme';
@@ -33,6 +33,7 @@ export const InvoicesScreen: React.FC<Props> = () => {
   // Create Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
   const [invoiceItems, setInvoiceItems] = useState<
     Array<{ product_id: number; quantity: string }>
   >([{ product_id: 0, quantity: '1' }]);
@@ -62,11 +63,22 @@ export const InvoicesScreen: React.FC<Props> = () => {
   }, []);
 
   useEffect(() => {
+    Promise.all([
+      getCachedData<Invoice[]>(ENDPOINTS.INVOICES),
+      getCachedData<Customer[]>(ENDPOINTS.CUSTOMERS),
+      getCachedData<Product[]>(ENDPOINTS.PRODUCTS),
+    ]).then(([cInv, cCust, cProd]) => {
+      if (cInv && cInv.length > 0) setInvoices(cInv);
+      if (cCust && cCust.length > 0) setCustomers(cCust);
+      if (cProd && cProd.length > 0) setProducts(cProd);
+      if (cInv || cCust || cProd) setLoading(false);
+    });
     loadData();
-    const timer = setInterval(() => {
+
+    const interval = setInterval(() => {
       loadData();
-    }, 5000);
-    return () => clearInterval(timer);
+    }, 6000);
+    return () => clearInterval(interval);
   }, [loadData]);
 
   const handleOpenDetail = async (id: number) => {
@@ -130,16 +142,31 @@ export const InvoicesScreen: React.FC<Props> = () => {
     }
   };
 
-  // Filtered List
-  const filtered = invoices.filter((inv) => {
-    const matchesSearch =
-      inv.invoice_number.toLowerCase().includes(search.toLowerCase()) ||
-      (inv.customer_name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (inv.customer?.name || '').toLowerCase().includes(search.toLowerCase());
+  // Filtered List memoized
+  const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return invoices.filter((inv) => {
+      const matchesSearch =
+        !q ||
+        inv.invoice_number.toLowerCase().includes(q) ||
+        (inv.customer_name || '').toLowerCase().includes(q) ||
+        (inv.customer?.name || '').toLowerCase().includes(q);
 
-    if (filterStatus === 'ALL') return matchesSearch;
-    return matchesSearch && inv.status?.toUpperCase() === filterStatus;
-  });
+      if (filterStatus === 'ALL') return matchesSearch;
+      return matchesSearch && inv.status?.toUpperCase() === filterStatus;
+    });
+  }, [invoices, search, filterStatus]);
+
+  const filteredCustomers = React.useMemo(() => {
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter(
+      (c) =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(q)) ||
+        (c.gstin && c.gstin.toLowerCase().includes(q))
+    );
+  }, [customers, customerSearch]);
 
   return (
     <View style={styles.container}>
@@ -187,6 +214,11 @@ export const InvoicesScreen: React.FC<Props> = () => {
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id.toString()}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -258,30 +290,82 @@ export const InvoicesScreen: React.FC<Props> = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ maxHeight: 440 }} keyboardShouldPersistTaps="handled">
               {/* Customer Selector */}
-              <Text style={styles.formLabel}>Customer *</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.customerScroll}>
-                {customers.map((c) => (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[
-                      styles.customerChip,
-                      selectedCustomer === c.id && styles.customerChipActive,
-                    ]}
-                    onPress={() => setSelectedCustomer(c.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.customerChipText,
-                        selectedCustomer === c.id && styles.customerChipTextActive,
-                      ]}
-                    >
-                      {c.name}
-                    </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <Text style={styles.formLabel}>Select Customer * ({filteredCustomers.length})</Text>
+                {selectedCustomer ? (
+                  <TouchableOpacity onPress={() => setSelectedCustomer(null)}>
+                    <Text style={{ fontSize: 11, color: Colors.danger, fontWeight: '600' }}>Clear</Text>
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
+                ) : null}
+              </View>
+
+              <TextInput
+                style={[styles.searchInput, { height: 38, fontSize: 12.5, marginBottom: 8, paddingHorizontal: 10 }]}
+                placeholder="🔍 Search customer name, phone, GSTIN..."
+                placeholderTextColor={Colors.textMuted}
+                value={customerSearch}
+                onChangeText={setCustomerSearch}
+              />
+
+              {filteredCustomers.length === 0 ? (
+                <View style={{ padding: 12, backgroundColor: Colors.bg, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, color: Colors.textMuted, marginBottom: 6 }}>
+                    No customer found.
+                  </Text>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 10, paddingVertical: 5, backgroundColor: Colors.primary, borderRadius: 6 }}
+                    onPress={() => loadData(true)}
+                  >
+                    <Text style={{ color: '#FFF', fontSize: 11, fontWeight: '700' }}>↻ Reload Customers</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <ScrollView
+                  style={{ maxHeight: 130, backgroundColor: Colors.bg, borderRadius: 8, padding: 6, marginBottom: 12, borderWidth: 1, borderColor: Colors.border }}
+                  nestedScrollEnabled
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {filteredCustomers.map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      style={[
+                        {
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          paddingVertical: 7,
+                          paddingHorizontal: 8,
+                          borderRadius: 6,
+                          marginBottom: 4,
+                          backgroundColor: selectedCustomer === c.id ? Colors.primaryLight : '#FFFFFF',
+                          borderWidth: selectedCustomer === c.id ? 1.5 : 1,
+                          borderColor: selectedCustomer === c.id ? Colors.primary : Colors.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        setSelectedCustomer(c.id);
+                        setCustomerSearch(c.name);
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: selectedCustomer === c.id ? Colors.primary : Colors.text }}>
+                          {selectedCustomer === c.id ? '✓ ' : ''}{c.name}
+                        </Text>
+                        <Text style={{ fontSize: 10.5, color: Colors.textMuted }}>
+                          {c.phone ? `📞 ${c.phone} ` : ''}{c.gstin ? `• GST: ${c.gstin}` : ''}
+                        </Text>
+                      </View>
+                      {selectedCustomer === c.id && (
+                        <View style={{ paddingHorizontal: 6, paddingVertical: 2, backgroundColor: Colors.primary, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 9.5, color: '#FFF', fontWeight: '800' }}>SELECTED</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
 
               {/* Items Section */}
               <View style={styles.itemsHeader}>

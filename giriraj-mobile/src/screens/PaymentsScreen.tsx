@@ -12,7 +12,7 @@ import {
   ScrollView,
   RefreshControl,
 } from 'react-native';
-import { api } from '../services/api';
+import { api, getCachedData } from '../services/api';
 import { ENDPOINTS } from '../config/api';
 import { Payment, Invoice } from '../types';
 import { Colors, Shadows } from '../components/Theme';
@@ -50,11 +50,20 @@ export const PaymentsScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    Promise.all([
+      getCachedData<Payment[]>(ENDPOINTS.PAYMENTS),
+      getCachedData<Invoice[]>(ENDPOINTS.INVOICES),
+    ]).then(([cP, cI]) => {
+      if (cP && cP.length > 0) setPayments(cP);
+      if (cI && cI.length > 0) setInvoices(cI.filter((i) => i.status !== 'Paid'));
+      if (cP || cI) setLoading(false);
+    });
     fetchData();
-    const timer = setInterval(() => {
+
+    const interval = setInterval(() => {
       fetchData();
-    }, 15000);
-    return () => clearInterval(timer);
+    }, 6000);
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   const handleRecordPayment = async () => {
@@ -87,7 +96,7 @@ export const PaymentsScreen: React.FC = () => {
       setRemarks('');
       fetchData();
     } catch (e: any) {
-      Alert.alert('Payment Failed', e.message || 'Could not record payment.');
+      Alert.alert('Error', e.message || 'Failed to record payment.');
     } finally {
       setSubmitting(false);
     }
@@ -95,8 +104,9 @@ export const PaymentsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/* Top Controls */}
       <View style={styles.topBar}>
-        <Text style={styles.screenTitle}>Payment Receipts</Text>
+        <Text style={styles.screenTitle}>Recent Transactions ({payments.length})</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
           <Text style={styles.addBtnText}>+ Record Payment</Text>
         </TouchableOpacity>
@@ -108,6 +118,11 @@ export const PaymentsScreen: React.FC = () => {
         <FlatList
           data={payments}
           keyExtractor={(item) => item.id.toString()}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
