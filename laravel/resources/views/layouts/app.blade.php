@@ -1547,9 +1547,38 @@
     /* ─── REAL-TIME NO-REFRESH ENGINE (SPA + LIVE SYNC) ─── */
     let isSyncing = false;
 
+    // Helper: Check if user is currently entering or editing data
+    function isUserDataEntryActive() {
+        const path = window.location.pathname.toLowerCase();
+        if (path.includes('/create') || path.includes('/edit') || path.includes('/pos')) {
+            return true;
+        }
+        // Check if any modal is open
+        const hasOpenModal = !!document.querySelector('.modal-overlay.open, .modal-overlay[style*="display: flex"], .modal-overlay[style*="display: block"], .modal.open');
+        if (hasOpenModal) {
+            return true;
+        }
+        // Check if active element is an input
+        if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            return true;
+        }
+        // Check if any input or textarea on the page has unsaved text
+        const hasUnsavedInput = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea')).some(el => {
+            return el.value && el.value.trim() !== '' && el.value !== el.defaultValue;
+        });
+        if (hasUnsavedInput) {
+            return true;
+        }
+        return false;
+    }
+
     // Trigger manual or post-action sync without page reload
     async function triggerLiveSync(isSilent = false) {
         if (isSyncing) return;
+        if (isUserDataEntryActive()) {
+            return; // NEVER sync or touch DOM while user is entering data!
+        }
+
         isSyncing = true;
         const icon = document.getElementById('liveSyncIcon');
         const text = document.getElementById('liveSyncText');
@@ -1560,16 +1589,20 @@
             const res = await fetch(window.location.href, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
             });
-            if (res.ok) {
+            if (res.ok && !isUserDataEntryActive()) {
                 const html = await res.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                // 1. Update all .card-body containers (Tables, Lists, Empty States)
+                // 1. Update all .card-body containers (Tables, Lists, Empty States) - ONLY if safe
                 const newCards = doc.querySelectorAll('.card-body');
                 const curCards = document.querySelectorAll('.card-body');
                 if (newCards.length && newCards.length === curCards.length) {
                     curCards.forEach((cur, idx) => {
+                        // Protect any card containing forms, inputs, textareas, selects
+                        if (cur.querySelector('form, input, textarea, select')) {
+                            return;
+                        }
                         const newCard = newCards[idx];
                         if (cur.innerHTML !== newCard.innerHTML) {
                             cur.innerHTML = newCard.innerHTML;
@@ -1578,7 +1611,7 @@
                 } else {
                     const newTable = doc.querySelector('.table-wrap');
                     const curTable = document.querySelector('.table-wrap');
-                    if (newTable && curTable && newTable.innerHTML !== curTable.innerHTML) {
+                    if (newTable && curTable && !curTable.querySelector('input, form') && newTable.innerHTML !== curTable.innerHTML) {
                         curTable.innerHTML = newTable.innerHTML;
                     }
                 }
@@ -1601,27 +1634,24 @@
         }
     }
 
-    // Smart sync on window focus / tab switch
+    // Smart sync on window focus / tab switch - ONLY if not entering data
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
+        if (!document.hidden && !isUserDataEntryActive()) {
             triggerLiveSync(true);
         }
     });
     window.addEventListener('focus', () => {
-        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
+        if (!document.hidden && !isUserDataEntryActive()) {
             triggerLiveSync(true);
         }
     });
 
-    // Real-time background sync every 6s (seamless cross-device updates)
+    // Real-time background sync every 15s (ONLY on list/dashboard pages when idle)
     setInterval(() => {
-        if (!document.hidden && !document.querySelector('.modal-overlay.open')) {
-            const isTyping = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
-            if (!isTyping) {
-                triggerLiveSync(true);
-            }
+        if (!document.hidden && !isUserDataEntryActive()) {
+            triggerLiveSync(true);
         }
-    }, 6000);
+    }, 15000);
 
     // SPA Navigation Engine (Smooth load without page refresh)
     async function navigateSpa(url, push = true) {

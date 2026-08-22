@@ -710,7 +710,9 @@ function saveQuickProduct(e) {
                         }
                     }
                 })
-                .catch(() => location.reload());
+                .catch(err => {
+                    console.error('Error fetching updated products:', err);
+                });
         } else {
             showToast(res.message || 'Failed to add product', 'error');
         }
@@ -762,7 +764,9 @@ function saveQuickCustomer(e) {
                         selectCustomer(newCust.id);
                     }
                 })
-                .catch(() => location.reload());
+                .catch(err => {
+                    console.error('Error fetching updated customers:', err);
+                });
         } else {
             showToast(res.message || 'Failed to add customer', 'error');
         }
