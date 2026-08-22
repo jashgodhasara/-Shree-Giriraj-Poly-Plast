@@ -1418,8 +1418,8 @@
                 if (onSuccess) {
                     onSuccess(res);
                 } else {
-                    // Instantly sync the page without refreshing
-                    triggerLiveSync(true);
+                    // Instantly update table data without page refresh!
+                    triggerLiveSync(true, true);
                 }
             } else {
                 showToast(res.message || 'An error occurred.', 'error');
@@ -1457,7 +1457,7 @@
                     tr.style.transform = 'scaleY(0)';
                     setTimeout(() => tr.remove(), 250);
                 }
-                triggerLiveSync(true);
+                triggerLiveSync(true, true);
             } else {
                 if (tr) tr.style.opacity = '1';
                 showToast(res.message, 'error');
@@ -1573,9 +1573,9 @@
     }
 
     // Trigger manual or post-action sync without page reload
-    async function triggerLiveSync(isSilent = false) {
+    async function triggerLiveSync(forceSync = false, isSilent = false) {
         if (isSyncing) return;
-        if (isUserDataEntryActive()) {
+        if (!forceSync && isUserDataEntryActive()) {
             return; // NEVER sync or touch DOM while user is entering data!
         }
 
@@ -1589,7 +1589,7 @@
             const res = await fetch(window.location.href, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
             });
-            if (res.ok && !isUserDataEntryActive()) {
+            if (res.ok && (forceSync || !isUserDataEntryActive())) {
                 const html = await res.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
@@ -1600,7 +1600,7 @@
                 if (newCards.length && newCards.length === curCards.length) {
                     curCards.forEach((cur, idx) => {
                         // Protect any card containing forms, inputs, textareas, selects
-                        if (cur.querySelector('form, input, textarea, select')) {
+                        if (!forceSync && cur.querySelector('form, input, textarea, select')) {
                             return;
                         }
                         const newCard = newCards[idx];
@@ -1611,7 +1611,7 @@
                 } else {
                     const newTable = doc.querySelector('.table-wrap');
                     const curTable = document.querySelector('.table-wrap');
-                    if (newTable && curTable && !curTable.querySelector('input, form') && newTable.innerHTML !== curTable.innerHTML) {
+                    if (newTable && curTable && (forceSync || !curTable.querySelector('input, form')) && newTable.innerHTML !== curTable.innerHTML) {
                         curTable.innerHTML = newTable.innerHTML;
                     }
                 }
@@ -1637,19 +1637,19 @@
     // Smart sync on window focus / tab switch - ONLY if not entering data
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && !isUserDataEntryActive()) {
-            triggerLiveSync(true);
+            triggerLiveSync(false, true);
         }
     });
     window.addEventListener('focus', () => {
         if (!document.hidden && !isUserDataEntryActive()) {
-            triggerLiveSync(true);
+            triggerLiveSync(false, true);
         }
     });
 
     // Real-time background sync every 15s (ONLY on list/dashboard pages when idle)
     setInterval(() => {
         if (!document.hidden && !isUserDataEntryActive()) {
-            triggerLiveSync(true);
+            triggerLiveSync(false, true);
         }
     }, 15000);
 
