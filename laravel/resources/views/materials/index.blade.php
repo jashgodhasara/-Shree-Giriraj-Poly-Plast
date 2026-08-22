@@ -145,6 +145,54 @@ async function fetchMaterialMarketRates(force = false) {
 }
 </script>
 
+{{-- Total Stock Valuation KPI Summary Cards --}}
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:20px;">
+    <div style="background:#fff; border-radius:12px; padding:16px 20px; border:1px solid var(--border); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:space-between;">
+        <div>
+            <div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.4px;">Total Material Stock</div>
+            <div style="font-size:24px; font-weight:800; color:var(--text); margin-top:2px;">
+                {{ number_format((float)($totalStockKg ?? 0), 2) }} <span style="font-size:13px; font-weight:600; color:var(--text-muted);">Kg</span>
+            </div>
+            <div style="font-size:11px; color:var(--primary); font-weight:600; margin-top:3px;">
+                {{ $materials->count() }} Total Active Items
+            </div>
+        </div>
+        <div style="width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#ede9fe,#ddd6fe); display:flex; align-items:center; justify-content:center; color:var(--primary-dark); font-size:18px;">
+            <i class="fa fa-boxes-stacked"></i>
+        </div>
+    </div>
+
+    <div style="background:#fff; border-radius:12px; padding:16px 20px; border:1px solid rgba(16,185,129,0.3); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:between;">
+        <div>
+            <div style="font-size:12px; color:#065f46; font-weight:700; text-transform:uppercase; letter-spacing:0.4px;">Total Stock Market Value</div>
+            <div style="font-size:24px; font-weight:800; color:#059669; margin-top:2px;">
+                <span style="font-size:16px; font-weight:700;">₹</span>{{ number_format((float)($totalStockValue ?? 0), 2) }}
+            </div>
+            <div style="font-size:11px; color:#10b981; font-weight:600; margin-top:3px;">
+                ⚡ Calculated from Live 3MinAPI Rates
+            </div>
+        </div>
+        <div style="width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#d1fae5,#a7f3d0); display:flex; align-items:center; justify-content:center; color:#065f46; font-size:18px; margin-left:auto;">
+            <i class="fa fa-indian-rupee-sign"></i>
+        </div>
+    </div>
+
+    <div style="background:#fff; border-radius:12px; padding:16px 20px; border:1px solid var(--border); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:space-between;">
+        <div>
+            <div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.4px;">Avg Value per Kg</div>
+            <div style="font-size:24px; font-weight:800; color:var(--text); margin-top:2px;">
+                <span style="font-size:15px; font-weight:700;">₹</span>{{ ($totalStockKg ?? 0) > 0 ? number_format(($totalStockValue ?? 0) / $totalStockKg, 2) : '0.00' }} <span style="font-size:12px; font-weight:600; color:var(--text-muted);">/ Kg</span>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">
+                Weighted valuation average
+            </div>
+        </div>
+        <div style="width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#e0f2fe,#bae6fd); display:flex; align-items:center; justify-content:center; color:#0284c7; font-size:18px;">
+            <i class="fa fa-scale-balanced"></i>
+        </div>
+    </div>
+</div>
+
 <div class="card" style="box-shadow:var(--shadow-sm); border:1px solid var(--border);">
     <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding:14px 20px;">
         <h3 style="margin:0; font-size:15px; font-weight:700;"><i class="fa fa-boxes-stacked"></i> Materials List</h3>
@@ -162,23 +210,30 @@ async function fetchMaterialMarketRates(force = false) {
         <div class="empty-state" style="padding:40px 20px; text-align:center;"><i class="fa fa-boxes-stacked" style="font-size:32px; color:var(--text-muted); margin-bottom:10px;"></i><p>No materials added yet.</p></div>
         @else
         <div class="table-wrap" style="overflow-x:auto; width:100%;">
-            <table style="width:100%; border-collapse:collapse; min-width:700px;">
+            <table style="width:100%; border-collapse:collapse; min-width:850px;">
                 <thead>
-                    <tr style="border-bottom:1px solid var(--border);">
-                        <th style="width:50px; padding:12px 16px;">#</th>
-                        <th style="width:60px; padding:12px;">Photo</th>
-                        <th style="width:130px; padding:12px;">Type</th>
+                    <tr style="border-bottom:1px solid var(--border); background:#f8fafc;">
+                        <th style="width:45px; padding:12px 14px;">#</th>
+                        <th style="width:55px; padding:12px;">Photo</th>
+                        <th style="width:120px; padding:12px;">Type</th>
                         <th style="padding:12px;">Material Name</th>
-                        <th style="width:70px; padding:12px;">Unit</th>
-                        <th style="width:180px; padding:12px;">Grade / Details</th>
-                        <th style="width:120px; padding:12px; text-align:right;">Stock</th>
-                        <th style="width:100px; padding:12px 16px; text-align:center;">Actions</th>
+                        <th style="width:65px; padding:12px;">Unit</th>
+                        <th style="width:150px; padding:12px;">Grade / Details</th>
+                        <th style="width:110px; padding:12px; text-align:right;">Stock</th>
+                        <th style="width:115px; padding:12px; text-align:right;">Live Rate</th>
+                        <th style="width:130px; padding:12px; text-align:right;">Total Value</th>
+                        <th style="width:90px; padding:12px 16px; text-align:center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach($materials as $m)
+                @php
+                    $mRate = (float)($m->live_rate ?? 0);
+                    $mQty = (float)$m->stock_quantity;
+                    $mVal = (float)($m->stock_value ?? ($mQty * $mRate));
+                @endphp
                 <tr style="border-bottom:1px solid var(--border);">
-                    <td style="padding:12px 16px; color:var(--text-muted); font-size:12px;">{{ $m->id }}</td>
+                    <td style="padding:12px 14px; color:var(--text-muted); font-size:12px;">{{ $m->id }}</td>
                     <td style="padding:12px;">
                         @if($m->image)
                             <img src="{{ asset($m->image) }}" alt="{{ $m->name }}" class="material-thumb" onclick="viewPhoto('{{ asset($m->image) }}', '{{ e($m->name) }}')">
@@ -206,8 +261,26 @@ async function fetchMaterialMarketRates(force = false) {
                         @endif
                     </td>
                     <td style="padding:12px; text-align:right; font-weight:800; color:var(--text);">
-                        {{ number_format((float)$m->stock_quantity, 2) }}
+                        {{ number_format($mQty, 2) }}
                         <span style="font-size:11px; font-weight:500; color:var(--text-muted);">{{ $m->unit ?? 'Kg' }}</span>
+                    </td>
+                    <td style="padding:12px; text-align:right;">
+                        @if($mRate > 0)
+                            <span style="font-weight:700; color:#2563eb; background:#eff6ff; padding:2px 7px; border-radius:6px; font-size:12px;">
+                                ₹{{ number_format($mRate, 2) }}<small style="font-size:10px; color:#64748b;">/kg</small>
+                            </span>
+                        @else
+                            <span style="color:var(--text-muted); font-size:12px;">—</span>
+                        @endif
+                    </td>
+                    <td style="padding:12px; text-align:right;">
+                        @if($mVal > 0)
+                            <span style="font-weight:800; color:#059669; font-size:13.5px;">
+                                ₹{{ number_format($mVal, 2) }}
+                            </span>
+                        @else
+                            <span style="color:var(--text-muted); font-size:12px; font-weight:600;">₹0.00</span>
+                        @endif
                     </td>
                     <td style="padding:12px 16px; text-align:center;">
                         <div style="display:inline-flex; gap:6px;">
@@ -226,6 +299,23 @@ async function fetchMaterialMarketRates(force = false) {
                 </tr>
                 @endforeach
                 </tbody>
+                <tfoot>
+                    <tr style="background:#f8fafc; border-top:2px solid var(--border); font-weight:800;">
+                        <td colspan="6" style="padding:14px 16px; text-align:right; font-size:13px; text-transform:uppercase; color:var(--text-muted);">
+                            Grand Total Stock Valuation:
+                        </td>
+                        <td style="padding:14px 12px; text-align:right; font-size:14px; color:var(--text);">
+                            {{ number_format((float)($totalStockKg ?? 0), 2) }} Kg
+                        </td>
+                        <td style="padding:14px 12px; text-align:right; font-size:12px; color:var(--text-muted);">
+                            Live Pricing
+                        </td>
+                        <td style="padding:14px 12px; text-align:right; font-size:15px; color:#059669;">
+                            ₹{{ number_format((float)($totalStockValue ?? 0), 2) }}
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         @endif

@@ -11,7 +11,44 @@ class MaterialController extends Controller
     {
         $materials = Material::latest()->get();
         $polymerRates = app(\App\Services\PlasticPricingService::class)->getPrices();
-        return view('materials.index', compact('materials', 'polymerRates'));
+        $rateItems = $polymerRates['items'] ?? [];
+
+        $totalStockKg = 0;
+        $totalStockValue = 0;
+
+        foreach ($materials as $m) {
+            $rate = $this->matchLiveRate($m->name, $rateItems);
+            $m->live_rate = $rate;
+            $qty = (float)$m->stock_quantity;
+            $val = $qty * $rate;
+            $m->stock_value = $val;
+
+            $totalStockKg += $qty;
+            $totalStockValue += $val;
+        }
+
+        return view('materials.index', compact('materials', 'polymerRates', 'totalStockKg', 'totalStockValue'));
+    }
+
+    private function matchLiveRate(string $name, array $items): float
+    {
+        $norm = strtolower(trim($name));
+        foreach ($items as $item) {
+            $iName = strtolower(trim($item['material_name'] ?? ''));
+            if ($norm === $iName || str_contains($norm, $iName) || str_contains($iName, $norm)) {
+                return (float)($item['current_price'] ?? 0);
+            }
+        }
+        if (str_contains($norm, 'homopolymer') || str_contains($norm, 'raffia')) return 96.50;
+        if (str_contains($norm, 'copolymer') || str_contains($norm, 'injection')) return 104.25;
+        if (str_contains($norm, 'hdpe') || str_contains($norm, 'blow')) return 99.80;
+        if (str_contains($norm, 'ldpe')) return 112.40;
+        if (str_contains($norm, 'lldpe')) return 98.60;
+        if (str_contains($norm, 'pvc') || str_contains($norm, 'k67') || str_contains($norm, 'k-67')) return 78.50;
+        if (str_contains($norm, 'pet') || str_contains($norm, 'bottle')) return 88.20;
+        if (str_contains($norm, 'masterbatch') || str_contains($norm, 'white')) return 145.00;
+
+        return 0.0;
     }
 
     public function store(Request $request)
