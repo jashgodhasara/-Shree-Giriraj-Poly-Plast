@@ -14,7 +14,8 @@ mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/bootstrap/cache \
          /var/www/html/database \
          /var/www/html/public/uploads/customers \
-         /var/www/html/public/uploads/products
+         /var/www/html/public/uploads/products \
+         /var/www/html/public/uploads/materials
 
 touch /var/www/html/database/database.sqlite
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
@@ -24,6 +25,7 @@ chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/d
 php artisan key:generate --force || true
 php artisan migrate --force || true
 php artisan db:seed --class=AdminUserSeeder --force || true
+php artisan materials:sync-api --force || true
 php artisan storage:link || true
 
 exec "$@"
