@@ -210,18 +210,26 @@ async function fetchMaterialMarketRates(force = false) {
         <div class="empty-state" style="padding:40px 20px; text-align:center;"><i class="fa fa-boxes-stacked" style="font-size:32px; color:var(--text-muted); margin-bottom:10px;"></i><p>No materials added yet.</p></div>
         @else
         <div class="table-wrap" style="overflow-x:auto; width:100%;">
-            <table style="width:100%; border-collapse:collapse; min-width:850px;">
+            <table style="width:100%; border-collapse:collapse; min-width:900px;">
                 <thead>
                     <tr style="border-bottom:1px solid var(--border); background:#f8fafc;">
                         <th style="width:45px; padding:12px 14px;">#</th>
                         <th style="width:55px; padding:12px;">Photo</th>
-                        <th style="width:120px; padding:12px;">Type</th>
+                        <th style="width:110px; padding:12px;">Type</th>
                         <th style="padding:12px;">Material Name</th>
-                        <th style="width:65px; padding:12px;">Unit</th>
-                        <th style="width:150px; padding:12px;">Grade / Details</th>
-                        <th style="width:110px; padding:12px; text-align:right;">Stock</th>
-                        <th style="width:115px; padding:12px; text-align:right;">Live Rate</th>
-                        <th style="width:130px; padding:12px; text-align:right;">Total Value</th>
+                        <th style="width:125px; padding:12px; text-align:right;">
+                            Available Stock<br>
+                            <small style="font-size:10px; font-weight:600; color:#64748b;">(મારી પાસે સ્ટોક)</small>
+                        </th>
+                        <th style="width:130px; padding:12px; text-align:right;">
+                            Rate / Kg<br>
+                            <small style="font-size:10px; font-weight:600; color:#64748b;">(પ્રતિ Kg ભાવ)</small>
+                        </th>
+                        <th style="width:145px; padding:12px; text-align:right;">
+                            Total Price<br>
+                            <small style="font-size:10px; font-weight:600; color:#059669;">(Stock × Rate)</small>
+                        </th>
+                        <th style="width:140px; padding:12px;">Grade / Details</th>
                         <th style="width:90px; padding:12px 16px; text-align:center;">Actions</th>
                     </tr>
                 </thead>
@@ -248,26 +256,20 @@ async function fetchMaterialMarketRates(force = false) {
                             {{ $m->type }}
                         </span>
                     </td>
-                    <td style="padding:12px; font-weight:700; color:var(--text);">{{ $m->name }}</td>
-                    <td style="padding:12px; color:var(--text-muted);">{{ $m->unit ?? 'Kg' }}</td>
-                    <td style="padding:12px; font-size:12.5px;">
-                        <div style="font-weight:600; color:var(--text);">{{ $m->grade_variation ?? '—' }}</div>
-                        @if($m->temp || $m->size)
-                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-                                @if($m->temp)<span>Temp: {{ $m->temp }}</span>@endif
-                                @if($m->temp && $m->size) • @endif
-                                @if($m->size)<span>Size: {{ $m->size }}</span>@endif
-                            </div>
+                    <td style="padding:12px; font-weight:700; color:var(--text);">
+                        {{ $m->name }}
+                        @if($m->unit && $m->unit !== 'Kg')
+                            <span style="font-size:11px; font-weight:500; color:var(--text-muted);">({{ $m->unit }})</span>
                         @endif
                     </td>
-                    <td style="padding:12px; text-align:right; font-weight:800; color:var(--text);">
+                    <td style="padding:12px; text-align:right; font-weight:800; color:var(--text); font-size:13.5px;">
                         {{ number_format($mQty, 2) }}
-                        <span style="font-size:11px; font-weight:500; color:var(--text-muted);">{{ $m->unit ?? 'Kg' }}</span>
+                        <span style="font-size:11px; font-weight:600; color:var(--text-muted);">{{ $m->unit ?? 'Kg' }}</span>
                     </td>
                     <td style="padding:12px; text-align:right;">
                         @if($mRate > 0)
-                            <span style="font-weight:700; color:#2563eb; background:#eff6ff; padding:2px 7px; border-radius:6px; font-size:12px;">
-                                ₹{{ number_format($mRate, 2) }}<small style="font-size:10px; color:#64748b;">/kg</small>
+                            <span style="font-weight:700; color:#1d4ed8; background:#eff6ff; padding:3px 8px; border-radius:6px; border:1px solid rgba(59,130,246,0.2); font-size:12.5px; display:inline-block;">
+                                ₹{{ number_format($mRate, 2) }}<small style="font-size:10px; color:#64748b; font-weight:600;">/Kg</small>
                             </span>
                         @else
                             <span style="color:var(--text-muted); font-size:12px;">—</span>
@@ -275,11 +277,21 @@ async function fetchMaterialMarketRates(force = false) {
                     </td>
                     <td style="padding:12px; text-align:right;">
                         @if($mVal > 0)
-                            <span style="font-weight:800; color:#059669; font-size:13.5px;">
+                            <span style="font-weight:800; color:#065f46; background:#ecfdf5; padding:3px 8px; border-radius:6px; border:1px solid rgba(16,185,129,0.25); font-size:13.5px; display:inline-block;">
                                 ₹{{ number_format($mVal, 2) }}
                             </span>
                         @else
-                            <span style="color:var(--text-muted); font-size:12px; font-weight:600;">₹0.00</span>
+                            <span style="color:var(--text-muted); font-size:12px; font-weight:600; background:#f1f5f9; padding:2px 6px; border-radius:4px;">₹0.00</span>
+                        @endif
+                    </td>
+                    <td style="padding:12px; font-size:12px;">
+                        <div style="font-weight:600; color:var(--text);">{{ $m->grade_variation ?? '—' }}</div>
+                        @if($m->temp || $m->size)
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                                @if($m->temp)<span>Temp: {{ $m->temp }}</span>@endif
+                                @if($m->temp && $m->size) • @endif
+                                @if($m->size)<span>Size: {{ $m->size }}</span>@endif
+                            </div>
                         @endif
                     </td>
                     <td style="padding:12px 16px; text-align:center;">
@@ -301,19 +313,19 @@ async function fetchMaterialMarketRates(force = false) {
                 </tbody>
                 <tfoot>
                     <tr style="background:#f8fafc; border-top:2px solid var(--border); font-weight:800;">
-                        <td colspan="6" style="padding:14px 16px; text-align:right; font-size:13px; text-transform:uppercase; color:var(--text-muted);">
-                            Grand Total Stock Valuation:
+                        <td colspan="4" style="padding:14px 16px; text-align:right; font-size:13px; text-transform:uppercase; color:var(--text-muted);">
+                            Grand Total (કુલ સ્ટોક અને કિંમત):
                         </td>
                         <td style="padding:14px 12px; text-align:right; font-size:14px; color:var(--text);">
                             {{ number_format((float)($totalStockKg ?? 0), 2) }} Kg
                         </td>
                         <td style="padding:14px 12px; text-align:right; font-size:12px; color:var(--text-muted);">
-                            Live Pricing
+                            Live Rates
                         </td>
                         <td style="padding:14px 12px; text-align:right; font-size:15px; color:#059669;">
                             ₹{{ number_format((float)($totalStockValue ?? 0), 2) }}
                         </td>
-                        <td></td>
+                        <td colspan="2"></td>
                     </tr>
                 </tfoot>
             </table>
