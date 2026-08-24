@@ -46,7 +46,14 @@ class ProductApiController extends Controller
 
     public function destroy(Product $product)
     {
+        if ($product->invoiceItems()->exists() || $product->productionLogs()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete product because existing invoices or production logs are linked to this product.',
+            ], 422);
+        }
+
         $product->delete();
-        return response()->json(['message' => 'Product deleted.']);
+        return response()->json(['success' => true, 'message' => 'Product deleted.']);
     }
 }

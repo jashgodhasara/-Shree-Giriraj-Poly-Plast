@@ -29,13 +29,30 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (\Illuminate\Validation\ValidationException $e, $request) {
-            if ($request->is('api/*') || $request->expectsJson()) {
+            if ($request->is('api/*') || $request->expectsJson() || $request->ajax() || $request->wantsJson()) {
                 $firstError = collect($e->errors())->flatten()->first();
                 return response()->json([
                     'success' => false,
                     'message' => $firstError ?: 'Validation error.',
                     'errors'  => $e->errors(),
                 ], 422);
+            }
+        });
+
+        $exceptions->renderable(function (\Illuminate\Database\QueryException $e, $request) {
+            $isConstraint = str_contains($e->getMessage(), 'FOREIGN KEY constraint failed') 
+                || str_contains($e->getMessage(), '1451') 
+                || str_contains($e->getMessage(), 'Integrity constraint violation');
+
+            if ($isConstraint) {
+                $msg = 'Cannot delete or alter this record because it is referenced in existing transactions (such as Invoices, Ledger, Orders, or Stock Logs).';
+                if ($request->is('api/*') || $request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $msg,
+                    ], 422);
+                }
+                return back()->with('error', $msg);
             }
         });
     })->create();

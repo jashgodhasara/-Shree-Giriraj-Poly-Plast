@@ -42,7 +42,14 @@ class TransporterApiController extends Controller
 
     public function destroy(Transporter $transporter)
     {
+        if ($transporter->invoices()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete transporter because existing invoices reference this transporter.',
+            ], 422);
+        }
+
         $transporter->delete();
-        return response()->json(['message' => 'Transporter deleted.']);
+        return response()->json(['success' => true, 'message' => 'Transporter deleted.']);
     }
 }

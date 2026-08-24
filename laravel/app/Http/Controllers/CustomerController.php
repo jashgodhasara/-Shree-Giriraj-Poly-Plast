@@ -179,6 +179,13 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        if ($customer->invoices()->exists() || $customer->ledgers()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete customer because existing invoices or ledger records are linked to this customer.',
+            ], 422);
+        }
+
         if ($customer->image && file_exists(public_path($customer->image))) {
             @unlink(public_path($customer->image));
         }

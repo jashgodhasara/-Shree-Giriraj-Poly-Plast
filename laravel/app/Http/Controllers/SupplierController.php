@@ -45,6 +45,13 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier)
     {
+        if ($supplier->purchaseOrders()->exists() || $supplier->ledgers()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete supplier because existing purchase orders or ledger records are linked to this supplier.',
+            ], 422);
+        }
+
         $supplier->delete();
         return response()->json(['success' => true, 'message' => 'Supplier deleted.']);
     }

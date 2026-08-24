@@ -155,6 +155,13 @@ class MaterialController extends Controller
 
     public function destroy(Material $material)
     {
+        if ($material->transactions()->exists() || $material->productionLogs()->exists() || $material->purchaseOrders()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete raw material because existing stock transactions, purchase orders, or production logs are linked to it.',
+            ], 422);
+        }
+
         if ($material->image && file_exists(public_path($material->image))) {
             @unlink(public_path($material->image));
         }

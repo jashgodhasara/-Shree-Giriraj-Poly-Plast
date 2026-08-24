@@ -73,7 +73,14 @@ class CustomerApiController extends Controller
 
     public function destroy(Customer $customer)
     {
+        if ($customer->invoices()->exists() || $customer->ledgers()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete customer because existing invoices or ledger records are linked to this customer.',
+            ], 422);
+        }
+
         $customer->delete();
-        return response()->json(['message' => 'Customer deleted.']);
+        return response()->json(['success' => true, 'message' => 'Customer deleted.']);
     }
 }

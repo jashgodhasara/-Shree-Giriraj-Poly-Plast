@@ -116,6 +116,13 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        if ($product->invoiceItems()->exists() || $product->productionLogs()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete product because existing invoices or production logs are linked to this product.',
+            ], 422);
+        }
+
         if ($product->image && file_exists(public_path($product->image))) {
             @unlink(public_path($product->image));
         }
