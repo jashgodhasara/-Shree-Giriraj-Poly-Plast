@@ -61,3 +61,7 @@ desktop.ini
 
 # Composer lock
 !laravel/composer.lock
+
+# MCP Tooling
+indian-bizverify-mcp-main/
+

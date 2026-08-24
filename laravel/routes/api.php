@@ -64,6 +64,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [ApiAuthController::class, 'login'])->name('api.auth.login');
 });
 Route::get('/plastic-prices', [PlasticPricingApiController::class, 'index'])->name('api.plastic-prices.public');
+Route::post('/verify-gstin', [\App\Http\Controllers\GstVerificationController::class, 'verify'])->name('api.gstin.verify.public');
 
 // ─── Protected Routes (Sanctum token required) ───────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {

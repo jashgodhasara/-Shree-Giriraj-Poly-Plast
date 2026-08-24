@@ -302,6 +302,10 @@ export const CustomersScreen: React.FC = () => {
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Customer 360° Detail Modal */}
       <Modal visible={showDetailModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -335,7 +339,7 @@ export const CustomersScreen: React.FC = () => {
               {loadingDetail ? (
                 <View style={{ padding: 30, alignItems: 'center' }}>
                   <ActivityIndicator size="large" color={Colors.primary} />
-                  <Text style={{ marginTop: 10, color: Colors.textMuted, fontSize: 13 }}>Loading customer sales &amp; bills...</Text>
+                  <Text style={{ marginTop: 10, color: Colors.textMuted, fontSize: 13 }}>Loading customer sales & bills...</Text>
                 </View>
               ) : (
                 <>
@@ -399,7 +403,7 @@ export const CustomersScreen: React.FC = () => {
                   {/* Invoices & Bills List */}
                   <View style={{ marginTop: 16, marginBottom: 8 }}>
                     <Text style={{ fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 8 }}>
-                      📋 All Invoices &amp; Bills ({customerDetail?.invoices?.length || 0})
+                      📋 All Invoices & Bills ({customerDetail?.invoices?.length || 0})
                     </Text>
 
                     {(!customerDetail?.invoices || customerDetail.invoices.length === 0) ? (

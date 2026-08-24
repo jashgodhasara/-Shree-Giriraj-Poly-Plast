@@ -37,9 +37,13 @@ class ApiAuthController extends Controller
             ], 403);
         }
 
-        // Revoke old tokens for same device name (prevents token accumulation)
-        $deviceName = $request->device_name ?? 'mobile-app';
-        $user->tokens()->where('name', $deviceName)->delete();
+        $deviceName = $request->device_name ?? 'Mobile Device';
+
+        // Keep maximum 30 active tokens per user (prune oldest if exceeded) to prevent table bloat
+        // without kicking out other active sessions
+        if ($user->tokens()->count() >= 30) {
+            $user->tokens()->oldest()->take(10)->delete();
+        }
 
         $token = $user->createToken($deviceName, ['*'])->plainTextToken;
 

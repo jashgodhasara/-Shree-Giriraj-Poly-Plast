@@ -77,6 +77,12 @@ export async function getCachedData<T = any>(key: string): Promise<T | null> {
   return null;
 }
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function registerUnauthorizedHandler(callback: () => void) {
+  unauthorizedHandler = callback;
+}
+
 // ─── Core HTTP Client ──────────────────────────────────────────────────────
 async function request<T = any>(
   endpoint: string,
@@ -105,6 +111,9 @@ async function request<T = any>(
 
     if (response.status === 401) {
       await removeToken();
+      if (unauthorizedHandler) {
+        unauthorizedHandler();
+      }
       throw new Error('Session expired. Please login again.');
     }
 

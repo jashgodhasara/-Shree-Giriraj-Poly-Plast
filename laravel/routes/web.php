@@ -33,6 +33,10 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback'])->name('auth.social.callback');
 });
 
+// GSTIN Live Verification (Fast utility endpoint)
+Route::post('/verify-gstin', [\App\Http\Controllers\GstVerificationController::class, 'verify'])->name('gstin.verify');
+
+
 // ── Authenticated routes ─────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
@@ -50,8 +54,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/working-date/reset', [DashboardController::class, 'resetWorkingDate'])->name('working-date.reset');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
-    // GSTIN Live Verification
-    Route::post('/verify-gstin', [\App\Http\Controllers\GstVerificationController::class, 'verify'])->name('gstin.verify');
 
     // Live Plastic Pricing Feed
     Route::get('/plastic-prices', [App\Http\Controllers\Api\PlasticPricingApiController::class, 'index'])->name('plastic-prices.index');

@@ -964,6 +964,77 @@ if (payForm) {
 
 // Edit Customer
 let editUrl = '{{ route('customers.update', $customer) }}';
+
+window.verifyGst = async function(mode) {
+    const input = document.getElementById(mode + '_gstin');
+    const btn = document.getElementById(mode + '_gst_btn');
+    const statusDiv = document.getElementById(mode + '_gst_status');
+    if (!input) return;
+    const gstin = (input.value || '').trim().toUpperCase();
+
+    if (!gstin || gstin.length < 15) {
+        showToast('Please enter a valid 15-character GSTIN', 'error');
+        return;
+    }
+
+    const oldBtnText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+        btn.disabled = true;
+    }
+    if (statusDiv) {
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying GSTIN...</span>';
+    }
+
+    try {
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = tokenMeta ? tokenMeta.content : '{{ csrf_token() }}';
+        const res = await fetch('{{ route('gstin.verify') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ gstin: gstin })
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.valid) {
+            const detailLabel = data.trade_name || data.legal_name || `${data.state || 'Gujarat'} (${data.business_type || 'Active Taxpayer'})`;
+            if (statusDiv) {
+                statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status || 'Active'} • ${detailLabel}</span>`;
+            }
+            
+            // Auto-fill fields when available
+            if (data.name && document.getElementById(mode + '_name')) {
+                document.getElementById(mode + '_name').value = data.name;
+            }
+            if (data.state && document.getElementById(mode + '_state')) {
+                document.getElementById(mode + '_state').value = data.state;
+            }
+            if (data.address && document.getElementById(mode + '_address')) {
+                document.getElementById(mode + '_address').value = data.address;
+            }
+
+            showToast(data.message || '✅ GSTIN Verified & State Auto-filled!', 'success');
+        } else {
+            if (statusDiv) statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Invalid GSTIN'}</span>`;
+            showToast(data.message || 'GSTIN verification failed', 'error');
+        }
+    } catch (err) {
+        if (statusDiv) statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error verifying GSTIN</span>`;
+        showToast('Error connecting to GST verification service', 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = oldBtnText;
+            btn.disabled = false;
+        }
+    }
+};
+
 window.editCustomer = function(id, name, phone, email, address, gstin, state, imageUrl) {
     editUrl = `/customers/${id}`;
     if (document.getElementById('edit_name')) document.getElementById('edit_name').value = name || '';
@@ -972,6 +1043,9 @@ window.editCustomer = function(id, name, phone, email, address, gstin, state, im
     if (document.getElementById('edit_address')) document.getElementById('edit_address').value = address || '';
     if (document.getElementById('edit_gstin')) document.getElementById('edit_gstin').value = gstin || '';
     if (document.getElementById('edit_state')) document.getElementById('edit_state').value = state || '';
+
+    const statusDiv = document.getElementById('edit_gst_status');
+    if (statusDiv) statusDiv.style.display = 'none';
 
     const preview = document.getElementById('edit_cust_preview');
     const container = document.getElementById('edit_cust_preview_container');

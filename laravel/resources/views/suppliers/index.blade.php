@@ -138,7 +138,7 @@ async function verifySupplierGst(prefix) {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
     btn.disabled = true;
     statusDiv.style.display = 'block';
-    statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying with GST portal...</span>';
+    statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying GSTIN...</span>';
 
     try {
         const res = await fetch('{{ route('gstin.verify') }}', {
@@ -154,9 +154,10 @@ async function verifySupplierGst(prefix) {
         const data = await res.json();
 
         if (data.success && data.valid) {
-            statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status} • ${data.trade_name || data.legal_name}</span>`;
+            const detailLabel = data.trade_name || data.legal_name || `${data.state || 'Gujarat'} (${data.business_type || 'Active Taxpayer'})`;
+            statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status || 'Active'} • ${detailLabel}</span>`;
             
-            // Auto-fill name & address
+            // Auto-fill name & address when present
             if (data.name) {
                 document.getElementById(prefix + '_name').value = data.name;
             }
@@ -164,14 +165,14 @@ async function verifySupplierGst(prefix) {
                 document.getElementById(prefix + '_address').value = data.address;
             }
 
-            showToast('✅ GSTIN Verified & Supplier Details Auto-filled!', 'success');
+            showToast(data.message || '✅ GSTIN Verified!', 'success');
         } else {
             statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Invalid GSTIN'}</span>`;
             showToast(data.message || 'GSTIN verification failed', 'error');
         }
     } catch (err) {
         statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error verifying GSTIN</span>`;
-        showToast('Error connecting to GST API', 'error');
+        showToast('Error connecting to GST verification service', 'error');
     } finally {
         btn.innerHTML = oldBtnText;
         btn.disabled = false;

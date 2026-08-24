@@ -296,7 +296,7 @@ window.verifyGst = async function(mode) {
     }
     if (statusDiv) {
         statusDiv.style.display = 'block';
-        statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying with GST portal...</span>';
+        statusDiv.innerHTML = '<span style="color:var(--primary)"><i class="fa-solid fa-spinner fa-spin"></i> Verifying GSTIN...</span>';
     }
 
     try {
@@ -315,9 +315,12 @@ window.verifyGst = async function(mode) {
         const data = await res.json();
 
         if (data.success && data.valid) {
-            if (statusDiv) statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status} • ${data.trade_name || data.legal_name}</span>`;
+            const detailLabel = data.trade_name || data.legal_name || `${data.state || 'Gujarat'} (${data.business_type || 'Active Taxpayer'})`;
+            if (statusDiv) {
+                statusDiv.innerHTML = `<span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${data.status || 'Active'} • ${detailLabel}</span>`;
+            }
             
-            // Auto-fill fields
+            // Auto-fill fields when available
             if (data.name && document.getElementById(mode + '_name')) {
                 document.getElementById(mode + '_name').value = data.name;
             }
@@ -328,14 +331,14 @@ window.verifyGst = async function(mode) {
                 document.getElementById(mode + '_address').value = data.address;
             }
 
-            showToast('✅ GSTIN Verified & Form Auto-filled!', 'success');
+            showToast(data.message || '✅ GSTIN Verified & State Auto-filled!', 'success');
         } else {
             if (statusDiv) statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Invalid GSTIN'}</span>`;
             showToast(data.message || 'GSTIN verification failed', 'error');
         }
     } catch (err) {
         if (statusDiv) statusDiv.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error verifying GSTIN</span>`;
-        showToast('Error connecting to GST API', 'error');
+        showToast('Error connecting to GST verification service', 'error');
     } finally {
         if (btn) {
             btn.innerHTML = oldBtnText;

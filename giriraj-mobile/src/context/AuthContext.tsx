@@ -1,7 +1,9 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '../types';
-import { getToken, getUser, saveToken, saveUser, removeToken, api } from '../services/api';
-import { ENDPOINTS, getApiBaseUrl, setApiBaseUrl } from '../config/api';
+import { getToken, getUser, saveToken, saveUser, removeToken, api, registerUnauthorizedHandler } from '../services/api';
+import { ENDPOINTS, DEFAULT_API_BASE_URL, getApiBaseUrl, setApiBaseUrl } from '../config/api';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +25,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [serverUrl, setServerUrlState] = useState<string>(DEFAULT_API_BASE_URL);
 
   useEffect(() => {
+    registerUnauthorizedHandler(() => {
+      setToken(null);
+      setUser(null);
+    });
     bootstrapAuth();
   }, []);
 
@@ -45,12 +51,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const getDeviceId = async (): Promise<string> => {
+    try {
+      let id = await AsyncStorage.getItem('erp_device_id');
+      if (!id) {
+        id = Math.random().toString(36).substring(2, 8);
+        await AsyncStorage.setItem('erp_device_id', id);
+      }
+      return id;
+    } catch {
+      return 'mobile';
+    }
+  };
+
   const login = async (email: string, pass: string): Promise<{ success: boolean; message?: string }> => {
     try {
+      const deviceId = await getDeviceId();
+      const deviceLabel = Platform.OS === 'ios' ? `iOS Device (${deviceId})` : `Android Phone (${deviceId})`;
+
       const response = await api.post(ENDPOINTS.LOGIN, {
         email: email.trim(),
         password: pass,
-        device_name: 'Android Mobile App',
+        device_name: deviceLabel,
       });
 
       if (response.success && response.token) {

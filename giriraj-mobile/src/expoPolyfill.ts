@@ -49,7 +49,7 @@ class PolyfillSharedRef extends PolyfillSharedObject {
   nativeRefType = 'unknown';
 }
 
-const g = typeof globalThis !== 'undefined' ? (globalThis as any) : (global as any);
+const g = typeof globalThis !== 'undefined' ? (globalThis as any) : (typeof window !== 'undefined' ? (window as any) : {});
 
 if (g) {
   if (!g.expo) {

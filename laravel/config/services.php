@@ -36,7 +36,7 @@ return [
     ],
 
     'gstin' => [
-        'api_key' => env('GSTIN_API_KEY', '375ae44ed21b759aa6a580d31a4ff3d5'),
+        'api_key' => env('GSTIN_API_KEY', 'gak_5bb39b8150d74e30a27a5496925c9517'),
     ],
 
     'google' => [
