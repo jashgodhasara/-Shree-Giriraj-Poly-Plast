@@ -126,6 +126,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/inventory/adjustments',   [\App\Http\Controllers\Api\InventoryApiController::class, 'adjustments'])->name('api.inventory.adjustments');
     Route::post('/inventory/adjustments',  [\App\Http\Controllers\Api\InventoryApiController::class, 'storeAdjustment'])->name('api.inventory.adjustments.store');
 
+    // Dyes & Moulds API
+    Route::get('/dyes',                    [\App\Http\Controllers\Api\DyeApiController::class, 'index'])->name('api.dyes.index');
+    Route::get('/dyes/{dye}',              [\App\Http\Controllers\Api\DyeApiController::class, 'show'])->name('api.dyes.show');
+
+    // Factory Machinery & Plant Assets API
+    Route::get('/factory-assets',          [\App\Http\Controllers\Api\FactoryAssetApiController::class, 'index'])->name('api.factory-assets.index');
+    Route::get('/factory-assets/{factoryAsset}', [\App\Http\Controllers\Api\FactoryAssetApiController::class, 'show'])->name('api.factory-assets.show');
+
     // ── Admin-only destructive actions ───────────────────────────────────────
     Route::middleware('api.admin')->group(function () {
         Route::delete('/invoices/{invoice}',             [InvoiceApiController::class, 'destroy'])->name('api.invoices.destroy');

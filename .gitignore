@@ -43,9 +43,15 @@ giriraj-desktop/dist/
 giriraj-mobile/.expo/
 giriraj-mobile/web-build/
 
-# Legacy uploads
+# Legacy and dynamic uploads
 uploads/*
 !uploads/.gitkeep
+laravel/public/uploads/*
+!laravel/public/uploads/.gitkeep
+!laravel/public/uploads/products/.gitkeep
+!laravel/public/uploads/customers/.gitkeep
+!laravel/public/uploads/dyes/.gitkeep
+!laravel/public/uploads/assets/.gitkeep
 
 # OS & IDE
 .DS_Store

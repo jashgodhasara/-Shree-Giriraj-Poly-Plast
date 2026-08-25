@@ -47,7 +47,7 @@
 
 <div style="margin-bottom:24px;">
     <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;">
-        Password {{ $isEdit ? '<span style="font-size:11px;color:var(--text-muted);font-weight:400;">(leave blank to keep current)</span>' : '<span style="color:var(--danger);">*</span>' }}
+        Password {!! $isEdit ? '<span style="font-size:11px;color:var(--text-muted);font-weight:400;">(leave blank to keep current)</span>' : '<span style="color:var(--danger);">*</span>' !!}
     </label>
     <input type="password" name="password" id="{{ $isEdit ? 'edit_password' : 'create_password' }}"
         placeholder="{{ $isEdit ? 'Leave blank to keep current password' : 'Min. 8 characters' }}"

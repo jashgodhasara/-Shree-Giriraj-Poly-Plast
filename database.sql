@@ -278,3 +278,91 @@ CREATE TABLE IF NOT EXISTS ledgers (
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS dyes_and_moulds (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    mould_type VARCHAR(100) DEFAULT 'Injection Mould',
+    cavities INT DEFAULT 1,
+    ownership_type ENUM('Company Owned', 'Client Owned') DEFAULT 'Company Owned',
+    customer_id INT NULL,
+    product_id INT NULL,
+    compatible_machines VARCHAR(255) NULL,
+    rack_location VARCHAR(150) NULL,
+    status VARCHAR(50) DEFAULT 'Ready / In Storage',
+    total_shots_count BIGINT UNSIGNED DEFAULT 0,
+    service_interval_shots BIGINT UNSIGNED DEFAULT 50000,
+    last_serviced_date DATE NULL,
+    next_service_due_date DATE NULL,
+    purchase_cost DECIMAL(12, 2) DEFAULT 0.00,
+    fabrication_date DATE NULL,
+    image VARCHAR(255) NULL,
+    specifications JSON NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS dye_maintenance_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    dye_id BIGINT NOT NULL,
+    maintenance_date DATE NOT NULL,
+    maintenance_type VARCHAR(150) NOT NULL,
+    shots_at_service BIGINT UNSIGNED DEFAULT 0,
+    cost DECIMAL(10, 2) DEFAULT 0.00,
+    performed_by VARCHAR(150) NULL,
+    vendor_name VARCHAR(150) NULL,
+    work_description TEXT NULL,
+    next_due_date DATE NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (dye_id) REFERENCES dyes_and_moulds(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS factory_assets (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    asset_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    category VARCHAR(100) DEFAULT 'Moulding Machine',
+    make_brand VARCHAR(150) NULL,
+    model_number VARCHAR(100) NULL,
+    serial_number VARCHAR(100) NULL,
+    tonnage_or_capacity VARCHAR(100) NULL,
+    power_rating_kw DECIMAL(8, 2) NULL,
+    plant_location VARCHAR(150) NULL,
+    purchase_date DATE NULL,
+    purchase_cost DECIMAL(14, 2) DEFAULT 0.00,
+    warranty_expiry DATE NULL,
+    supplier_id INT NULL,
+    status VARCHAR(50) DEFAULT 'Operational',
+    assigned_operator VARCHAR(150) NULL,
+    last_service_date DATE NULL,
+    next_service_date DATE NULL,
+    service_interval_days INT DEFAULT 90,
+    image VARCHAR(255) NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS asset_maintenance_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    asset_id BIGINT NOT NULL,
+    service_date DATE NOT NULL,
+    service_type VARCHAR(150) NOT NULL,
+    cost DECIMAL(10, 2) DEFAULT 0.00,
+    technician_name VARCHAR(150) NULL,
+    vendor_name VARCHAR(150) NULL,
+    parts_replaced TEXT NULL,
+    problem_reported TEXT NULL,
+    action_taken TEXT NULL,
+    status_after_service VARCHAR(50) DEFAULT 'Operational',
+    next_service_due DATE NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (asset_id) REFERENCES factory_assets(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -118,6 +118,23 @@ Route::middleware('auth')->group(function () {
     Route::post('/warehouses', [\App\Http\Controllers\InventoryController::class, 'warehouseStore'])->name('warehouses.store');
     Route::put('/warehouses/{warehouse}', [\App\Http\Controllers\InventoryController::class, 'warehouseUpdate'])->name('warehouses.update');
 
+    // Dyes & Moulds Tool Room Inventory
+    Route::get('/dyes', [\App\Http\Controllers\DyeController::class, 'index'])->name('dyes.index');
+    Route::post('/dyes', [\App\Http\Controllers\DyeController::class, 'store'])->name('dyes.store');
+    Route::get('/dyes/{dye}', [\App\Http\Controllers\DyeController::class, 'show'])->name('dyes.show');
+    Route::put('/dyes/{dye}', [\App\Http\Controllers\DyeController::class, 'update'])->name('dyes.update');
+    Route::delete('/dyes/{dye}', [\App\Http\Controllers\DyeController::class, 'destroy'])->name('dyes.destroy');
+    Route::post('/dyes/{dye}/maintenance', [\App\Http\Controllers\DyeController::class, 'logMaintenance'])->name('dyes.log-maintenance');
+    Route::post('/dyes/{dye}/shots', [\App\Http\Controllers\DyeController::class, 'updateShots'])->name('dyes.update-shots');
+
+    // Factory Machinery & Plant Assets
+    Route::get('/factory-assets', [\App\Http\Controllers\FactoryAssetController::class, 'index'])->name('factory-assets.index');
+    Route::post('/factory-assets', [\App\Http\Controllers\FactoryAssetController::class, 'store'])->name('factory-assets.store');
+    Route::get('/factory-assets/{factoryAsset}', [\App\Http\Controllers\FactoryAssetController::class, 'show'])->name('factory-assets.show');
+    Route::put('/factory-assets/{factoryAsset}', [\App\Http\Controllers\FactoryAssetController::class, 'update'])->name('factory-assets.update');
+    Route::delete('/factory-assets/{factoryAsset}', [\App\Http\Controllers\FactoryAssetController::class, 'destroy'])->name('factory-assets.destroy');
+    Route::post('/factory-assets/{factoryAsset}/maintenance', [\App\Http\Controllers\FactoryAssetController::class, 'logMaintenance'])->name('factory-assets.log-maintenance');
+
     // Invoices
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/billing', [InvoiceController::class, 'create'])->name('invoices.create');

@@ -843,6 +843,17 @@
     </a>
 
     <div class="sidebar-divider"></div>
+    <div class="sidebar-section">Tooling &amp; Plant Assets</div>
+    <a href="{{ route('dyes.index') }}" class="{{ request()->routeIs('dyes.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-shapes"></i></span>
+        <span class="nav-label">Dyes &amp; Moulds (ડાઈ)</span>
+    </a>
+    <a href="{{ route('factory-assets.index') }}" class="{{ request()->routeIs('factory-assets.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-industry"></i></span>
+        <span class="nav-label">Plant Machinery (મશીન)</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
     <div class="sidebar-section">Job Work Module</div>
     <a href="{{ route('jobworks.dashboard') }}" class="{{ request()->routeIs('jobworks.dashboard') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-chart-pie"></i></span>
