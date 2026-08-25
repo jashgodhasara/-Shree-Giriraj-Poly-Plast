@@ -341,12 +341,15 @@ class InventoryController extends Controller
     public function warehouseStore(Request $request)
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:150',
-            'code'       => 'required|string|max:50|unique:warehouses,code',
-            'location'   => 'nullable|string|max:150',
-            'address'    => 'nullable|string',
-            'is_primary' => 'nullable|boolean',
-            'status'     => 'nullable|in:active,inactive',
+            'name'           => 'required|string|max:150',
+            'code'           => 'required|string|max:50|unique:warehouses,code',
+            'location'       => 'nullable|string|max:150',
+            'contact_person' => 'nullable|string|max:150',
+            'contact_number' => 'nullable|string|max:50',
+            'email'          => 'nullable|email|max:150',
+            'address'        => 'nullable|string',
+            'is_primary'     => 'nullable|boolean',
+            'status'         => 'nullable|in:active,inactive',
         ]);
 
         $validated['code'] = strtoupper(trim($validated['code']));
@@ -368,12 +371,15 @@ class InventoryController extends Controller
     public function warehouseUpdate(Request $request, Warehouse $warehouse)
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:150',
-            'code'       => 'required|string|max:50|unique:warehouses,code,' . $warehouse->id,
-            'location'   => 'nullable|string|max:150',
-            'address'    => 'nullable|string',
-            'is_primary' => 'nullable|boolean',
-            'status'     => 'required|in:active,inactive',
+            'name'           => 'required|string|max:150',
+            'code'           => 'required|string|max:50|unique:warehouses,code,' . $warehouse->id,
+            'location'       => 'nullable|string|max:150',
+            'contact_person' => 'nullable|string|max:150',
+            'contact_number' => 'nullable|string|max:50',
+            'email'          => 'nullable|email|max:150',
+            'address'        => 'nullable|string',
+            'is_primary'     => 'nullable|boolean',
+            'status'         => 'required|in:active,inactive',
         ]);
 
         $validated['code'] = strtoupper(trim($validated['code']));
