@@ -647,21 +647,18 @@
     </div>
 </div>
 
-@endsection
-
-@section('scripts')
 <script>
-let editProductUrl = '';
+window.editProductUrl = '';
 
-function openAddProductModal() {
+window.openAddProductModal = function() {
     document.getElementById('addProductForm').reset();
     document.getElementById('add_prod_preview_box').style.display = 'none';
     document.getElementById('add_dup_alert').style.display = 'none';
     openModal('addProductModal');
-}
+};
 
-function openEditProductModal(p) {
-    editProductUrl = `/products/${p.id}`;
+window.openEditProductModal = function(p) {
+    window.editProductUrl = `/products/${p.id}`;
     document.getElementById('edit_product_id').value = p.id;
     document.getElementById('edit_name').value = p.name || '';
     document.getElementById('edit_sku').value = p.sku || '';
@@ -689,9 +686,9 @@ function openEditProductModal(p) {
     }
 
     openModal('editProductModal');
-}
+};
 
-function previewProductImg(input, previewId) {
+window.previewProductImg = function(input, previewId) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -701,15 +698,15 @@ function previewProductImg(input, previewId) {
         };
         reader.readAsDataURL(input.files[0]);
     }
-}
+};
 
-function viewPhoto(url, title) {
+window.viewPhoto = function(url, title) {
     document.getElementById('photoModalImg').src = url;
     document.getElementById('photoModalTitle').innerText = title;
     openModal('photoModal');
-}
+};
 
-async function checkDuplicateProduct(mode) {
+window.checkDuplicateProduct = async function(mode) {
     const sku = document.getElementById(mode + '_sku') ? document.getElementById(mode + '_sku').value.trim() : '';
     const barcode = document.getElementById(mode + '_barcode') ? document.getElementById(mode + '_barcode').value.trim() : '';
     const name = document.getElementById(mode + '_name') ? document.getElementById(mode + '_name').value.trim() : '';
@@ -730,22 +727,22 @@ async function checkDuplicateProduct(mode) {
             }
         }
     } catch (e) {}
-}
+};
 
 // Add Product Submit
-document.getElementById('addProductForm').addEventListener('submit', function(e) {
+document.getElementById('addProductForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
     submitForm(this, '{{ route('products.store') }}', 'POST');
 });
 
 // Edit Product Submit
-document.getElementById('editProductForm').addEventListener('submit', function(e) {
+document.getElementById('editProductForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    submitForm(this, editProductUrl, 'POST');
+    submitForm(this, window.editProductUrl, 'POST');
 });
 
 // CSV Import Submit
-document.getElementById('importProductForm').addEventListener('submit', async function(e) {
+document.getElementById('importProductForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     const resultBox = document.getElementById('import_results');

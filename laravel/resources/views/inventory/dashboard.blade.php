@@ -5,6 +5,30 @@
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Top Quick Actions Bar -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+    <div>
+        <h2 style="font-size:22px; font-weight:800; color:var(--text-dark, #0f172a); margin:0; display:flex; align-items:center; gap:10px;">
+            <i class="fa-solid fa-boxes-stacked" style="color:var(--primary, #6366f1);"></i> Central Inventory &amp; Stock Engine
+        </h2>
+        <p style="font-size:13px; color:var(--text-muted, #64748b); margin:4px 0 0 0;">Real-time stock valuation, raw materials inward/outward, low stock alerts &amp; adjustments</p>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{{ route('products.index') }}" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Add Product / Stock
+        </a>
+        <a href="{{ route('material-transactions.index') }}" class="btn btn-outline" style="background:#fff;">
+            <i class="fa fa-circle-arrow-down text-success"></i> Material Inward / Out
+        </a>
+        <a href="{{ route('inventory.adjustments.index') }}" class="btn btn-outline" style="background:#fff;">
+            <i class="fa fa-sliders"></i> Stock Adjustment
+        </a>
+        <a href="{{ route('inventory.transfers.index') }}" class="btn btn-outline" style="background:#fff;">
+            <i class="fa fa-truck-ramp-box"></i> Stock Transfer
+        </a>
+    </div>
+</div>
+
 <!-- Top Row Inventory KPI Metric Cards -->
 <div class="stats-grid">
     <div class="stat-card s-indigo">
