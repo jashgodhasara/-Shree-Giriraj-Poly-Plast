@@ -14,8 +14,17 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\Material;
 
+use App\Services\InventoryService;
+
 class InvoiceController extends Controller
 {
+    protected InventoryService $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     private function resolveDates(?string $preset, ?string $dateFrom, ?string $dateTo): array
     {
         $today = Carbon::today();
@@ -90,11 +99,11 @@ class InvoiceController extends Controller
             Product::firstOrCreate(
                 ['name' => $fm->name],
                 [
-                    'price' => 0,
-                    'gst_rate' => 18,
+                    'price'          => 0,
+                    'gst_rate'       => 18,
                     'stock_quantity' => $fm->stock_quantity ?? 0,
-                    'image' => $fm->image,
-                    'description' => 'Final Product (' . ($fm->unit ?? '') . ')'
+                    'image'          => $fm->image,
+                    'description'    => 'Final Product (' . ($fm->unit ?? '') . ')'
                 ]
             );
         }
@@ -196,8 +205,16 @@ class InvoiceController extends Controller
                     'total_price' => $item['total_price'],
                 ]);
 
-                // Deduct stock quantity from product
-                $item['product']->decrement('stock_quantity', $item['quantity']);
+                // Record Sale in Centralized Inventory Engine (Atomic stock deduction + Stock Ledger entry)
+                $this->inventoryService->recordSale(
+                    $item['product'],
+                    $item['quantity'],
+                    $item['unit_price'],
+                    $invoice->invoice_number,
+                    $invoice->id,
+                    $invoiceDate,
+                    "Sales Invoice #{$invoice->invoice_number} to {$customer->name}"
+                );
             }
 
             // Auto-post Customer Debit Ledger entry
@@ -247,12 +264,8 @@ class InvoiceController extends Controller
         try {
             $invoice->load('items.product');
 
-            // 1. Restore product stock quantity
-            foreach ($invoice->items as $item) {
-                if ($item->product) {
-                    $item->product->increment('stock_quantity', $item->quantity);
-                }
-            }
+            // 1. Reversal in Stock Ledger & restore stock via Inventory Engine
+            $this->inventoryService->reverseByReference('Invoices', $invoice->id, 'Sales Invoice Cancellation');
 
             // 2. Remove matching Customer Debit ledger entry
             Ledger::where('entity_type', 'Customer')

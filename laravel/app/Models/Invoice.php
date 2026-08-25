@@ -69,7 +69,7 @@ class Invoice extends Model
         $prefix = 'INV-' . now()->format('Ym') . '-';
         
         $lastInvoice = self::where('invoice_number', 'LIKE', $prefix . '%')
-                           ->orderByRaw('CAST(SUBSTRING(invoice_number, ' . (strlen($prefix) + 1) . ') AS UNSIGNED) DESC')
+                           ->orderBy('id', 'desc')
                            ->first();
 
         if ($lastInvoice) {

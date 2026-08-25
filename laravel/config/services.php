@@ -39,6 +39,12 @@ return [
         'api_key' => env('GSTIN_API_KEY', 'gak_5bb39b8150d74e30a27a5496925c9517'),
     ],
 
+    'cashfree' => [
+        'client_id' => env('CASHFREE_CLIENT_ID'),
+        'client_secret' => env('CASHFREE_CLIENT_SECRET'),
+        'env' => env('CASHFREE_ENV', 'production'), // 'production' or 'sandbox'
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
@@ -54,6 +60,10 @@ return [
     'plastic_pricing' => [
         'url' => env('PLASTIC_API_URL', 'https://api.3minapi.com/api/v1/data/ywlci8ttl5h35fyadebua'),
         'key' => env('PLASTIC_API_KEY', 'tm_test_ca04999d0dd5fc015391a2693b9da987516231ea86d03cfa'),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
     ],
 
 ];

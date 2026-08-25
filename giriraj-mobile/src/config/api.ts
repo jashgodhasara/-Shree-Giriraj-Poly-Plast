@@ -53,4 +53,8 @@ export const ENDPOINTS = {
   INVESTORS:   '/investors',
   JOB_WORKS:   '/job-works',
   PLASTIC_PRICES: '/plastic-prices',
+  INVENTORY_DASHBOARD: '/inventory/dashboard',
+  INVENTORY_LEDGER:    '/inventory/ledger',
+  INVENTORY_LOW_STOCK: '/inventory/low-stock',
+  INVENTORY_VALUATION: '/inventory/valuation',
 } as const;

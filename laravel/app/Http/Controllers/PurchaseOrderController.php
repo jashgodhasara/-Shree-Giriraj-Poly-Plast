@@ -9,8 +9,18 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Product;
+use App\Services\InventoryService;
+
 class PurchaseOrderController extends Controller
 {
+    protected InventoryService $inventoryService;
+
+    public function __construct(InventoryService $inventoryService)
+    {
+        $this->inventoryService = $inventoryService;
+    }
+
     private function resolveDates(?string $preset, ?string $dateFrom, ?string $dateTo): array
     {
         $today = \Carbon\Carbon::today();
@@ -18,7 +28,7 @@ class PurchaseOrderController extends Controller
         if ($preset && $preset !== 'custom') {
             return match ($preset) {
                 'today'        => [$today->toDateString(), $today->toDateString()],
-                'yesterday'    => [\Carbon\Carbon::yesterday()->toDateString(), \Carbon\Carbon::yesterday()->toDateString()],
+                'yesterday'    => [\Carbon\Carbon::yesterday()->toDateString(), [\Carbon\Carbon::yesterday()->toDateString()]],
                 'this_month'   => [$today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
                 'last_month'   => [$today->copy()->subMonth()->startOfMonth()->toDateString(), $today->copy()->subMonth()->endOfMonth()->toDateString()],
                 'last_3months' => [$today->copy()->subMonths(3)->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()],
@@ -176,10 +186,27 @@ class PurchaseOrderController extends Controller
             // 1. Update PO Status
             $purchaseOrder->update(['status' => 'Received']);
 
-            // 2. Increase Material stock for each line item
+            // 2. Increase Material & Product stock for each line item
             foreach ($purchaseOrder->items as $item) {
                 if ($item->material) {
                     $item->material->increment('stock_quantity', $item->quantity);
+
+                    // Sync/Record to matching Product if exists
+                    $matchedProduct = Product::where('material_id', $item->material->id)
+                        ->orWhere('name', $item->material->name)
+                        ->first();
+
+                    if ($matchedProduct) {
+                        $this->inventoryService->recordPurchase(
+                            $matchedProduct,
+                            (float) $item->quantity,
+                            (float) $item->unit_price,
+                            $purchaseOrder->po_number,
+                            $purchaseOrder->id,
+                            now()->toDateString(),
+                            "Purchase receipt from {$purchaseOrder->supplier->name}"
+                        );
+                    }
                 }
             }
 
@@ -218,6 +245,9 @@ class PurchaseOrderController extends Controller
                         $item->material->decrement('stock_quantity', $item->quantity);
                     }
                 }
+
+                // Reverse Product Stock Ledgers
+                $this->inventoryService->reverseByReference('PurchaseOrders', $purchaseOrder->id, 'Purchase Order Cancellation');
 
                 Ledger::where('entity_type', 'Supplier')
                     ->where('entity_id', $purchaseOrder->supplier_id)

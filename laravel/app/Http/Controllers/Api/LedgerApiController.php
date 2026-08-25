@@ -29,7 +29,7 @@ class LedgerApiController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'entity_type'      => 'required|in:Customer,Supplier,Investor,Job Work',
+            'entity_type'      => 'required|in:Customer,Supplier,Investor,Job Work,JobWork',
             'entity_id'        => 'required|integer|min:1',
             'transaction_date' => 'required|date',
             'type'             => 'required|in:Debit,Credit',

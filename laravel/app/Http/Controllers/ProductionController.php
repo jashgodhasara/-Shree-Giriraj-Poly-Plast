@@ -125,6 +125,32 @@ class ProductionController extends Controller
             Material::where('id', $validated['final_product_id'])
                 ->increment('stock_quantity', $validated['final_product_qty_pcs']);
 
+            // Record to matching Product Stock Ledger if exists
+            $finalMat = Material::find($validated['final_product_id']);
+            if ($finalMat) {
+                $matchedProd = \App\Models\Product::where('material_id', $finalMat->id)
+                    ->orWhere('name', $finalMat->name)
+                    ->first();
+
+                if ($matchedProd) {
+                    app(\App\Services\InventoryService::class)->recordTransaction([
+                        'product_id'       => $matchedProd->id,
+                        'warehouse_id'     => $matchedProd->warehouse_id,
+                        'transaction_type' => 'Production',
+                        'quantity'         => (float) $validated['final_product_qty_pcs'],
+                        'unit'             => $matchedProd->unit ?: 'PCS',
+                        'direction'        => 'IN',
+                        'rate'             => (float) $matchedProd->price,
+                        'amount'           => round((float) $validated['final_product_qty_pcs'] * (float) $matchedProd->price, 2),
+                        'reference_module' => 'Production',
+                        'reference_id'     => $log->id,
+                        'reference_number' => 'PROD-' . $log->id,
+                        'transaction_date' => $validated['date'],
+                        'remarks'          => "Production yield: {$validated['final_product_qty_pcs']} pcs",
+                    ]);
+                }
+            }
+
             DB::commit();
 
             return response()->json([
@@ -157,6 +183,9 @@ class ProductionController extends Controller
             // 3. Decrement produced final product stock
             Material::where('id', $productionLog->final_product_id)
                 ->decrement('stock_quantity', $productionLog->final_product_qty_pcs);
+
+            // Reverse in Stock Ledger
+            app(\App\Services\InventoryService::class)->reverseByReference('Production', $productionLog->id, 'Production Log Deletion');
 
             $productionLog->delete();
 

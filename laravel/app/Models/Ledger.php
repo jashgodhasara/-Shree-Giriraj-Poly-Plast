@@ -23,7 +23,7 @@ class Ledger extends Model
             'Customer' => Customer::find($this->entity_id)?->name ?? 'Unknown Customer',
             'Supplier' => Supplier::find($this->entity_id)?->name ?? 'Unknown Supplier',
             'Investor' => Investor::find($this->entity_id)?->name ?? 'Unknown Investor',
-            'Job Work' => JobWork::find($this->entity_id)?->party_name ?? 'Unknown Job Work',
+            'Job Work', 'JobWork' => JobWorkClient::find($this->entity_id)?->name ?? (JobWork::find($this->entity_id)?->party_name ?? 'Job Work #' . $this->entity_id),
             default    => $this->entity_type . ' #' . $this->entity_id,
         };
     }

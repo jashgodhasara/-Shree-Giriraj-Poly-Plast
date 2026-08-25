@@ -131,7 +131,83 @@ class GstVerificationController extends Controller
 
         $isValidChecksum = self::validateGstinChecksum($gstin);
 
-        // Check if external API lookup is configured
+        // 1. Check Cashfree Verification API if configured
+        $cashfreeClientId = config('services.cashfree.client_id', env('CASHFREE_CLIENT_ID'));
+        $cashfreeClientSecret = config('services.cashfree.client_secret', env('CASHFREE_CLIENT_SECRET'));
+        $cashfreeEnv = config('services.cashfree.env', env('CASHFREE_ENV', 'production'));
+
+        if (!empty($cashfreeClientId) && !empty($cashfreeClientSecret)) {
+            try {
+                $cashfreeUrl = strtolower($cashfreeEnv) === 'sandbox'
+                    ? 'https://sandbox.cashfree.com/verification/gstin'
+                    : 'https://api.cashfree.com/verification/gstin';
+
+                $response = Http::timeout(5)
+                    ->withoutVerifying()
+                    ->withHeaders([
+                        'x-client-id'     => $cashfreeClientId,
+                        'x-client-secret' => $cashfreeClientSecret,
+                        'Content-Type'    => 'application/json',
+                        'Accept'          => 'application/json',
+                    ])
+                    ->post($cashfreeUrl, [
+                        'GSTIN' => $gstin,
+                    ]);
+
+                if ($response->successful()) {
+                    $cfData = $response->json();
+
+                    if (!empty($cfData['valid']) || (isset($cfData['status']) && strtoupper($cfData['status']) === 'VALID')) {
+                        $legalName = trim($cfData['legal_name_of_business'] ?? ($cfData['legal_name'] ?? ''));
+                        $tradeName = trim($cfData['trade_name'] ?? ($cfData['business_name'] ?? ''));
+                        $name = $tradeName ?: $legalName;
+
+                        $cfAddr = $cfData['principal_place_of_business_fields']['principal_place_of_business_address'] ?? [];
+                        $state = !empty($cfAddr['state']) ? $cfAddr['state'] : $stateName;
+                        $city = $cfAddr['city'] ?? ($cfAddr['district'] ?? '');
+                        $pincode = $cfAddr['pincode'] ?? '';
+
+                        $fullAddressParts = array_filter([
+                            $cfAddr['building_name'] ?? ($cfAddr['building_number'] ?? ''),
+                            $cfAddr['street'] ?? '',
+                            $cfAddr['locality'] ?? '',
+                            $city,
+                            $state,
+                            $pincode,
+                        ]);
+                        $fullAddress = implode(', ', $fullAddressParts);
+
+                        $rawStatus = $cfData['gstin_status'] ?? ($cfData['status'] ?? 'Active');
+                        $status = ucfirst(strtolower($rawStatus));
+
+                        return response()->json([
+                            'success'       => true,
+                            'valid'         => true,
+                            'gstin'         => $gstin,
+                            'name'          => $name,
+                            'trade_name'    => $tradeName,
+                            'legal_name'    => $legalName,
+                            'status'        => $status,
+                            'is_active'     => strtolower($status) === 'active' || strtolower($rawStatus) === 'valid',
+                            'state'         => $state,
+                            'state_code'    => $stateCode,
+                            'pan'           => $pan,
+                            'city'          => $city,
+                            'pincode'       => $pincode,
+                            'address'       => $fullAddress,
+                            'business_type' => $cfData['constitution_of_business'] ?? $businessType,
+                            'registered_on' => $cfData['date_of_registration'] ?? '',
+                            'source'        => 'cashfree',
+                            'message'       => "GSTIN Verified: {$name} ({$status})",
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::info('Cashfree GST verification skipped: ' . $e->getMessage());
+            }
+        }
+
+        // 2. Check if external API lookup is configured (GSTINCheck / RapidAPI)
         $apiKey = config('services.gstin.api_key', env('GSTIN_API_KEY'));
 
         if (!empty($apiKey)) {

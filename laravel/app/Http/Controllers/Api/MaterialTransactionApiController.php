@@ -64,7 +64,7 @@ class MaterialTransactionApiController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'id' => $txn->id], 201);
+            return response()->json(['success' => true, 'id' => $txn->id, 'transaction' => $txn], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);

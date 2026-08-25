@@ -76,12 +76,47 @@ Route::middleware('auth')->group(function () {
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
     Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
-    // Products
+    // Products & Product Inventory
+    Route::get('/products/export', [ProductController::class, 'export'])->name('products.export');
+    Route::post('/products/import', [ProductController::class, 'import'])->name('products.import');
+    Route::get('/products/check-duplicate', [ProductController::class, 'checkDuplicate'])->name('products.check-duplicate');
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    // Product Categories Master
+    Route::get('/categories', [\App\Http\Controllers\ProductCategoryController::class, 'index'])->name('categories.index');
+    Route::post('/categories', [\App\Http\Controllers\ProductCategoryController::class, 'store'])->name('categories.store');
+    Route::put('/categories/{category}', [\App\Http\Controllers\ProductCategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/categories/{category}', [\App\Http\Controllers\ProductCategoryController::class, 'destroy'])->name('categories.destroy');
+
+    // Unit Master & Conversions
+    Route::get('/units', [\App\Http\Controllers\UnitController::class, 'index'])->name('units.index');
+    Route::post('/units', [\App\Http\Controllers\UnitController::class, 'store'])->name('units.store');
+    Route::put('/units/{unit}', [\App\Http\Controllers\UnitController::class, 'update'])->name('units.update');
+    Route::post('/unit-conversions', [\App\Http\Controllers\UnitController::class, 'storeConversion'])->name('units.conversions.store');
+    Route::delete('/unit-conversions/{conversion}', [\App\Http\Controllers\UnitController::class, 'destroyConversion'])->name('units.conversions.destroy');
+
+    // Complete ERP Inventory System
+    Route::get('/inventory/dashboard', [\App\Http\Controllers\InventoryController::class, 'dashboard'])->name('inventory.dashboard');
+    Route::get('/inventory/ledger', [\App\Http\Controllers\InventoryController::class, 'ledger'])->name('inventory.ledger');
+    Route::get('/inventory/low-stock', [\App\Http\Controllers\InventoryController::class, 'lowStock'])->name('inventory.low-stock');
+    Route::get('/inventory/valuation', [\App\Http\Controllers\InventoryController::class, 'valuation'])->name('inventory.valuation');
+    
+    // Stock Adjustments
+    Route::get('/inventory/adjustments', [\App\Http\Controllers\InventoryController::class, 'adjustmentsIndex'])->name('inventory.adjustments.index');
+    Route::post('/inventory/adjustments', [\App\Http\Controllers\InventoryController::class, 'adjustmentStore'])->name('inventory.adjustments.store');
+
+    // Stock Transfers
+    Route::get('/inventory/transfers', [\App\Http\Controllers\InventoryController::class, 'transfersIndex'])->name('inventory.transfers.index');
+    Route::post('/inventory/transfers', [\App\Http\Controllers\InventoryController::class, 'transferStore'])->name('inventory.transfers.store');
+
+    // Warehouse Master
+    Route::get('/warehouses', [\App\Http\Controllers\InventoryController::class, 'warehousesIndex'])->name('warehouses.index');
+    Route::post('/warehouses', [\App\Http\Controllers\InventoryController::class, 'warehouseStore'])->name('warehouses.store');
+    Route::put('/warehouses/{warehouse}', [\App\Http\Controllers\InventoryController::class, 'warehouseUpdate'])->name('warehouses.update');
 
     // Invoices
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');

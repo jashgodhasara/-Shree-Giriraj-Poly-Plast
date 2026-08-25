@@ -118,6 +118,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ledger',  [LedgerApiController::class, 'index'])->name('api.ledger.index');
     Route::post('/ledger', [LedgerApiController::class, 'store'])->name('api.ledger.store');
 
+    // Inventory Management API
+    Route::get('/inventory/dashboard',     [\App\Http\Controllers\Api\InventoryApiController::class, 'dashboard'])->name('api.inventory.dashboard');
+    Route::get('/inventory/ledger',        [\App\Http\Controllers\Api\InventoryApiController::class, 'stockLedger'])->name('api.inventory.ledger');
+    Route::get('/inventory/low-stock',     [\App\Http\Controllers\Api\InventoryApiController::class, 'lowStock'])->name('api.inventory.low-stock');
+    Route::get('/inventory/valuation',     [\App\Http\Controllers\Api\InventoryApiController::class, 'valuation'])->name('api.inventory.valuation');
+    Route::get('/inventory/adjustments',   [\App\Http\Controllers\Api\InventoryApiController::class, 'adjustments'])->name('api.inventory.adjustments');
+    Route::post('/inventory/adjustments',  [\App\Http\Controllers\Api\InventoryApiController::class, 'storeAdjustment'])->name('api.inventory.adjustments.store');
+
     // ── Admin-only destructive actions ───────────────────────────────────────
     Route::middleware('api.admin')->group(function () {
         Route::delete('/invoices/{invoice}',             [InvoiceApiController::class, 'destroy'])->name('api.invoices.destroy');

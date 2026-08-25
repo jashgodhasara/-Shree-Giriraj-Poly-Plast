@@ -778,6 +778,18 @@
         <span class="nav-icon"><i class="fa fa-tag"></i></span>
         <span class="nav-label">Products</span>
     </a>
+    <a href="{{ route('categories.index') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-layer-group"></i></span>
+        <span class="nav-label">Categories</span>
+    </a>
+    <a href="{{ route('units.index') }}" class="{{ request()->routeIs('units.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-ruler-combined"></i></span>
+        <span class="nav-label">Units &amp; Conversion</span>
+    </a>
+    <a href="{{ route('warehouses.index') }}" class="{{ request()->routeIs('warehouses.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-warehouse"></i></span>
+        <span class="nav-label">Warehouses</span>
+    </a>
     <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-users"></i></span>
         <span class="nav-label">Customers</span>
@@ -792,72 +804,42 @@
     </a>
 
     <div class="sidebar-divider"></div>
-    <div class="sidebar-section">Sales Module</div>
-    <a href="{{ route('invoices.create') }}" class="{{ request()->routeIs('invoices.create') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-file-signature"></i></span>
-        <span class="nav-label">Sales Order</span>
+    <div class="sidebar-section">Inventory &amp; Stock</div>
+    <a href="{{ route('inventory.dashboard') }}" class="{{ request()->routeIs('inventory.dashboard') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-boxes-stacked"></i></span>
+        <span class="nav-label">Stock Dashboard</span>
     </a>
-    <a href="{{ route('invoices.index') }}" class="{{ request()->routeIs('invoices.index') ? 'active' : '' }}">
+    <a href="{{ route('inventory.ledger') }}" class="{{ request()->routeIs('inventory.ledger') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-book-open"></i></span>
+        <span class="nav-label">Stock Ledger</span>
+    </a>
+    <a href="{{ route('inventory.low-stock') }}" class="{{ request()->routeIs('inventory.low-stock') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-triangle-exclamation"></i></span>
+        <span class="nav-label">Low Stock Alerts</span>
+    </a>
+    <a href="{{ route('inventory.valuation') }}" class="{{ request()->routeIs('inventory.valuation') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-scale-balanced"></i></span>
+        <span class="nav-label">Stock Valuation</span>
+    </a>
+    <a href="{{ route('inventory.adjustments.index') }}" class="{{ request()->routeIs('inventory.adjustments.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-sliders"></i></span>
+        <span class="nav-label">Stock Adjustments</span>
+    </a>
+    <a href="{{ route('inventory.transfers.index') }}" class="{{ request()->routeIs('inventory.transfers.*') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-truck-ramp-box"></i></span>
-        <span class="nav-label">Delivery Notes</span>
+        <span class="nav-label">Stock Transfers</span>
     </a>
-    <a href="{{ route('invoices.index') }}" class="{{ request()->routeIs('invoices.index') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-file-invoice-dollar"></i></span>
-        <span class="nav-label">Sales</span>
-    </a>
-    <a href="{{ route('ledger.index') }}" class="{{ request()->routeIs('ledger.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-file-circle-minus"></i></span>
-        <span class="nav-label">Credit Note</span>
-    </a>
-    <a href="{{ route('material-transactions.index') }}" class="{{ request()->routeIs('material-transactions.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-rotate-left"></i></span>
-        <span class="nav-label">Rejection In</span>
-    </a>
-
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">Purchase Module</div>
-    <a href="{{ route('purchase-orders.index') }}" class="{{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-cart-flatbed"></i></span>
-        <span class="nav-label">Purchase Order</span>
-    </a>
-    <a href="{{ route('purchase-orders.create') }}" class="{{ request()->routeIs('purchase-orders.create') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-boxes-packing"></i></span>
-        <span class="nav-label">Receipt Note</span>
-    </a>
-    <a href="{{ route('purchase-orders.index') }}" class="{{ request()->routeIs('purchase-orders.index') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-bag-shopping"></i></span>
-        <span class="nav-label">Purchase</span>
-    </a>
-    <a href="{{ route('ledger.index') }}" class="{{ request()->routeIs('ledger.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-file-circle-plus"></i></span>
-        <span class="nav-label">Debit Note</span>
-    </a>
-    <a href="{{ route('material-transactions.index') }}" class="{{ request()->routeIs('material-transactions.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-rotate-right"></i></span>
-        <span class="nav-label">Rejection Out</span>
-    </a>
-
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">Inventory &amp; Production</div>
     <a href="{{ route('materials.index') }}" class="{{ request()->routeIs('materials.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-warehouse"></i></span>
-        <span class="nav-label">Inventory</span>
+        <span class="nav-icon"><i class="fa fa-cubes"></i></span>
+        <span class="nav-label">Raw Materials</span>
     </a>
     <a href="{{ route('material-transactions.index') }}" class="{{ request()->routeIs('material-transactions.*') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-circle-arrow-down"></i></span>
-        <span class="nav-label">Material In</span>
-    </a>
-    <a href="{{ route('material-transactions.index') }}" class="{{ request()->routeIs('material-transactions.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-circle-arrow-up"></i></span>
-        <span class="nav-label">Material Out</span>
+        <span class="nav-label">Material In / Out</span>
     </a>
     <a href="{{ route('production.index') }}" class="{{ request()->routeIs('production.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-book-bookmark"></i></span>
-        <span class="nav-label">Stock Journal</span>
-    </a>
-    <a href="{{ route('production.index') }}" class="{{ request()->routeIs('production.*') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-sitemap"></i></span>
-        <span class="nav-label">BOM</span>
+        <span class="nav-icon"><i class="fa fa-gears"></i></span>
+        <span class="nav-label">Production &amp; BOM</span>
     </a>
 
     <div class="sidebar-divider"></div>
@@ -897,10 +879,15 @@
     @auth
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">Download Apps</div>
-    <a href="http://192.168.1.13:8080" target="_blank" title="Download Desktop & Mobile App">
-        <span class="nav-icon"><i class="fa fa-cloud-arrow-down"></i></span>
-        <span class="nav-label">Download Apps</span>
-        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#34d399;">Laptop &amp; Mobile</span>
+    <a href="{{ asset('downloads/Shree-Giriraj-ERP-Desktop-Setup.zip') }}" download title="Download Windows Desktop App (Setup ZIP)">
+        <span class="nav-icon"><i class="fa fa-desktop"></i></span>
+        <span class="nav-label">Desktop App (.zip)</span>
+        <span class="nav-badge" style="background:rgba(99,102,241,.2);color:#818cf8;">Windows 64-bit</span>
+    </a>
+    <a href="http://192.168.1.13:8080" target="_blank" title="Download Mobile App APK & Portal">
+        <span class="nav-icon"><i class="fa fa-mobile-screen-button"></i></span>
+        <span class="nav-label">Mobile App Portal</span>
+        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#34d399;">Android APK</span>
     </a>
 
     @if(auth()->user()->isAdmin())
