@@ -17,10 +17,6 @@ mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/public/uploads/products \
          /var/www/html/public/uploads/materials
 
-touch /var/www/html/database/database.sqlite
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
-chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
-
 # Run database migrations and seed admin
 php artisan key:generate --force || true
 php artisan migrate --force || true
@@ -29,5 +25,10 @@ php artisan db:seed --class=StaffAndPayrollSeeder --force || true
 php artisan db:seed --class=DyeAndAssetSeeder --force || true
 php artisan materials:sync-api --force || true
 php artisan storage:link || true
+
+# Final permission lock ensuring Apache www-data has full read/write access to SQLite & storage
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
+chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/uploads
+chmod 666 /var/www/html/database/database.sqlite || true
 
 exec "$@"
