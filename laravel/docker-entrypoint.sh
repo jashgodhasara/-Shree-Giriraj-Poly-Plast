@@ -25,6 +25,8 @@ chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/d
 php artisan key:generate --force || true
 php artisan migrate --force || true
 php artisan db:seed --class=AdminUserSeeder --force || true
+php artisan db:seed --class=StaffAndPayrollSeeder --force || true
+php artisan db:seed --class=DyeAndAssetSeeder --force || true
 php artisan materials:sync-api --force || true
 php artisan storage:link || true
 

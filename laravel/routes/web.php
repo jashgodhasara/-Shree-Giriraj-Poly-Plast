@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
 
     // Warehouse Master
     Route::get('/warehouses', [\App\Http\Controllers\InventoryController::class, 'warehousesIndex'])->name('warehouses.index');
+    Route::get('/inventory/warehouses', [\App\Http\Controllers\InventoryController::class, 'warehousesIndex']);
     Route::post('/warehouses', [\App\Http\Controllers\InventoryController::class, 'warehouseStore'])->name('warehouses.store');
     Route::put('/warehouses/{warehouse}', [\App\Http\Controllers\InventoryController::class, 'warehouseUpdate'])->name('warehouses.update');
 

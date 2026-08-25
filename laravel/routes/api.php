@@ -138,7 +138,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/staff/employees',         [\App\Http\Controllers\Api\StaffApiController::class, 'employees'])->name('api.staff.employees');
     Route::get('/staff/employees/{employee}', [\App\Http\Controllers\Api\StaffApiController::class, 'employeeDetail'])->name('api.staff.employee-detail');
     Route::get('/staff/attendance',        [\App\Http\Controllers\Api\StaffApiController::class, 'attendanceSummary'])->name('api.staff.attendance');
-    Route::get('/staff/payroll',           [\App\Http\Controllers\Api\StaffApiController::class, 'payrollRecords'])->name('api.staff.payroll');
+    Route::get('/staff/attendance/today',  [\App\Http\Controllers\Api\StaffApiController::class, 'attendanceSummary']);
+    Route::post('/staff/attendance/mark',  [\App\Http\Controllers\Api\StaffApiController::class, 'markAttendance'])->name('api.staff.mark-attendance');
+    Route::get('/staff/advances',          [\App\Http\Controllers\Api\StaffApiController::class, 'advancesHistory'])->name('api.staff.advances');
+    Route::get('/staff/advances-history',  [\App\Http\Controllers\Api\StaffApiController::class, 'advancesHistory'])->name('api.staff.advances-history');
+    Route::post('/staff/advances',         [\App\Http\Controllers\Api\StaffApiController::class, 'recordAdvance'])->name('api.staff.record-advance');
+    Route::get('/staff/payroll',           [\App\Http\Controllers\Api\StaffApiController::class, 'payrollSummary'])->name('api.staff.payroll');
 
     // ── Admin-only destructive actions ───────────────────────────────────────
     Route::middleware('api.admin')->group(function () {
