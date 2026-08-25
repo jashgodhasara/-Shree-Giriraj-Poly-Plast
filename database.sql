@@ -366,3 +366,94 @@ CREATE TABLE IF NOT EXISTS asset_maintenance_logs (
     updated_at TIMESTAMP NULL,
     FOREIGN KEY (asset_id) REFERENCES factory_assets(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS employees (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    emp_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NULL,
+    email VARCHAR(255) NULL,
+    designation VARCHAR(100) DEFAULT 'Machine Operator',
+    department VARCHAR(100) DEFAULT 'Production',
+    shift VARCHAR(100) DEFAULT 'Day Shift (8 AM - 8 PM)',
+    joining_date DATE NULL,
+    salary_type VARCHAR(50) DEFAULT 'Monthly',
+    base_salary DECIMAL(12, 2) DEFAULT 0.00,
+    overtime_hourly_rate DECIMAL(8, 2) DEFAULT 0.00,
+    bank_name VARCHAR(100) NULL,
+    account_number VARCHAR(50) NULL,
+    ifsc_code VARCHAR(20) NULL,
+    upi_id VARCHAR(100) NULL,
+    aadhar_number VARCHAR(20) NULL,
+    pan_number VARCHAR(20) NULL,
+    status VARCHAR(50) DEFAULT 'Active',
+    photo VARCHAR(255) NULL,
+    address TEXT NULL,
+    emergency_contact TEXT NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS attendances (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL,
+    date DATE NOT NULL,
+    status VARCHAR(50) DEFAULT 'Present',
+    in_time TIME NULL,
+    out_time TIME NULL,
+    working_hours DECIMAL(5, 2) DEFAULT 8.00,
+    overtime_hours DECIMAL(5, 2) DEFAULT 0.00,
+    remarks TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY unique_employee_date (employee_id, date),
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS employee_advances (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT NOT NULL,
+    date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_mode VARCHAR(50) DEFAULT 'Cash',
+    salary_month VARCHAR(7) NULL,
+    reason VARCHAR(255) NULL,
+    is_deducted TINYINT(1) DEFAULT 0,
+    payroll_record_id BIGINT NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS payroll_records (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payroll_number VARCHAR(50) UNIQUE NOT NULL,
+    employee_id BIGINT NOT NULL,
+    month_year VARCHAR(7) NOT NULL,
+    total_month_days INT DEFAULT 30,
+    present_days DECIMAL(5, 2) DEFAULT 0.00,
+    half_days DECIMAL(5, 2) DEFAULT 0.00,
+    absent_days DECIMAL(5, 2) DEFAULT 0.00,
+    paid_holidays DECIMAL(5, 2) DEFAULT 0.00,
+    payable_days DECIMAL(5, 2) DEFAULT 0.00,
+    base_rate DECIMAL(10, 2) DEFAULT 0.00,
+    gross_salary DECIMAL(10, 2) DEFAULT 0.00,
+    total_ot_hours DECIMAL(6, 2) DEFAULT 0.00,
+    overtime_amount DECIMAL(10, 2) DEFAULT 0.00,
+    bonus_allowances DECIMAL(10, 2) DEFAULT 0.00,
+    advance_deductions DECIMAL(10, 2) DEFAULT 0.00,
+    other_deductions DECIMAL(10, 2) DEFAULT 0.00,
+    net_salary DECIMAL(10, 2) DEFAULT 0.00,
+    paid_amount DECIMAL(10, 2) DEFAULT 0.00,
+    payment_status VARCHAR(50) DEFAULT 'Unpaid',
+    payment_date DATE NULL,
+    payment_mode VARCHAR(50) NULL,
+    transaction_reference VARCHAR(100) NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY unique_employee_payroll (employee_id, month_year),
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

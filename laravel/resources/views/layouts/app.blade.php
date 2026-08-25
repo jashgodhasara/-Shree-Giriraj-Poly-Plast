@@ -854,6 +854,25 @@
     </a>
 
     <div class="sidebar-divider"></div>
+    <div class="sidebar-section">Staff &amp; Payroll</div>
+    <a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-users-gear"></i></span>
+        <span class="nav-label">Staff Directory (કર્મચારી)</span>
+    </a>
+    <a href="{{ route('attendance.index') }}" class="{{ request()->routeIs('attendance.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-clipboard-user"></i></span>
+        <span class="nav-label">Attendance (હાજરી)</span>
+    </a>
+    <a href="{{ route('employee-advances.index') }}" class="{{ request()->routeIs('employee-advances.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-hand-holding-dollar"></i></span>
+        <span class="nav-label">Upad / Advances (ઉપાડ)</span>
+    </a>
+    <a href="{{ route('payroll.index') }}" class="{{ request()->routeIs('payroll.*') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-file-invoice-dollar"></i></span>
+        <span class="nav-label">Salary &amp; Payroll (પગાર)</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
     <div class="sidebar-section">Job Work Module</div>
     <a href="{{ route('jobworks.dashboard') }}" class="{{ request()->routeIs('jobworks.dashboard') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-chart-pie"></i></span>

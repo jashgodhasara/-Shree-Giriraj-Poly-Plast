@@ -134,6 +134,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/factory-assets',          [\App\Http\Controllers\Api\FactoryAssetApiController::class, 'index'])->name('api.factory-assets.index');
     Route::get('/factory-assets/{factoryAsset}', [\App\Http\Controllers\Api\FactoryAssetApiController::class, 'show'])->name('api.factory-assets.show');
 
+    // Staff, Attendance & Payroll API
+    Route::get('/staff/employees',         [\App\Http\Controllers\Api\StaffApiController::class, 'employees'])->name('api.staff.employees');
+    Route::get('/staff/employees/{employee}', [\App\Http\Controllers\Api\StaffApiController::class, 'employeeDetail'])->name('api.staff.employee-detail');
+    Route::get('/staff/attendance',        [\App\Http\Controllers\Api\StaffApiController::class, 'attendanceSummary'])->name('api.staff.attendance');
+    Route::get('/staff/payroll',           [\App\Http\Controllers\Api\StaffApiController::class, 'payrollRecords'])->name('api.staff.payroll');
+
     // ── Admin-only destructive actions ───────────────────────────────────────
     Route::middleware('api.admin')->group(function () {
         Route::delete('/invoices/{invoice}',             [InvoiceApiController::class, 'destroy'])->name('api.invoices.destroy');

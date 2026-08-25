@@ -135,6 +135,31 @@ Route::middleware('auth')->group(function () {
     Route::delete('/factory-assets/{factoryAsset}', [\App\Http\Controllers\FactoryAssetController::class, 'destroy'])->name('factory-assets.destroy');
     Route::post('/factory-assets/{factoryAsset}/maintenance', [\App\Http\Controllers\FactoryAssetController::class, 'logMaintenance'])->name('factory-assets.log-maintenance');
 
+    // Staff & Employees Management
+    Route::get('/employees', [\App\Http\Controllers\EmployeeController::class, 'index'])->name('employees.index');
+    Route::post('/employees', [\App\Http\Controllers\EmployeeController::class, 'store'])->name('employees.store');
+    Route::get('/employees/{employee}', [\App\Http\Controllers\EmployeeController::class, 'show'])->name('employees.show');
+    Route::put('/employees/{employee}', [\App\Http\Controllers\EmployeeController::class, 'update'])->name('employees.update');
+    Route::delete('/employees/{employee}', [\App\Http\Controllers\EmployeeController::class, 'destroy'])->name('employees.destroy');
+
+    // Daily Attendance & Monthly Matrix
+    Route::get('/attendance', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance/daily', [\App\Http\Controllers\AttendanceController::class, 'storeDaily'])->name('attendance.store-daily');
+    Route::post('/attendance/mark-all-present', [\App\Http\Controllers\AttendanceController::class, 'markAllPresent'])->name('attendance.mark-all-present');
+    Route::get('/attendance/monthly', [\App\Http\Controllers\AttendanceController::class, 'monthly'])->name('attendance.monthly');
+
+    // Staff Advances & Upad
+    Route::get('/employee-advances', [\App\Http\Controllers\EmployeeAdvanceController::class, 'index'])->name('employee-advances.index');
+    Route::post('/employee-advances', [\App\Http\Controllers\EmployeeAdvanceController::class, 'store'])->name('employee-advances.store');
+    Route::delete('/employee-advances/{employeeAdvance}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'destroy'])->name('employee-advances.destroy');
+
+    // Monthly Salary & Payroll
+    Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
+    Route::post('/payroll/generate-all', [\App\Http\Controllers\PayrollController::class, 'generateAll'])->name('payroll.generate-all');
+    Route::post('/payroll/generate/{employee}', [\App\Http\Controllers\PayrollController::class, 'generateSingle'])->name('payroll.generate-single');
+    Route::post('/payroll/{payroll}/pay', [\App\Http\Controllers\PayrollController::class, 'markAsPaid'])->name('payroll.mark-paid');
+    Route::get('/payroll/{payroll}/payslip', [\App\Http\Controllers\PayrollController::class, 'payslip'])->name('payroll.payslip');
+
     // Invoices
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/billing', [InvoiceController::class, 'create'])->name('invoices.create');
