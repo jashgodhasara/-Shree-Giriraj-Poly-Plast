@@ -88,8 +88,13 @@ class PurchaseOrderController extends Controller
 
         DB::beginTransaction();
         try {
-            $supplier     = Supplier::findOrFail($request->supplier_id);
-            $isInterState = !empty($supplier->state) && strtolower(trim($supplier->state)) !== 'gujarat';
+            $supplier  = Supplier::findOrFail($request->supplier_id);
+            $taxRegime = \App\Services\GstTaxCalculationService::determineTaxRegime(
+                $supplier->country,
+                $supplier->state,
+                $supplier->gstin,
+                $supplier->tax_type
+            );
 
             $subtotal  = 0;
             $cgst      = 0;
@@ -109,12 +114,9 @@ class PurchaseOrderController extends Controller
 
                 $subtotal += $lineTotal;
 
-                if ($isInterState) {
-                    $igst += $gstAmt;
-                } else {
-                    $cgst += $gstAmt / 2;
-                    $sgst += $gstAmt / 2;
-                }
+                $cgst += $gstAmt * $taxRegime['cgst_split'];
+                $sgst += $gstAmt * $taxRegime['sgst_split'];
+                $igst += $gstAmt * $taxRegime['igst_split'];
 
                 $itemsData[] = [
                     'material_id' => $material->id,

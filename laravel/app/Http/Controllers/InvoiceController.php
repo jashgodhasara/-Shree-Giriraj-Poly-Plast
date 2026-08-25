@@ -135,10 +135,15 @@ class InvoiceController extends Controller
 
         DB::beginTransaction();
         try {
-            $customer     = Customer::findOrFail($request->customer_id);
-            $isInterState = !empty($customer->state) && strtolower(trim($customer->state)) !== 'gujarat';
+            $customer  = Customer::findOrFail($request->customer_id);
+            $taxRegime = \App\Services\GstTaxCalculationService::determineTaxRegime(
+                $customer->country,
+                $customer->state,
+                $customer->gstin,
+                $customer->tax_type
+            );
 
-            $invoiceDate  = $request->filled('invoice_date')
+            $invoiceDate = $request->filled('invoice_date')
                 ? Carbon::parse($request->invoice_date)->toDateString()
                 : session('working_date', now()->toDateString());
 
@@ -157,12 +162,9 @@ class InvoiceController extends Controller
 
                 $subtotal += $lineTotal;
 
-                if ($isInterState) {
-                    $igst += $gstAmt;
-                } else {
-                    $cgst += $gstAmt / 2;
-                    $sgst += $gstAmt / 2;
-                }
+                $cgst += $gstAmt * $taxRegime['cgst_split'];
+                $sgst += $gstAmt * $taxRegime['sgst_split'];
+                $igst += $gstAmt * $taxRegime['igst_split'];
 
                 $itemsData[] = [
                     'product'     => $product,

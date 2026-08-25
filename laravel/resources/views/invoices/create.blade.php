@@ -278,7 +278,7 @@
 
 <!-- Quick Add Customer Modal -->
 <div class="modal-overlay" id="quickCustomerModal">
-    <div class="modal">
+    <div class="modal" style="max-width:540px">
         <div class="modal-header">
             <h3><i class="fa fa-user-plus"></i> Quick Add Customer</h3>
             <button class="modal-close" type="button" onclick="closeModal('quickCustomerModal')">✕</button>
@@ -295,17 +295,38 @@
                         <input type="text" id="qc_phone" placeholder="10-digit mobile">
                     </div>
                     <div class="form-group">
-                        <label>State</label>
-                        <input type="text" id="qc_state" value="Gujarat" placeholder="Gujarat">
+                        <label>Country *</label>
+                        <select id="qc_country" onchange="handleCustomerCountryChange()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;">
+                            <option value="India" selected>🇮🇳 India</option>
+                            <option value="United States">🇺🇸 United States</option>
+                            <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                            <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                            <option value="Germany">🇩🇪 Germany</option>
+                            <option value="Canada">🇨🇦 Canada</option>
+                            <option value="Australia">🇦🇺 Australia</option>
+                            <option value="Singapore">🇸🇬 Singapore</option>
+                            <option value="Other">🌍 Other Overseas Country</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>GSTIN (Auto-detects State)</label>
+                        <input type="text" id="qc_gstin" maxlength="15" placeholder="15-digit GSTIN (e.g. 24..., 27...)" oninput="handleGstinAutoDetect(this.value)" style="text-transform:uppercase;">
+                        <small id="qc_gstin_hint" style="display:block;margin-top:3px;font-size:11px;color:#059669;font-weight:600;"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>State / Province</label>
+                        <input type="text" id="qc_state" value="Gujarat" placeholder="e.g. Gujarat, Maharashtra" oninput="handleCustomStateChange()">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>GSTIN</label>
-                    <input type="text" id="qc_gstin" placeholder="15-digit GSTIN">
+                    <label>Billing Address</label>
+                    <input type="text" id="qc_address" placeholder="Factory / billing address">
                 </div>
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" id="qc_address" placeholder="Billing address">
+                <div id="qc_tax_preview" style="background:#f1f5f9;border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:8px;">
+                    <i class="fa fa-info-circle" style="color:#6366f1;"></i>
+                    <span id="qc_tax_preview_text">Auto Tax: <strong>CGST + SGST (Gujarat Intra-State)</strong></span>
                 </div>
             </div>
             <div class="modal-footer">
@@ -319,9 +340,30 @@
 
 @section('scripts')
 <script>
+const GST_STATE_MAP = {
+    '01': 'Jammu and Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh',
+    '05': 'Uttarakhand', '06': 'Haryana', '07': 'Delhi', '08': 'Rajasthan',
+    '09': 'Uttar Pradesh', '10': 'Bihar', '11': 'Sikkim', '12': 'Arunachal Pradesh',
+    '13': 'Nagaland', '14': 'Manipur', '15': 'Mizoram', '16': 'Tripura',
+    '17': 'Meghalaya', '18': 'Assam', '19': 'West Bengal', '20': 'Jharkhand',
+    '21': 'Odisha', '22': 'Chhattisgarh', '23': 'Madhya Pradesh', '24': 'Gujarat',
+    '26': 'Dadra and Nagar Haveli and Daman and Diu', '27': 'Maharashtra', '29': 'Karnataka',
+    '30': 'Goa', '31': 'Lakshadweep', '32': 'Kerala', '33': 'Tamil Nadu',
+    '34': 'Puducherry', '35': 'Andaman and Nicobar Islands', '36': 'Telangana',
+    '37': 'Andhra Pradesh', '38': 'Ladakh'
+};
+
 let productsData = @json($products->keyBy('id'));
 let customersData = @json($customers->keyBy('id'));
-let selectedCustomerState = '';
+let selectedCustomerObj = null;
+let currentTaxRegime = {
+    type: 'INTRA_STATE',
+    label: 'CGST + SGST (Gujarat Intra-State)',
+    cgst_split: 0.5,
+    sgst_split: 0.5,
+    igst_split: 0.0,
+    is_export: false
+};
 
 // Close dropdowns on outside click
 document.addEventListener('click', function(e) {
@@ -329,6 +371,74 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.combo-wrap').forEach(w => w.classList.remove('open'));
     }
 });
+
+/* ── GSTIN STATE AUTO DETECT HELPER ── */
+function detectStateFromGstin(gstin) {
+    if (!gstin) return null;
+    const clean = gstin.trim().toUpperCase();
+    if (clean.length >= 2) {
+        const prefix = clean.substring(0, 2);
+        return GST_STATE_MAP[prefix] || null;
+    }
+    return null;
+}
+
+function handleGstinAutoDetect(val) {
+    const hint = document.getElementById('qc_gstin_hint');
+    const stateInput = document.getElementById('qc_state');
+    const countryVal = document.getElementById('qc_country').value;
+    
+    if (countryVal !== 'India') {
+        hint.textContent = 'Overseas customer — Export tax rules apply.';
+        updateQuickModalTaxPreview();
+        return;
+    }
+
+    const state = detectStateFromGstin(val);
+    if (state) {
+        stateInput.value = state;
+        hint.innerHTML = `<i class="fa fa-check-circle"></i> Auto-detected state: <strong>${state}</strong>`;
+    } else {
+        hint.textContent = '';
+    }
+    updateQuickModalTaxPreview();
+}
+
+function handleCustomerCountryChange() {
+    const country = document.getElementById('qc_country').value;
+    const gstinInput = document.getElementById('qc_gstin');
+    const stateInput = document.getElementById('qc_state');
+    
+    if (country !== 'India') {
+        gstinInput.placeholder = 'Tax ID / VAT / Tax Number';
+        stateInput.placeholder = 'State / Region (e.g. California, Dubai)';
+    } else {
+        gstinInput.placeholder = '15-digit GSTIN (e.g. 24..., 27...)';
+        if (!stateInput.value || stateInput.value.toLowerCase() !== 'gujarat') {
+            stateInput.value = 'Gujarat';
+        }
+    }
+    updateQuickModalTaxPreview();
+}
+
+function handleCustomStateChange() {
+    updateQuickModalTaxPreview();
+}
+
+function updateQuickModalTaxPreview() {
+    const country = document.getElementById('qc_country').value;
+    const state = (document.getElementById('qc_state').value || '').trim();
+    const isDomestic = country.toLowerCase() === 'india';
+    const previewText = document.getElementById('qc_tax_preview_text');
+
+    if (!isDomestic) {
+        previewText.innerHTML = `Auto Tax: <strong style="color:#8b5cf6;">Export (0% Tax / LUT)</strong> — ${escapeHtml(country)}`;
+    } else if (state.toLowerCase() === 'gujarat' || state.toLowerCase() === 'gj' || (document.getElementById('qc_gstin').value || '').startsWith('24')) {
+        previewText.innerHTML = `Auto Tax: <strong style="color:#10b981;">CGST (50%) + SGST (50%)</strong> — Gujarat Intra-State`;
+    } else {
+        previewText.innerHTML = `Auto Tax: <strong style="color:#3b82f6;">IGST (100%)</strong> — Inter-State: ${escapeHtml(state || 'Outside Gujarat')}`;
+    }
+}
 
 /* ── CUSTOMER SEARCHABLE COMBO ── */
 function initCustomerCombo() {
@@ -343,7 +453,9 @@ function initCustomerCombo() {
             const name = (c.name || '').toLowerCase();
             const phone = (c.phone || '').toLowerCase();
             const gstin = (c.gstin || '').toLowerCase();
-            return name.includes(query) || phone.includes(query) || gstin.includes(query);
+            const state = (c.state || '').toLowerCase();
+            const country = (c.country || '').toLowerCase();
+            return name.includes(query) || phone.includes(query) || gstin.includes(query) || state.includes(query) || country.includes(query);
         });
 
         if (list.length === 0) {
@@ -356,18 +468,38 @@ function initCustomerCombo() {
             return;
         }
 
-        dropdown.innerHTML = list.map(c => `
-            <div class="combo-item ${hidden.value == c.id ? 'selected' : ''}" onclick="selectCustomer(${c.id})">
-                <div>
-                    <strong>${escapeHtml(c.name)}</strong>
-                    ${c.state ? `<small style="color:#64748b;">(${escapeHtml(c.state)})</small>` : ''}
+        dropdown.innerHTML = list.map(c => {
+            const country = c.country || 'India';
+            const state = c.state || (country.toLowerCase() === 'india' ? 'Gujarat' : '');
+            const isDomestic = country.toLowerCase() === 'india';
+            const isGuj = isDomestic && (state.toLowerCase() === 'gujarat' || (c.gstin && c.gstin.startsWith('24')));
+            
+            let taxBadge = '';
+            if (!isDomestic) {
+                taxBadge = `<span class="badge" style="background:#f3e8ff;color:#7e22ce;font-size:10px;">Export (0% LUT)</span>`;
+            } else if (isGuj) {
+                taxBadge = `<span class="badge" style="background:#ecfdf5;color:#047857;font-size:10px;">CGST + SGST (GJ)</span>`;
+            } else {
+                taxBadge = `<span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:10px;">IGST (${state})</span>`;
+            }
+
+            return `
+                <div class="combo-item ${hidden.value == c.id ? 'selected' : ''}" onclick="selectCustomer(${c.id})">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <strong>${escapeHtml(c.name)}</strong>
+                            <small style="color:#64748b;margin-left:4px;">(${escapeHtml(state || country)})</small>
+                        </div>
+                        ${taxBadge}
+                    </div>
+                    <div class="combo-item-meta" style="margin-top:2px;">
+                        ${c.phone ? `<span style="color:#64748b;"><i class="fa fa-phone"></i> ${escapeHtml(c.phone)}</span>` : ''}
+                        ${c.gstin ? `<span class="badge badge-gray" style="font-size:10px;">GSTIN: ${escapeHtml(c.gstin)}</span>` : ''}
+                        ${c.country && c.country.toLowerCase() !== 'india' ? `<span style="font-size:11px;color:#7e22ce;">🌍 ${escapeHtml(c.country)}</span>` : ''}
+                    </div>
                 </div>
-                <div class="combo-item-meta">
-                    ${c.phone ? `<span style="color:#64748b;"><i class="fa fa-phone"></i> ${escapeHtml(c.phone)}</span>` : ''}
-                    ${c.gstin ? `<span class="badge badge-gray" style="font-size:10px;">${escapeHtml(c.gstin)}</span>` : ''}
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     input.addEventListener('focus', function() {
@@ -404,24 +536,103 @@ function initCustomerCombo() {
     });
 }
 
+function computeCustomerTaxRegime(c) {
+    if (!c) {
+        return {
+            type: 'INTRA_STATE',
+            label: 'CGST + SGST (Gujarat Intra-State)',
+            cgst_split: 0.5,
+            sgst_split: 0.5,
+            igst_split: 0.0,
+            is_export: false
+        };
+    }
+
+    const country = (c.country || 'India').trim();
+    let state = (c.state || '').trim();
+    const gstin = (c.gstin || '').trim();
+    const taxType = (c.tax_type || '').trim().toLowerCase();
+
+    // Auto detect from GSTIN if empty
+    if (!state && gstin) {
+        state = detectStateFromGstin(gstin) || '';
+    }
+
+    const isDomestic = !country || ['india', 'in', 'bharat', 'ind'].includes(country.toLowerCase());
+    const isExport = !isDomestic || ['export', 'export with lut', 'sez', 'zero rated'].includes(taxType);
+
+    if (isExport) {
+        return {
+            type: 'EXPORT_LUT',
+            label: `Export (0% Tax / LUT) — ${country || 'Overseas'}`,
+            cgst_split: 0.0,
+            sgst_split: 0.0,
+            igst_split: 0.0,
+            is_export: true
+        };
+    }
+
+    const isGujarat = (gstin && gstin.startsWith('24')) || (state.toLowerCase() === 'gujarat' || state.toLowerCase() === 'gj') || (!state && isDomestic);
+
+    if (isGujarat) {
+        return {
+            type: 'INTRA_STATE',
+            label: 'CGST (50%) + SGST (50%) — Gujarat (Intra-State)',
+            cgst_split: 0.5,
+            sgst_split: 0.5,
+            igst_split: 0.0,
+            is_export: false
+        };
+    }
+
+    return {
+        type: 'INTER_STATE',
+        label: `IGST (100%) — Inter-State: ${state || 'Outside Gujarat'}`,
+        cgst_split: 0.0,
+        sgst_split: 0.0,
+        igst_split: 1.0,
+        is_export: false
+    };
+}
+
 function selectCustomer(id) {
     const c = customersData[id];
     if (!c) return;
+    selectedCustomerObj = c;
     document.getElementById('customerSelect').value = c.id;
-    document.getElementById('customerSearchInput').value = c.name + (c.state ? ` (${c.state})` : '');
-    selectedCustomerState = c.state || 'Gujarat';
+    
+    const country = c.country || 'India';
+    const state = c.state || (country.toLowerCase() === 'india' ? 'Gujarat' : country);
+    document.getElementById('customerSearchInput').value = `${c.name} (${state})`;
     document.getElementById('customerComboWrap').classList.remove('open');
-    updateTaxCalculation();
+    
+    currentTaxRegime = computeCustomerTaxRegime(c);
+    updateTaxCalculationUI();
 }
 
-function updateTaxCalculation() {
-    const isInterState = selectedCustomerState && selectedCustomerState.toLowerCase() !== 'gujarat';
-    document.getElementById('row_cgst').style.display = isInterState ? 'none' : '';
-    document.getElementById('row_sgst').style.display = isInterState ? 'none' : '';
-    document.getElementById('row_igst').style.display = isInterState ? '' : 'none';
-    document.getElementById('taxLabel').innerHTML = isInterState
-        ? 'Tax type: <strong>IGST</strong> (Inter-state: ' + escapeHtml(selectedCustomerState) + ')'
-        : 'Tax type: <strong>CGST + SGST</strong> (Gujarat)';
+function updateTaxCalculationUI() {
+    const rowCgst = document.getElementById('row_cgst');
+    const rowSgst = document.getElementById('row_sgst');
+    const rowIgst = document.getElementById('row_igst');
+    const taxLabel = document.getElementById('taxLabel');
+
+    if (currentTaxRegime.type === 'EXPORT_LUT') {
+        rowCgst.style.display = 'none';
+        rowSgst.style.display = 'none';
+        rowIgst.style.display = 'none';
+        taxLabel.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;color:#7e22ce;font-weight:700;"><i class="fa fa-plane"></i> ${escapeHtml(currentTaxRegime.label)}</span>`;
+    } else if (currentTaxRegime.type === 'INTER_STATE') {
+        rowCgst.style.display = 'none';
+        rowSgst.style.display = 'none';
+        rowIgst.style.display = '';
+        taxLabel.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;color:#1d4ed8;font-weight:700;"><i class="fa fa-truck"></i> ${escapeHtml(currentTaxRegime.label)}</span>`;
+    } else {
+        rowCgst.style.display = '';
+        rowSgst.style.display = '';
+        rowIgst.style.display = 'none';
+        taxLabel.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;color:#047857;font-weight:700;"><i class="fa fa-building"></i> ${escapeHtml(currentTaxRegime.label)}</span>`;
+    }
+
     recalc();
 }
 
@@ -547,12 +758,11 @@ function removeRow(btn) {
 
 function recalc() {
     let subtotal = 0, cgst = 0, sgst = 0, igst = 0;
-    const isInterState = selectedCustomerState && selectedCustomerState.toLowerCase() !== 'gujarat';
 
     document.querySelectorAll('.item-row').forEach(row => {
-        const qty      = parseFloat(row.querySelector('.qty-input').value) || 0;
-        const price    = parseFloat(row.querySelector('.price-input').value) || 0;
-        const gstRate  = parseFloat(row.dataset.gstRate || 18);
+        const qty       = parseFloat(row.querySelector('.qty-input').value) || 0;
+        const price     = parseFloat(row.querySelector('.price-input').value) || 0;
+        const gstRate   = parseFloat(row.dataset.gstRate || 18);
         const lineTotal = qty * price;
 
         row.querySelector('.total-input').value = lineTotal.toFixed(2);
@@ -561,12 +771,9 @@ function recalc() {
         const gstAmt = lineTotal * (gstRate / 100);
         row.querySelector('.gstamt-input').value = gstAmt.toFixed(2);
 
-        if (isInterState) {
-            igst += gstAmt;
-        } else {
-            cgst += gstAmt / 2;
-            sgst += gstAmt / 2;
-        }
+        cgst += gstAmt * currentTaxRegime.cgst_split;
+        sgst += gstAmt * currentTaxRegime.sgst_split;
+        igst += gstAmt * currentTaxRegime.igst_split;
     });
 
     const grand = subtotal + cgst + sgst + igst;
@@ -743,8 +950,10 @@ function saveQuickCustomer(e) {
     const formData = new FormData();
     const custName = document.getElementById('qc_name').value;
     const custState = document.getElementById('qc_state').value || 'Gujarat';
+    const custCountry = document.getElementById('qc_country').value || 'India';
     formData.append('name', custName);
     formData.append('phone', document.getElementById('qc_phone').value);
+    formData.append('country', custCountry);
     formData.append('state', custState);
     formData.append('gstin', document.getElementById('qc_gstin').value);
     formData.append('address', document.getElementById('qc_address').value);

@@ -74,10 +74,15 @@
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>#</th><th>Photo</th><th>Name</th><th>Phone</th><th>Email</th><th>GSTIN</th><th>State</th><th>Actions</th></tr>
+                    <tr><th>#</th><th>Photo</th><th>Name</th><th>Phone</th><th>GSTIN</th><th>Location / State</th><th>Auto Tax Regime</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                 @foreach($customers as $c)
+                @php
+                    $country = $c->country ?: 'India';
+                    $state = $c->state ?: ($country === 'India' ? 'Gujarat' : $country);
+                    $regime = \App\Services\GstTaxCalculationService::determineTaxRegime($country, $state, $c->gstin, $c->tax_type);
+                @endphp
                 <tr>
                     <td>{{ $c->id }}</td>
                     <td>
@@ -94,18 +99,30 @@
                             <span>{{ $c->name }}</span>
                             <i class="fa fa-arrow-up-right-from-square" style="font-size:11px;opacity:0.7;"></i>
                         </a>
+                        @if($c->email)<div style="font-size:11px;color:var(--text-muted);">{{ $c->email }}</div>@endif
                     </td>
                     <td>{{ $c->phone ?? '—' }}</td>
-                    <td>{{ $c->email ?? '—' }}</td>
                     <td><code>{{ $c->gstin ?? '—' }}</code></td>
-                    <td>{{ $c->state ?? '—' }}</td>
+                    <td>
+                        <div style="font-weight:600;">{{ $state }}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">{{ $country !== 'India' ? '🌍 '.$country : '🇮🇳 India' }}</div>
+                    </td>
+                    <td>
+                        @if($regime['is_export'])
+                            <span class="badge" style="background:#f3e8ff;color:#7e22ce;font-weight:600;"><i class="fa fa-plane"></i> Export (0% LUT)</span>
+                        @elseif($regime['is_intrastate'])
+                            <span class="badge" style="background:#ecfdf5;color:#047857;font-weight:600;"><i class="fa fa-check-circle"></i> CGST + SGST (GJ)</span>
+                        @else
+                            <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-weight:600;"><i class="fa fa-truck"></i> IGST (Inter-State)</span>
+                        @endif
+                    </td>
                     <td>
                         <div class="d-flex gap-2">
                             <a href="{{ route('customers.show', $c) }}" class="btn btn-outline btn-sm btn-icon" title="View Customer Profile, Bills & Sales" style="color:var(--primary);border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06);">
                                 <i class="fa fa-eye"></i>
                             </a>
                             <button class="btn btn-outline btn-sm btn-icon" title="Edit Customer"
-                                onclick="editCustomer({{ $c->id }}, {{ json_encode($c->name) }}, {{ json_encode($c->phone) }}, {{ json_encode($c->email) }}, {{ json_encode($c->address) }}, {{ json_encode($c->gstin) }}, {{ json_encode($c->state) }}, {{ json_encode($c->image ? asset($c->image) : null) }})">
+                                onclick="editCustomer({{ $c->id }}, {{ json_encode($c->name) }}, {{ json_encode($c->phone) }}, {{ json_encode($c->email) }}, {{ json_encode($c->address) }}, {{ json_encode($c->gstin) }}, {{ json_encode($c->state) }}, {{ json_encode($c->country ?: 'India') }}, {{ json_encode($c->image ? asset($c->image) : null) }})">
                                 <i class="fa fa-pen"></i>
                             </button>
                             <button class="btn btn-danger btn-sm btn-icon" title="Delete Customer"
@@ -125,7 +142,7 @@
 
 <!-- Add Modal -->
 <div class="modal-overlay" id="addCustomerModal">
-    <div class="modal">
+    <div class="modal" style="max-width:560px;">
         <div class="modal-header">
             <h3>Add Customer</h3>
             <button class="modal-close" onclick="closeModal('addCustomerModal')">✕</button>
@@ -134,11 +151,11 @@
             <div class="modal-body">
                 <div class="form-row cols-2">
                     <div class="form-group">
-                        <label>GSTIN <span style="font-size:11px;color:var(--primary);font-weight:500;">(Enter GST to Auto-Fill details)</span></label>
+                        <label>GSTIN <span style="font-size:11px;color:var(--primary);font-weight:500;">(Auto-detects State)</span></label>
                         <div style="display:flex;gap:6px;">
-                            <input type="text" id="add_gstin" name="gstin" maxlength="15" placeholder="e.g. 24AHUPP7924M1ZG" style="text-transform:uppercase">
+                            <input type="text" id="add_gstin" name="gstin" maxlength="15" placeholder="e.g. 24AHUPP7924M1ZG" oninput="onGstinTyped('add')" style="text-transform:uppercase">
                             <button type="button" id="add_gst_btn" class="btn btn-outline btn-sm" onclick="verifyGst('add')" style="white-space:nowrap;padding:0 12px;">
-                                <i class="fa-solid fa-bolt" style="color:var(--primary)"></i> Verify &amp; Fill
+                                <i class="fa-solid fa-bolt" style="color:var(--primary)"></i> Verify
                             </button>
                         </div>
                         <div id="add_gst_status" style="font-size:12px;margin-top:4px;display:none;"></div>
@@ -150,9 +167,32 @@
                     <div class="form-group"><label>Email</label><input type="email" name="email"></div>
                 </div>
                 <div class="form-row cols-2">
-                    <div class="form-group"><label>State</label><input type="text" id="add_state" name="state" placeholder="e.g. Gujarat"></div>
-                    <div class="form-group"><label>Billing Address</label><textarea id="add_address" name="address" rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>Country *</label>
+                        <select id="add_country" name="country" onchange="onCountryChanged('add')" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;">
+                            <option value="India" selected>🇮🇳 India</option>
+                            <option value="United States">🇺🇸 United States</option>
+                            <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                            <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                            <option value="Germany">🇩🇪 Germany</option>
+                            <option value="Canada">🇨🇦 Canada</option>
+                            <option value="Australia">🇦🇺 Australia</option>
+                            <option value="Singapore">🇸🇬 Singapore</option>
+                            <option value="Other">🌍 Other Overseas Country</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>State / Province</label>
+                        <input type="text" id="add_state" name="state" value="Gujarat" placeholder="e.g. Gujarat, Maharashtra" oninput="updateModalTaxBadge('add')">
+                    </div>
                 </div>
+                <div class="form-group">
+                    <div id="add_tax_preview" style="background:#f1f5f9;border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:8px;">
+                        <i class="fa fa-calculator" style="color:#6366f1;"></i>
+                        <span id="add_tax_preview_text">Tax Mode: <strong style="color:#059669;">CGST + SGST (Gujarat Intra-State)</strong></span>
+                    </div>
+                </div>
+                <div class="form-group"><label>Billing Address</label><textarea id="add_address" name="address" rows="2"></textarea></div>
                 <div class="form-group">
                     <label><i class="fa fa-camera"></i> Customer Photo / Logo</label>
                     <input type="file" name="image" id="add_cust_img_input" accept="image/*" onchange="previewCustImage(this, 'add_cust_preview')">
@@ -172,7 +212,7 @@
 
 <!-- Edit Modal -->
 <div class="modal-overlay" id="editCustomerModal">
-    <div class="modal">
+    <div class="modal" style="max-width:560px;">
         <div class="modal-header">
             <h3>Edit Customer</h3>
             <button class="modal-close" onclick="closeModal('editCustomerModal')">✕</button>
@@ -184,7 +224,7 @@
                     <div class="form-group">
                         <label>GSTIN</label>
                         <div style="display:flex;gap:6px;">
-                            <input type="text" id="edit_gstin" name="gstin" maxlength="15" style="text-transform:uppercase">
+                            <input type="text" id="edit_gstin" name="gstin" maxlength="15" oninput="onGstinTyped('edit')" style="text-transform:uppercase">
                             <button type="button" id="edit_gst_btn" class="btn btn-outline btn-sm" onclick="verifyGst('edit')" style="white-space:nowrap;padding:0 12px;">
                                 <i class="fa-solid fa-bolt" style="color:var(--primary)"></i> Verify
                             </button>
@@ -198,9 +238,32 @@
                     <div class="form-group"><label>Email</label><input type="email" id="edit_email" name="email"></div>
                 </div>
                 <div class="form-row cols-2">
-                    <div class="form-group"><label>State</label><input type="text" id="edit_state" name="state"></div>
-                    <div class="form-group"><label>Billing Address</label><textarea id="edit_address" name="address" rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>Country *</label>
+                        <select id="edit_country" name="country" onchange="onCountryChanged('edit')" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;">
+                            <option value="India">🇮🇳 India</option>
+                            <option value="United States">🇺🇸 United States</option>
+                            <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                            <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                            <option value="Germany">🇩🇪 Germany</option>
+                            <option value="Canada">🇨🇦 Canada</option>
+                            <option value="Australia">🇦🇺 Australia</option>
+                            <option value="Singapore">🇸🇬 Singapore</option>
+                            <option value="Other">🌍 Other Overseas Country</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>State / Province</label>
+                        <input type="text" id="edit_state" name="state" oninput="updateModalTaxBadge('edit')">
+                    </div>
                 </div>
+                <div class="form-group">
+                    <div id="edit_tax_preview" style="background:#f1f5f9;border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:8px;">
+                        <i class="fa fa-calculator" style="color:#6366f1;"></i>
+                        <span id="edit_tax_preview_text">Tax Mode: <strong style="color:#059669;">CGST + SGST (Gujarat Intra-State)</strong></span>
+                    </div>
+                </div>
+                <div class="form-group"><label>Billing Address</label><textarea id="edit_address" name="address" rows="2"></textarea></div>
                 <div class="form-group">
                     <label><i class="fa fa-camera"></i> Customer Photo / Logo</label>
                     <input type="file" name="image" id="edit_cust_img_input" accept="image/*" onchange="previewCustImage(this, 'edit_cust_preview')">
@@ -355,15 +418,80 @@ if (addForm) {
     });
 }
 
-window.editCustomer = function(id, name, phone, email, address, gstin, state, imageUrl) {
+const GST_STATE_MAP = {
+    '01': 'Jammu and Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh',
+    '05': 'Uttarakhand', '06': 'Haryana', '07': 'Delhi', '08': 'Rajasthan',
+    '09': 'Uttar Pradesh', '10': 'Bihar', '11': 'Sikkim', '12': 'Arunachal Pradesh',
+    '13': 'Nagaland', '14': 'Manipur', '15': 'Mizoram', '16': 'Tripura',
+    '17': 'Meghalaya', '18': 'Assam', '19': 'West Bengal', '20': 'Jharkhand',
+    '21': 'Odisha', '22': 'Chhattisgarh', '23': 'Madhya Pradesh', '24': 'Gujarat',
+    '26': 'Dadra and Nagar Haveli and Daman and Diu', '27': 'Maharashtra', '29': 'Karnataka',
+    '30': 'Goa', '31': 'Lakshadweep', '32': 'Kerala', '33': 'Tamil Nadu',
+    '34': 'Puducherry', '35': 'Andaman and Nicobar Islands', '36': 'Telangana',
+    '37': 'Andhra Pradesh', '38': 'Ladakh'
+};
+
+window.onGstinTyped = function(mode) {
+    const gstinInput = document.getElementById(mode + '_gstin');
+    const stateInput = document.getElementById(mode + '_state');
+    const countrySelect = document.getElementById(mode + '_country');
+    if (!gstinInput) return;
+
+    const val = (gstinInput.value || '').trim().toUpperCase();
+    if (val.length >= 2 && countrySelect.value === 'India') {
+        const prefix = val.substring(0, 2);
+        const state = GST_STATE_MAP[prefix];
+        if (state && stateInput) {
+            stateInput.value = state;
+        }
+    }
+    updateModalTaxBadge(mode);
+};
+
+window.onCountryChanged = function(mode) {
+    const country = document.getElementById(mode + '_country').value;
+    const gstinInput = document.getElementById(mode + '_gstin');
+    const stateInput = document.getElementById(mode + '_state');
+    
+    if (country !== 'India') {
+        if (gstinInput) gstinInput.placeholder = 'Tax ID / VAT No (Optional)';
+        if (stateInput && stateInput.value.toLowerCase() === 'gujarat') stateInput.value = '';
+    } else {
+        if (gstinInput) gstinInput.placeholder = '15-digit GSTIN (e.g. 24..., 27...)';
+        if (stateInput && !stateInput.value) stateInput.value = 'Gujarat';
+    }
+    updateModalTaxBadge(mode);
+};
+
+window.updateModalTaxBadge = function(mode) {
+    const country = (document.getElementById(mode + '_country')?.value || 'India').trim();
+    const state = (document.getElementById(mode + '_state')?.value || '').trim();
+    const gstin = (document.getElementById(mode + '_gstin')?.value || '').trim();
+    const previewText = document.getElementById(mode + '_tax_preview_text');
+    if (!previewText) return;
+
+    const isDomestic = country.toLowerCase() === 'india';
+    if (!isDomestic) {
+        previewText.innerHTML = `Tax Mode: <strong style="color:#8b5cf6;"><i class="fa fa-plane"></i> Export (0% Tax / LUT)</strong> — ${country || 'Overseas'}`;
+    } else if (state.toLowerCase() === 'gujarat' || state.toLowerCase() === 'gj' || gstin.startsWith('24') || (!state && isDomestic)) {
+        previewText.innerHTML = `Tax Mode: <strong style="color:#059669;"><i class="fa fa-building"></i> CGST (50%) + SGST (50%)</strong> — Gujarat Intra-State`;
+    } else {
+        previewText.innerHTML = `Tax Mode: <strong style="color:#2563eb;"><i class="fa fa-truck"></i> IGST (100%)</strong> — Inter-State: ${state || 'Outside Gujarat'}`;
+    }
+};
+
+window.editCustomer = function(id, name, phone, email, address, gstin, state, country, imageUrl) {
     editUrl = `/customers/${id}`;
     if (document.getElementById('edit_name')) document.getElementById('edit_name').value = name || '';
     if (document.getElementById('edit_phone')) document.getElementById('edit_phone').value = phone || '';
     if (document.getElementById('edit_email')) document.getElementById('edit_email').value = email || '';
     if (document.getElementById('edit_address')) document.getElementById('edit_address').value = address || '';
     if (document.getElementById('edit_gstin')) document.getElementById('edit_gstin').value = gstin || '';
+    if (document.getElementById('edit_country')) document.getElementById('edit_country').value = country || 'India';
     if (document.getElementById('edit_state')) document.getElementById('edit_state').value = state || '';
     
+    updateModalTaxBadge('edit');
+
     const statusDiv = document.getElementById('edit_gst_status');
     if (statusDiv) statusDiv.style.display = 'none';
 

@@ -108,16 +108,27 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email|max:255',
-            'address' => 'nullable|string',
-            'gstin'   => 'nullable|string|max:15',
-            'state'   => 'nullable|string|max:50',
-            'image'   => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:4096',
+            'name'     => 'required|string|max:255',
+            'phone'    => 'nullable|string|max:20',
+            'email'    => 'nullable|email|max:255',
+            'address'  => 'nullable|string',
+            'city'     => 'nullable|string|max:100',
+            'state'    => 'nullable|string|max:50',
+            'country'  => 'nullable|string|max:100',
+            'pincode'  => 'nullable|string|max:20',
+            'gstin'    => 'nullable|string|max:15',
+            'tax_type' => 'nullable|string|max:50',
+            'image'    => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:4096',
         ]);
 
         try {
+            if (empty($validated['country'])) {
+                $validated['country'] = 'India';
+            }
+            if (empty($validated['state']) && !empty($validated['gstin'])) {
+                $validated['state'] = \App\Services\GstTaxCalculationService::getStateFromGstin($validated['gstin']) ?: 'Gujarat';
+            }
+
             if ($request->hasFile('image')) {
                 $dest = public_path('uploads/customers');
                 if (!file_exists($dest)) {
@@ -140,16 +151,27 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'phone'   => 'nullable|string|max:20',
-            'email'   => 'nullable|email|max:255',
-            'address' => 'nullable|string',
-            'gstin'   => 'nullable|string|max:15',
-            'state'   => 'nullable|string|max:50',
-            'image'   => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:4096',
+            'name'     => 'required|string|max:255',
+            'phone'    => 'nullable|string|max:20',
+            'email'    => 'nullable|email|max:255',
+            'address'  => 'nullable|string',
+            'city'     => 'nullable|string|max:100',
+            'state'    => 'nullable|string|max:50',
+            'country'  => 'nullable|string|max:100',
+            'pincode'  => 'nullable|string|max:20',
+            'gstin'    => 'nullable|string|max:15',
+            'tax_type' => 'nullable|string|max:50',
+            'image'    => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:4096',
         ]);
 
         try {
+            if (empty($validated['country'])) {
+                $validated['country'] = 'India';
+            }
+            if (empty($validated['state']) && !empty($validated['gstin'])) {
+                $validated['state'] = \App\Services\GstTaxCalculationService::getStateFromGstin($validated['gstin']) ?: $customer->state;
+            }
+
             if ($request->hasFile('image')) {
                 $dest = public_path('uploads/customers');
                 if (!file_exists($dest)) {

@@ -7,9 +7,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
-    protected $fillable = ['name', 'image', 'phone', 'email', 'address', 'gstin', 'state'];
+    protected $fillable = [
+        'name', 'image', 'phone', 'email', 'address', 'city',
+        'state', 'country', 'pincode', 'gstin', 'tax_type'
+    ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'tax_regime'];
+
+    public function getTaxRegimeAttribute(): array
+    {
+        return \App\Services\GstTaxCalculationService::determineTaxRegime(
+            $this->country,
+            $this->state,
+            $this->gstin,
+            $this->tax_type
+        );
+    }
 
     public function getImageUrlAttribute(): ?string
     {

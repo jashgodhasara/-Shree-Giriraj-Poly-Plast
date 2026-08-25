@@ -236,6 +236,49 @@ CREATE TABLE IF NOT EXISTS inventory_audit_logs (
     created_at TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS customers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NULL,
+    email VARCHAR(255) NULL,
+    address TEXT NULL,
+    city VARCHAR(100) NULL,
+    state VARCHAR(50) DEFAULT 'Gujarat',
+    country VARCHAR(100) DEFAULT 'India',
+    pincode VARCHAR(20) NULL,
+    gstin VARCHAR(15) NULL,
+    tax_type VARCHAR(50) DEFAULT 'Regular',
+    image VARCHAR(255) NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS suppliers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NULL,
+    email VARCHAR(255) NULL,
+    address TEXT NULL,
+    city VARCHAR(100) NULL,
+    state VARCHAR(50) DEFAULT 'Gujarat',
+    country VARCHAR(100) DEFAULT 'India',
+    pincode VARCHAR(20) NULL,
+    gstin VARCHAR(15) NULL,
+    tax_type VARCHAR(50) DEFAULT 'Regular',
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS transporters (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NULL,
+    vehicle_no VARCHAR(50) NULL,
+    address TEXT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     invoice_number VARCHAR(50) UNIQUE NOT NULL,
