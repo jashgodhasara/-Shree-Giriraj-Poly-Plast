@@ -191,7 +191,7 @@
                                 <a href="{{ route('factory-assets.show', $asset) }}" class="btn btn-outline btn-sm btn-icon" title="View Details &amp; Service History">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <button class="btn btn-outline btn-sm btn-icon" title="Edit Asset Details" onclick='openEditAssetModal(@json($asset))'>
+                                <button class="btn btn-outline btn-sm btn-icon" title="Edit Asset Details" onclick="openEditAssetModal({{ $asset->id }})">
                                     <i class="fa fa-pen"></i>
                                 </button>
                                 <form action="{{ route('factory-assets.destroy', $asset) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this machine?');">
@@ -337,19 +337,23 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
-function openCreateAssetModal() {
+window.assetsData = @json($assets->items());
+window.assetsMap = {};
+window.assetsData.forEach(function(a) { window.assetsMap[a.id] = a; });
+
+window.openCreateAssetModal = function() {
     document.getElementById('assetModalTitle').innerHTML = '<i class="fa-solid fa-industry text-primary"></i> Register New Plant Asset';
     document.getElementById('assetForm').action = "{{ route('factory-assets.store') }}";
     document.getElementById('assetMethodField').innerHTML = '';
     document.getElementById('assetForm').reset();
     openModal('assetModal');
-}
+};
 
-function openEditAssetModal(asset) {
-    document.getElementById('assetModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-primary"></i> Edit Machine: ' + asset.asset_code;
-    document.getElementById('assetForm').action = "/factory-assets/" + asset.id;
+window.openEditAssetModal = function(assetId) {
+    const asset = window.assetsMap[assetId] || {};
+    document.getElementById('assetModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-primary"></i> Edit Machine: ' + (asset.asset_code || '');
+    document.getElementById('assetForm').action = "/factory-assets/" + (asset.id || assetId);
     document.getElementById('assetMethodField').innerHTML = '@method("PUT")';
     
     document.getElementById('asset_code').value = asset.asset_code || '';
@@ -370,7 +374,6 @@ function openEditAssetModal(asset) {
     document.getElementById('asset_notes').value = asset.notes || '';
     
     openModal('assetModal');
-}
+};
 </script>
-@endpush
 @endsection

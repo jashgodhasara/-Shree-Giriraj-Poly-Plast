@@ -204,7 +204,7 @@
                                 <a href="{{ route('dyes.show', $dye) }}" class="btn btn-outline btn-sm btn-icon" title="View Specifications &amp; Maintenance Logs">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <button class="btn btn-outline btn-sm btn-icon" title="Edit Dye Details" onclick='openEditDyeModal(@json($dye))'>
+                                <button class="btn btn-outline btn-sm btn-icon" title="Edit Dye Details" onclick="openEditDyeModal({{ $dye->id }})">
                                     <i class="fa fa-pen"></i>
                                 </button>
                                 <form action="{{ route('dyes.destroy', $dye) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this dye?');">
@@ -344,9 +344,12 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
-function openCreateDyeModal() {
+window.dyesData = @json($dyes->items());
+window.dyesMap = {};
+window.dyesData.forEach(function(d) { window.dyesMap[d.id] = d; });
+
+window.openCreateDyeModal = function() {
     document.getElementById('dyeModalTitle').innerHTML = '<i class="fa-solid fa-shapes text-primary"></i> Add New Dye / Mould';
     document.getElementById('dyeForm').action = "{{ route('dyes.store') }}";
     document.getElementById('dyeMethodField').innerHTML = '';
@@ -355,11 +358,12 @@ function openCreateDyeModal() {
     document.getElementById('dye_service_interval_shots').value = '50000';
     toggleClientSelect();
     openModal('dyeModal');
-}
+};
 
-function openEditDyeModal(dye) {
-    document.getElementById('dyeModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-primary"></i> Edit Dye / Mould: ' + dye.code;
-    document.getElementById('dyeForm').action = "/dyes/" + dye.id;
+window.openEditDyeModal = function(dyeId) {
+    const dye = window.dyesMap[dyeId] || {};
+    document.getElementById('dyeModalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-primary"></i> Edit Dye / Mould: ' + (dye.code || '');
+    document.getElementById('dyeForm').action = "/dyes/" + (dye.id || dyeId);
     document.getElementById('dyeMethodField').innerHTML = '@method("PUT")';
     
     document.getElementById('dye_code').value = dye.code || '';
@@ -379,9 +383,9 @@ function openEditDyeModal(dye) {
     
     toggleClientSelect();
     openModal('dyeModal');
-}
+};
 
-function toggleClientSelect() {
+window.toggleClientSelect = function() {
     const ownership = document.getElementById('dye_ownership_type').value;
     const clientDiv = document.getElementById('clientSelectDiv');
     if (ownership === 'Client Owned') {
@@ -389,7 +393,6 @@ function toggleClientSelect() {
     } else {
         clientDiv.style.display = 'none';
     }
-}
+};
 </script>
-@endpush
 @endsection

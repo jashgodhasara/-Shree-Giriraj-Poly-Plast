@@ -185,7 +185,7 @@
                                     <i class="fa fa-print"></i>
                                 </a>
                                 @if($p->payment_status !== 'Paid')
-                                <button class="btn btn-primary btn-sm btn-icon" title="Mark Salary Paid" onclick='openPayoutModal(@json($p))'>
+                                <button class="btn btn-primary btn-sm btn-icon" title="Mark Salary Paid" onclick="openPayoutModal({{ $p->id }})">
                                     <i class="fa fa-indian-rupee-sign"></i>
                                 </button>
                                 @endif
@@ -258,15 +258,18 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
-function openPayoutModal(payroll) {
-    document.getElementById('payoutForm').action = "/payroll/" + payroll.id + "/pay";
-    document.getElementById('payout_emp_name').innerText = payroll.employee.name + " (" + payroll.employee.emp_code + ")";
-    document.getElementById('payout_net_amount').innerText = parseFloat(payroll.net_salary).toFixed(2);
-    document.getElementById('payout_paid_amount').value = parseFloat(payroll.net_salary).toFixed(2);
+window.payrollsData = @json($payrolls->items());
+window.payrollsMap = {};
+window.payrollsData.forEach(function(p) { window.payrollsMap[p.id] = p; });
+
+window.openPayoutModal = function(payrollId) {
+    const payroll = window.payrollsMap[payrollId] || {};
+    document.getElementById('payoutForm').action = "/payroll/" + (payroll.id || payrollId) + "/pay";
+    document.getElementById('payout_emp_name').innerText = (payroll.employee ? payroll.employee.name + " (" + payroll.employee.emp_code + ")" : '');
+    document.getElementById('payout_net_amount').innerText = parseFloat(payroll.net_salary || 0).toFixed(2);
+    document.getElementById('payout_paid_amount').value = parseFloat(payroll.net_salary || 0).toFixed(2);
     openModal('payoutModal');
-}
+};
 </script>
-@endpush
 @endsection

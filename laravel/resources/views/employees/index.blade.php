@@ -187,7 +187,7 @@
                                 <a href="{{ route('employees.show', $emp) }}" class="btn btn-outline btn-sm btn-icon" title="View Full Employee Profile &amp; Attendance History">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <button class="btn btn-outline btn-sm btn-icon" title="Edit Employee" onclick='openEditEmployeeModal(@json($emp))'>
+                                <button class="btn btn-outline btn-sm btn-icon" title="Edit Employee" onclick="openEditEmployeeModal({{ $emp->id }})">
                                     <i class="fa fa-pen"></i>
                                 </button>
                                 <form action="{{ route('employees.destroy', $emp) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove this employee?');">
@@ -334,19 +334,23 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
-function openCreateEmployeeModal() {
+window.employeesData = @json($employees->items());
+window.employeesMap = {};
+window.employeesData.forEach(function(e) { window.employeesMap[e.id] = e; });
+
+window.openCreateEmployeeModal = function() {
     document.getElementById('employeeModalTitle').innerHTML = '<i class="fa-solid fa-user-plus text-primary"></i> Register New Staff';
     document.getElementById('employeeForm').action = "{{ route('employees.store') }}";
     document.getElementById('employeeMethodField').innerHTML = '';
     document.getElementById('employeeForm').reset();
     openModal('employeeModal');
-}
+};
 
-function openEditEmployeeModal(emp) {
-    document.getElementById('employeeModalTitle').innerHTML = '<i class="fa-solid fa-user-pen text-primary"></i> Edit Staff: ' + emp.name;
-    document.getElementById('employeeForm').action = "/employees/" + emp.id;
+window.openEditEmployeeModal = function(empId) {
+    const emp = window.employeesMap[empId] || {};
+    document.getElementById('employeeModalTitle').innerHTML = '<i class="fa-solid fa-user-pen text-primary"></i> Edit Staff: ' + (emp.name || '');
+    document.getElementById('employeeForm').action = "/employees/" + (emp.id || empId);
     document.getElementById('employeeMethodField').innerHTML = '@method("PUT")';
     
     document.getElementById('emp_code').value = emp.emp_code || '';
@@ -367,7 +371,6 @@ function openEditEmployeeModal(emp) {
     document.getElementById('emp_address').value = emp.address || '';
     
     openModal('employeeModal');
-}
+};
 </script>
-@endpush
 @endsection

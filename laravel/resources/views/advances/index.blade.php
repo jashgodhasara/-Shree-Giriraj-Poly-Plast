@@ -207,11 +207,9 @@
     </div>
 </div>
 
-@push('scripts')
 <script>
-function openCreateAdvanceModal() {
+window.openCreateAdvanceModal = function() {
     openModal('advanceModal');
-}
+};
 </script>
-@endpush
 @endsection
