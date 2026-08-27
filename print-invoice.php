@@ -2,13 +2,20 @@
 require_once 'config/db.php';
 require_once 'config/auth.php';
 requireAuth();
-$id = $_GET['id'] ?? 0;
+
+$id = intval($_GET['id'] ?? 0);
 
 if (!$id) {
     die("Invalid Invoice ID");
 }
 
-$stmt = $pdo->prepare("SELECT invoices.*, customers.name as c_name, customers.address as c_address, customers.phone as c_phone, customers.gstin as c_gstin, customers.state as c_state FROM invoices JOIN customers ON invoices.customer_id = customers.id WHERE invoices.id = ?");
+$stmt = $pdo->prepare("
+    SELECT invoices.*, customers.name as c_name, customers.address as c_address, customers.phone as c_phone, 
+           customers.gstin as c_gstin, customers.state as c_state 
+    FROM invoices 
+    JOIN customers ON invoices.customer_id = customers.id 
+    WHERE invoices.id = ?
+");
 $stmt->execute([$id]);
 $invoice = $stmt->fetch();
 
@@ -16,7 +23,15 @@ if (!$invoice) {
     die("Invoice not found");
 }
 
-$stmtItems = $pdo->prepare("SELECT invoice_items.*, products.name as p_name, products.hsn_code, products.gst_rate FROM invoice_items JOIN products ON invoice_items.product_id = products.id WHERE invoice_id = ?");
+$stmtItems = $pdo->prepare("
+    SELECT invoice_items.*, products.name as p_name, 
+           COALESCE(invoice_items.hsn_code, products.hsn_code, '392690') as hsn_code,
+           COALESCE(invoice_items.unit, products.unit, 'PCS') as item_unit,
+           COALESCE(invoice_items.gst_rate, products.gst_rate, 18) as item_gst_rate
+    FROM invoice_items 
+    JOIN products ON invoice_items.product_id = products.id 
+    WHERE invoice_id = ?
+");
 $stmtItems->execute([$id]);
 $items = $stmtItems->fetchAll();
 
@@ -47,7 +62,7 @@ $igstRate = ($subtotal > 0 && $igst > 0) ? round(($igst / $subtotal) * 100, 2) :
 $exactTotal = $subtotal + $cgst + $sgst + $igst;
 $roundOff = round($grand_total - $exactTotal, 2);
 $rowCount = count($items);
-$fillCount = max(0, 10 - $rowCount);
+$fillCount = max(0, 8 - $rowCount);
 $words = numToWordsINR_php((int)round($grand_total));
 ?>
 <!DOCTYPE html>
@@ -119,8 +134,8 @@ body {
 .table-area { position: relative; margin-top: 0; flex: 1; }
 .watermark-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-14deg); font-family: 'Great Vibes', 'Playball', cursive; font-size: 130px; color: rgba(220, 38, 38, 0.08); font-weight: bold; pointer-events: none; z-index: 0; user-select: none; white-space: nowrap; }
 .bill-table { width: 100%; border-collapse: collapse; position: relative; z-index: 1; font-size: 9px; }
-.bill-table th { border-bottom: 1px solid #000; padding: 4px 2px; font-size: 8.5px; font-weight: bold; text-align: center; text-transform: uppercase; }
-.bill-table td { padding: 3px 2px; vertical-align: top; height: 18px; }
+.bill-table th { border-bottom: 1px solid #000; padding: 4px 2px; font-size: 8.5px; font-weight: bold; text-align: center; text-transform: uppercase; background: #fafafa; }
+.bill-table td { padding: 4px 2px; vertical-align: top; height: 18px; border-bottom: 1px solid #f1f5f9; }
 .bill-table .al-left { text-align: left; }
 .bill-table .al-center { text-align: center; }
 .bill-table .al-right { text-align: right; }
@@ -129,7 +144,7 @@ body {
 .summary-container { display: grid; grid-template-columns: 1.15fr 1fr; margin-top: 6px; font-size: 9px; }
 .summary-left-box { padding-right: 12px; }
 .delivery-box { border: 1px solid #000; padding: 2px 6px; display: inline-block; min-width: 130px; font-weight: bold; font-size: 8.5px; margin-bottom: 6px; }
-.vehicle-line { font-weight: bold; font-size: 9.5px; margin-bottom: 10px; }
+.vehicle-line { font-weight: bold; font-size: 9.5px; margin-bottom: 6px; }
 .bank-section { font-size: 8.5px; line-height: 1.35; margin-top: 4px; }
 .bank-title { font-weight: bold; }
 .words-section { margin-top: 6px; font-size: 8.5px; }
@@ -149,7 +164,7 @@ body {
 .sign-block { text-align: right; display: flex; flex-direction: column; justify-content: space-between; }
 .for-title { font-size: 9px; }
 .company-name-bold { font-size: 10px; font-weight: bold; }
-.sign-label { margin-top: 32px; font-size: 8.5px; }
+.sign-label { margin-top: 32px; font-size: 8.5px; font-weight: bold; }
 
 .bottom-bars { margin-top: auto; width: 100%; }
 .bottom-bar-red { height: 3px; background: #dc2626; }
@@ -171,10 +186,25 @@ body {
         🏭 <span>Shree Giriraj Poly Plast</span> — Tax Invoice #<?= htmlspecialchars($invoice['invoice_number']) ?>
     </div>
     <div class="toolbar-actions">
-        <a href="invoices.php" class="btn-back">← Back</a>
+        <a href="invoices.php" class="btn-back"><i class='bx bx-arrow-back'></i> ← Back to Invoices</a>
+        <button onclick="exitPrintView()" class="btn-back" style="background:#475569; color:#fff;" title="Close print preview">✕ Exit Print</button>
         <button onclick="window.print()" class="btn-print">🖨 Print Invoice</button>
     </div>
 </div>
+
+<script>
+function exitPrintView() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.close();
+    }
+    // Fallback if window.close was blocked by browser
+    setTimeout(function() {
+        window.location.href = 'invoices.php';
+    }, 200);
+}
+</script>
 
 <div class="page-wrap">
     <div class="top-color-strip"></div>
@@ -203,41 +233,44 @@ body {
         </div>
 
         <div class="tax-strip-row">
-            <div>GSTIN:24AHUPP7924M1ZG</div>
+            <div>GSTIN: 24AHUPP7924M1ZG &nbsp;|&nbsp; STATE: GUJARAT (24)</div>
             <div class="tax-strip-title">TAX-INVOICE</div>
             <div class="tax-strip-copies">ORIGINAL / DUPLICATE / TRIPLICATE</div>
         </div>
 
         <div class="buyer-meta-grid">
             <div class="buyer-col">
-                <div class="buyer-label">Buyer's Name Address &amp; GSTIN:</div>
+                <div class="buyer-label">Buyer's Name, Address &amp; GSTIN:</div>
                 <div class="buyer-name">M/S. &nbsp;<?= strtoupper(htmlspecialchars($invoice['c_name'])) ?></div>
                 <?php if (!empty($invoice['c_address'])): ?>
                     <div><?= nl2br(htmlspecialchars($invoice['c_address'])) ?></div>
                 <?php endif; ?>
-                <?php if (!empty($invoice['c_state'])): ?>
-                    <div style="font-weight: 600;"><?= strtoupper(htmlspecialchars($invoice['c_state'])) ?>.</div>
-                <?php endif; ?>
-                <div class="buyer-gstin">GSTIN:<?= !empty($invoice['c_gstin']) ? htmlspecialchars($invoice['c_gstin']) : '—' ?></div>
+                <div>
+                    <strong>State:</strong> <?= strtoupper(htmlspecialchars($invoice['c_state'] ?: 'GUJARAT')) ?> 
+                    <?php if (strtolower(trim($invoice['c_state'] ?? '')) === 'gujarat' || empty($invoice['c_state'])): ?>
+                        <span>(Code: 24)</span>
+                    <?php endif; ?>
+                </div>
+                <div class="buyer-gstin">GSTIN: <?= !empty($invoice['c_gstin']) ? htmlspecialchars($invoice['c_gstin']) : '—' ?></div>
             </div>
 
             <div class="meta-col">
                 <div class="meta-line">
-                    <span class="meta-k">INVOICE NO: &nbsp;<span class="meta-v"><?= htmlspecialchars($invoice['invoice_number']) ?></span></span>
+                    <span class="meta-k">INVOICE NO: &nbsp;<span class="meta-v" style="font-weight:bold;"><?= htmlspecialchars($invoice['invoice_number']) ?></span></span>
                     <span class="meta-k">DATE: &nbsp;<span class="meta-v"><?= date('d.m.Y', strtotime($invoice['invoice_date'])) ?></span></span>
                 </div>
                 <div class="meta-line">
-                    <span class="meta-k">D CHALLAN NO: &nbsp;<span class="meta-v"><?= htmlspecialchars($invoice['challan_number'] ?? ($invoice['lr_number'] ?? '')) ?></span></span>
+                    <span class="meta-k">D CHALLAN NO: &nbsp;<span class="meta-v"><?= htmlspecialchars($invoice['challan_number'] ?: ($invoice['lr_number'] ?? '')) ?></span></span>
                     <span class="meta-k">DATE: &nbsp;<span class="meta-v"><?= date('d.m.Y', strtotime($invoice['invoice_date'])) ?></span></span>
                 </div>
                 <div class="meta-line">
-                    <span class="meta-k">P.O.NO &amp; DATE: &nbsp;<span class="meta-v"><?= htmlspecialchars($invoice['po_number'] ?? '') ?> <?= !empty($invoice['po_date']) ? '('.htmlspecialchars($invoice['po_date']).')' : '' ?></span></span>
+                    <span class="meta-k">P.O.NO &amp; DATE: &nbsp;<span class="meta-v"><?= htmlspecialchars($invoice['po_number'] ?? '') ?></span></span>
                 </div>
                 <div class="meta-line">
-                    <span class="meta-k">INSURANCE : &nbsp;<span class="meta-v"></span></span>
+                    <span class="meta-k">PAYMENT TERMS: &nbsp;<span class="meta-v"><?= strtoupper(htmlspecialchars($invoice['payment_terms'] ?: '30 Days')) ?></span></span>
                 </div>
                 <div class="meta-line">
-                    <span class="meta-k">PAYMENT TERMS: &nbsp;<span class="meta-v"><?= strtoupper(htmlspecialchars($invoice['payment_terms'] ?? '')) ?></span></span>
+                    <span class="meta-k">VEHICLE NO: &nbsp;<span class="meta-v"><?= htmlspecialchars($invoice['lr_number'] ?? '') ?></span></span>
                 </div>
             </div>
         </div>
@@ -247,37 +280,36 @@ body {
             <table class="bill-table">
                 <thead>
                     <tr>
-                        <th style="width: 35px;">NO</th>
-                        <th class="al-left" style="width: 44%;">Description Of Goods</th>
-                        <th style="width: 65px;">HSN<br>SAC</th>
-                        <th style="width: 75px;">QUANTITY<br><span style="font-weight: normal; text-transform: none;">Nos</span></th>
-                        <th style="width: 65px;">RATE</th>
-                        <th style="width: 60px;">RATE/</th>
-                        <th class="al-right" style="width: 85px;">AMOUNT</th>
+                        <th style="width: 30px;">NO</th>
+                        <th class="al-left" style="width: 40%;">Description Of Goods</th>
+                        <th style="width: 60px;">HSN/SAC</th>
+                        <th style="width: 65px;">QUANTITY</th>
+                        <th style="width: 50px;">UNIT</th>
+                        <th style="width: 65px;">RATE (₹)</th>
+                        <th style="width: 55px;">GST %</th>
+                        <th class="al-right" style="width: 85px;">AMOUNT (₹)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($items as $idx => $item): ?>
+                    <?php foreach ($items as $idx => $item): 
+                        $itemUnit = htmlspecialchars($item['item_unit'] ?: 'PCS');
+                    ?>
                     <tr>
                         <td class="al-center"><?= $idx + 1 ?></td>
                         <td class="item-name al-left"><?= strtoupper(htmlspecialchars($item['p_name'])) ?></td>
                         <td class="al-center"><?= htmlspecialchars($item['hsn_code'] ?? '392690') ?></td>
-                        <td class="al-center" style="font-weight: bold;"><?= number_format((float)$item['quantity'], 0) ?></td>
+                        <td class="al-center" style="font-weight: bold;"><?= number_format((float)$item['quantity'], 2) ?></td>
+                        <td class="al-center"><?= $itemUnit ?></td>
                         <td class="al-center"><?= number_format((float)$item['unit_price'], 2) ?></td>
-                        <td class="al-center">1 Nos</td>
+                        <td class="al-center"><?= htmlspecialchars($item['item_gst_rate']) ?>%</td>
                         <td class="al-right" style="font-weight: bold;"><?= number_format((float)$item['total_price'], 2) ?></td>
                     </tr>
                     <?php endforeach; ?>
 
                     <?php for ($f = 0; $f < $fillCount; $f++): ?>
                     <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td class="al-right" style="color: #4b5563;">0.00</td>
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        <td class="al-right" style="color: #cbd5e1;">-</td>
                     </tr>
                     <?php endfor; ?>
                 </tbody>
@@ -287,10 +319,7 @@ body {
         <div class="summary-container">
             <div class="summary-left-box">
                 <div class="delivery-box">
-                    DELIVERY AT: &nbsp;<?= htmlspecialchars($invoice['delivery_at'] ?? '') ?>
-                </div>
-                <div class="vehicle-line">
-                    VEHICLE NO: <?= htmlspecialchars($invoice['lr_number'] ?? '') ?>
+                    DELIVERY AT: &nbsp;<?= htmlspecialchars($invoice['delivery_at'] ?: 'AS PER ORDER') ?>
                 </div>
 
                 <div class="bank-section">
@@ -300,66 +329,59 @@ body {
                 </div>
 
                 <div class="words-section">
-                    <div class="words-title">Amount In Words :</div>
+                    <div class="words-title">Amount In Words:</div>
                     <div class="words-val">
-                        Rs. <?= $words ?> Only.
+                        Rupees <?= $words ?> Only.
                     </div>
                 </div>
             </div>
 
             <div class="calc-side">
-                <div class="calc-row">
-                    <span>PACKAGING &amp; FORWARDING CHARGES</span>
-                    <span>0.00</span>
-                </div>
                 <div class="calc-row" style="font-weight: bold;">
-                    <span>NET AMOUNT</span>
-                    <span><?= number_format($subtotal, 2) ?></span>
+                    <span>TAXABLE AMOUNT</span>
+                    <span>₹<?= number_format($subtotal, 2) ?></span>
                 </div>
                 <div class="calc-row bordered-top">
-                    <span>SGST &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?= $isInter ? '0.00%' : number_format($sgstRate, 2).'%' ?></span>
-                    <span><?= $isInter ? '0.00' : number_format($sgst, 2) ?></span>
+                    <span>CGST &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?= $isInter ? '0.00%' : number_format($cgstRate, 2).'%' ?></span>
+                    <span>₹<?= $isInter ? '0.00' : number_format($cgst, 2) ?></span>
                 </div>
                 <div class="calc-row">
-                    <span>CGST &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?= $isInter ? '0.00%' : number_format($cgstRate, 2).'%' ?></span>
-                    <span><?= $isInter ? '0.00' : number_format($cgst, 2) ?></span>
+                    <span>SGST &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?= $isInter ? '0.00%' : number_format($sgstRate, 2).'%' ?></span>
+                    <span>₹<?= $isInter ? '0.00' : number_format($sgst, 2) ?></span>
                 </div>
                 <div class="calc-row">
                     <span>IGST &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?= $isInter ? number_format($igstRate, 2).'%' : '0.00%' ?></span>
-                    <span><?= $isInter ? number_format($igst, 2) : '0.00' ?></span>
+                    <span>₹<?= $isInter ? number_format($igst, 2) : '0.00' ?></span>
                 </div>
+                <?php if ($roundOff != 0): ?>
                 <div class="calc-row">
-                    <span>ROUND OFF(+/-)</span>
-                    <span><?= number_format($roundOff, 2) ?></span>
+                    <span>ROUND OFF (+/-)</span>
+                    <span>₹<?= number_format($roundOff, 2) ?></span>
                 </div>
+                <?php endif; ?>
                 <div class="calc-row total-bold">
-                    <span>TOTAL</span>
-                    <span><?= number_format($grand_total, 2) ?></span>
+                    <span>GRAND TOTAL</span>
+                    <span style="font-size:12px;">₹<?= number_format($grand_total, 2) ?></span>
                 </div>
             </div>
         </div>
 
         <div class="full-divider"></div>
         <div class="reverse-charge-text">
-            Amount Of Tax Subject To Reverse Charge:
+            Amount Of Tax Subject To Reverse Charge: &nbsp;<strong>NO</strong>
         </div>
 
         <div class="footer-cols">
             <div class="decl-text">
-                <p><strong>Declaration:</strong> &nbsp; We declare that this invoice shows the actual</p>
-                <p>price of the Goods.</p>
-                <p>Payments By Cheque Or Bank Transfer Requested.</p>
-                <p>24% Interest Will Be Charged After 1 Month.</p>
-                <p>In Case Of Any Discrepancy is Found in This Invoice</p>
-                <p>Intimated in Writing Within 7 Days, Otherwise it Will</p>
-                <p>Treated as an Order.</p>
-                <div class="jurisdiction-center">Jurisdiction Ahmedabad.</div>
+                <p><strong>Declaration:</strong> We declare that this invoice shows the actual price of the Goods described and that all particulars are true and correct.</p>
+                <p>Payments By Cheque Or Bank Transfer Requested. 24% Interest Will Be Charged After Due Date.</p>
+                <div class="jurisdiction-center">Subject to Ahmedabad Jurisdiction.</div>
             </div>
 
             <div class="sign-block">
                 <div>
                     <div class="for-title">For,</div>
-                    <div class="company-name-bold">Shree Giriraj Poly Plast.</div>
+                    <div class="company-name-bold">Shree Giriraj Poly Plast</div>
                 </div>
                 <div class="sign-label">Authorised Signatory</div>
             </div>

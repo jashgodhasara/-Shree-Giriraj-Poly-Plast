@@ -37,11 +37,30 @@
 </head>
 <body>
 
-<div class="no-print">
+<div class="no-print" style="display:flex; justify-content:center; gap:12px; margin-bottom:20px;">
+    <a href="{{ route('purchase-orders.show', $purchaseOrder) }}" style="padding: 10px 20px; background: #334155; color: #fff; text-decoration:none; border-radius: 8px; font-size: 14px; font-weight: 600; display:inline-flex; align-items:center; gap:6px;">
+        ← Back
+    </a>
+    <button onclick="exitPoPrint()" style="padding: 10px 20px; background: #475569; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+        ✕ Exit
+    </button>
     <button onclick="window.print()" style="padding: 10px 24px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;">
-        <i class="fa fa-print"></i> Print / Save as PDF
+        🖨 Print / Save as PDF
     </button>
 </div>
+
+<script>
+function exitPoPrint() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.close();
+    }
+    setTimeout(function() {
+        window.location.href = "{{ route('purchase-orders.index') }}";
+    }, 200);
+}
+</script>
 
 <div class="po-container">
     <div class="header">

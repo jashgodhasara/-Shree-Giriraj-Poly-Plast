@@ -1,5 +1,8 @@
 {{-- Shared form fields for create/edit user modals --}}
-@php $isEdit = $isEdit ?? false; @endphp
+@php 
+    $isEdit = $isEdit ?? false; 
+    $buttonText = $buttonText ?? ($isEdit ? 'Update User' : 'Create User');
+@endphp
 
 <div style="margin-bottom:16px;">
     <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;">Full Name <span style="color:var(--danger);">*</span></label>

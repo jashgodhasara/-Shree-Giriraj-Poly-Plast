@@ -39,10 +39,12 @@ $sidebarInitial = strtoupper(substr($sidebarUser, 0, 1));
         
         <li style="color:var(--text-muted); font-size:0.75rem; font-weight:800; padding:10px 20px; text-transform:uppercase; margin-top:10px;">Sales Module</li>
         <li><a href="customers.php" class="<?= basename($_SERVER['PHP_SELF']) == 'customers.php' ? 'active' : '' ?>"><i class='bx bx-user-voice'></i> Customers</a></li>
+        <li><a href="products.php" class="<?= basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : '' ?>"><i class='bx bx-package'></i> Products Master</a></li>
         <li><a href="invoices.php" class="<?= basename($_SERVER['PHP_SELF']) == 'invoices.php' ? 'active' : '' ?>"><i class='bx bx-receipt'></i> Sales Invoices</a></li>
 
         <li style="color:var(--text-muted); font-size:0.75rem; font-weight:800; padding:10px 20px; text-transform:uppercase; margin-top:10px;">Purchase Module</li>
         <li><a href="suppliers.php" class="<?= basename($_SERVER['PHP_SELF']) == 'suppliers.php' ? 'active' : '' ?>"><i class='bx bx-shopping-bag'></i> Suppliers</a></li>
+        <li><a href="purchases.php" class="<?= basename($_SERVER['PHP_SELF']) == 'purchases.php' ? 'active' : '' ?>"><i class='bx bx-cart-download'></i> Purchase Bills</a></li>
         <li><a href="transporters.php" class="<?= basename($_SERVER['PHP_SELF']) == 'transporters.php' ? 'active' : '' ?>"><i class='bx bx-truck'></i> Transporters</a></li>
 
         <li style="color:var(--text-muted); font-size:0.75rem; font-weight:800; padding:10px 20px; text-transform:uppercase; margin-top:10px;">Inventory & Production</li>

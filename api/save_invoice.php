@@ -10,8 +10,14 @@ header('Content-Type: application/json');
 $data = json_decode(file_get_contents('php://input'), true);
 
 if ($data) {
-    $customer_id = $data['customer_id'] ?? 0;
+    $customer_id = intval($data['customer_id'] ?? 0);
     $date = $data['date'] ?? date('Y-m-d');
+    $po_number = trim($data['po_number'] ?? '');
+    $delivery_at = trim($data['delivery_at'] ?? '');
+    $vehicle_number = trim($data['vehicle_number'] ?? '');
+    $challan_number = trim($data['challan_number'] ?? '');
+    $payment_terms = trim($data['payment_terms'] ?? '');
+    $notes = trim($data['notes'] ?? '');
     $items = $data['items'] ?? [];
     
     if (empty($customer_id) || empty($items)) {
@@ -25,101 +31,134 @@ if ($data) {
 
         $pdo->beginTransaction();
         
-        // Generate Invoice Number (e.g., INV-YYYYMM-XXXX)
-        $prefix = 'INV-' . date('Ym') . '-';
-        $stmtMax = $pdo->prepare("SELECT invoice_number FROM invoices WHERE invoice_number LIKE ? ORDER BY CAST(SUBSTRING(invoice_number, ?) AS UNSIGNED) DESC LIMIT 1");
-        $stmtMax->execute([$prefix . '%', strlen($prefix) + 1]);
+        // 1. Generate Standard Bill Number format (e.g. SGPP/2026-27/0001 or INV-YYYYMM-XXXX)
+        $year = (int)date('Y', strtotime($date));
+        $month = (int)date('m', strtotime($date));
+        $fyStart = ($month >= 4) ? $year : $year - 1;
+        $fyEnd = substr((string)($fyStart + 1), -2);
+        $prefix = "SGPP/{$fyStart}-{$fyEnd}/";
+
+        // Query max sequence for current financial year prefix
+        $stmtMax = $pdo->prepare("SELECT invoice_number FROM invoices WHERE invoice_number LIKE ? ORDER BY id DESC LIMIT 1");
+        $stmtMax->execute([$prefix . '%']);
         $lastRow = $stmtMax->fetch();
-        
-        if ($lastRow) {
-            $lastNum = (int) substr($lastRow['invoice_number'], strlen($prefix));
-            $nextNum = $lastNum + 1;
+
+        if ($lastRow && !empty($lastRow['invoice_number'])) {
+            $lastSeq = (int)substr($lastRow['invoice_number'], strlen($prefix));
+            $nextSeq = $lastSeq + 1;
         } else {
-            $nextNum = 1;
+            // Check fallback for other formats
+            $stmtCount = $pdo->query("SELECT COUNT(*) FROM invoices");
+            $nextSeq = (int)$stmtCount->fetchColumn() + 1;
         }
+
+        $invoice_number = $prefix . str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
         
-        $invoice_number = $prefix . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
-        
-        // Safety loop to ensure uniqueness
+        // Safety loop to guarantee uniqueness
         $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE invoice_number = ?");
         while (true) {
             $stmtCheck->execute([$invoice_number]);
             if ($stmtCheck->fetchColumn() == 0) {
                 break;
             }
-            $nextNum++;
-            $invoice_number = $prefix . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+            $nextSeq++;
+            $invoice_number = $prefix . str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
         }
+        
+        // 2. Determine GST Regime (Gujarat = Intra vs Outside = Inter)
+        $stmtCust = $pdo->prepare("SELECT name, state, gstin, address FROM customers WHERE id = ?");
+        $stmtCust->execute([$customer_id]);
+        $customer = $stmtCust->fetch();
+        $customer_name = $customer['name'] ?? 'Customer #' . $customer_id;
+        
+        $customer_state = strtolower(trim($customer['state'] ?? 'gujarat'));
+        $is_igst = (!empty($customer_state) && $customer_state !== 'gujarat' && $customer_state !== '24');
+        
+        // 3. Insert base invoice
+        $stmtInv = $pdo->prepare("
+            INSERT INTO invoices (invoice_number, customer_id, invoice_date, subtotal, cgst, sgst, igst, round_off, grand_total, lr_number, challan_number, po_number, payment_terms, delivery_at, notes, created_by) 
+            VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmtInv->execute([$invoice_number, $customer_id, $date, $vehicle_number, $challan_number, $po_number, $payment_terms, $delivery_at, $notes, $createdBy]);
+        $invoice_id = $pdo->lastInsertId();
         
         $subtotal = 0;
         $total_cgst = 0;
         $total_sgst = 0;
         $total_igst = 0;
-        $grand_total = 0;
-        
-        // Determine if IGST applies (check customer state)
-        $stmtCust = $pdo->prepare("SELECT name, state FROM customers WHERE id = ?");
-        $stmtCust->execute([$customer_id]);
-        $customer = $stmtCust->fetch();
-        $customer_name = $customer['name'] ?? 'Customer #' . $customer_id;
-        $is_igst = false;
-        if ($customer && $customer['state']) {
-            if (strtolower(trim($customer['state'])) !== 'gujarat') {
-                $is_igst = true;
-            }
-        }
-        
-        // Insert empty invoice first to get ID
-        $stmtInv = $pdo->prepare("INSERT INTO invoices (invoice_number, customer_id, invoice_date, subtotal, cgst, sgst, igst, grand_total, created_by) VALUES (?, ?, ?, 0, 0, 0, 0, 0, ?)");
-        $stmtInv->execute([$invoice_number, $customer_id, $date, $createdBy]);
-        $invoice_id = $pdo->lastInsertId();
-        
-        // Insert items and calculate totals
-        $stmtItem = $pdo->prepare("INSERT INTO invoice_items (invoice_id, product_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)");
+
+        // 4. Insert items and update product stock
+        $stmtItem = $pdo->prepare("
+            INSERT INTO invoice_items (invoice_id, product_id, unit, quantity, rate_per_kg, unit_price, gst_rate, hsn_code, total_price) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
         
         foreach ($items as $item) {
-            $prod_id = $item['id'];
-            $qty = $item['quantity'];
+            $prod_id = intval($item['id']);
+            $qty = floatval($item['quantity']);
+            $unit = trim($item['unit'] ?? 'PCS');
+            $rate_per_kg = floatval($item['rate_per_kg'] ?? 0);
+            $unit_price = floatval($item['unit_price'] ?? 0);
+            $gst_rate = floatval($item['gst_rate'] ?? 18);
             
             // Get product details
-            $stmtProd = $pdo->prepare("SELECT price, gst_rate FROM products WHERE id = ?");
+            $stmtProd = $pdo->prepare("SELECT price, gst_rate, hsn_code FROM products WHERE id = ?");
             $stmtProd->execute([$prod_id]);
             $prod = $stmtProd->fetch();
             
-            $unit_price = $prod['price'];
-            $item_total = $unit_price * $qty;
+            if ($unit_price <= 0) {
+                $unit_price = floatval($prod['price'] ?? 0);
+            }
+            $hsn_code = $prod['hsn_code'] ?? '392690';
             
-            $stmtItem->execute([$invoice_id, $prod_id, $qty, $unit_price, $item_total]);
+            $item_taxable = round($qty * $unit_price, 2);
+            $gst_amount = round(($item_taxable * $gst_rate) / 100, 2);
+            $item_total = $item_taxable + $gst_amount;
             
-            // Deduct product stock
+            $stmtItem->execute([$invoice_id, $prod_id, $unit, $qty, $rate_per_kg, $unit_price, $gst_rate, $hsn_code, $item_total]);
+            
+            // Deduct product stock quantity
             $pdo->prepare("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?")->execute([$qty, $prod_id]);
             
-            $subtotal += $item_total;
-            $gst_amount = ($item_total * $prod['gst_rate']) / 100;
+            $subtotal += $item_taxable;
             
             if ($is_igst) {
                 $total_igst += $gst_amount;
             } else {
-                $total_cgst += $gst_amount / 2;
-                $total_sgst += $gst_amount / 2;
+                $total_cgst += round($gst_amount / 2, 2);
+                $total_sgst += round($gst_amount / 2, 2);
             }
         }
         
-        $grand_total = round($subtotal + $total_cgst + $total_sgst + $total_igst, 2);
+        $exact_total = $subtotal + $total_cgst + $total_sgst + $total_igst;
+        $grand_total = round($exact_total);
+        $round_off = round($grand_total - $exact_total, 2);
         
-        // Update invoice with totals
-        $stmtUpdate = $pdo->prepare("UPDATE invoices SET subtotal = ?, cgst = ?, sgst = ?, igst = ?, grand_total = ? WHERE id = ?");
-        $stmtUpdate->execute([$subtotal, $total_cgst, $total_sgst, $total_igst, $grand_total, $invoice_id]);
+        // 5. Update invoice with calculated totals
+        $stmtUpdate = $pdo->prepare("
+            UPDATE invoices 
+            SET subtotal = ?, cgst = ?, sgst = ?, igst = ?, round_off = ?, grand_total = ? 
+            WHERE id = ?
+        ");
+        $stmtUpdate->execute([$subtotal, $total_cgst, $total_sgst, $total_igst, $round_off, $grand_total, $invoice_id]);
 
-        // Auto-post Customer Debit Ledger entry
-        $stmtLedger = $pdo->prepare("INSERT INTO ledgers (entity_type, entity_id, transaction_date, type, amount, description, created_by) VALUES ('Customer', ?, ?, 'Debit', ?, ?, ?)");
+        // 6. Auto-post Customer Debit Ledger entry
+        $stmtLedger = $pdo->prepare("
+            INSERT INTO ledgers (entity_type, entity_id, transaction_date, type, amount, description, created_by) 
+            VALUES ('Customer', ?, ?, 'Debit', ?, ?, ?)
+        ");
         $stmtLedger->execute([$customer_id, $date, $grand_total, 'Sales Invoice #' . $invoice_number, $createdBy]);
         
         logActivity($pdo, 'CREATE', 'Invoices', "Created Sales Invoice #$invoice_number for Customer '$customer_name' (Total: ₹" . number_format($grand_total, 2) . ")");
 
         $pdo->commit();
         
-        echo json_encode(['success' => true, 'message' => 'Invoice created successfully', 'invoice_id' => $invoice_id]);
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Invoice created successfully', 
+            'invoice_id' => $invoice_id,
+            'invoice_number' => $invoice_number
+        ]);
     } catch (PDOException $e) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);

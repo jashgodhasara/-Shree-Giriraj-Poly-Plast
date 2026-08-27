@@ -417,10 +417,24 @@ body {
     </div>
     <div class="toolbar-actions">
         <a href="{{ route('invoices.show', $invoice) }}" class="btn-back">← Back</a>
+        <button onclick="exitInvoicePrint()" class="btn-back" style="background:#475569; color:#fff;" title="Exit Print View">✕ Exit</button>
         <a href="{{ route('invoices.challan', $invoice) }}" class="btn-challan" target="_blank">🚚 Delivery Challan</a>
         <button onclick="window.print()" class="btn-print">🖨 Print Invoice</button>
     </div>
 </div>
+
+<script>
+function exitInvoicePrint() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.close();
+    }
+    setTimeout(function() {
+        window.location.href = "{{ route('invoices.index') }}";
+    }, 200);
+}
+</script>
 
 <div class="page-wrap">
 
