@@ -52,7 +52,8 @@ $sidebarInitial = strtoupper(substr($sidebarUser, 0, 1));
         <li><a href="production.php" class="<?= basename($_SERVER['PHP_SELF']) == 'production.php' ? 'active' : '' ?>"><i class='bx bx-sitemap'></i> Production Logs</a></li>
 
         <li style="color:var(--text-muted); font-size:0.75rem; font-weight:800; padding:10px 20px; text-transform:uppercase; margin-top:10px;">Accounts & Finance</li>
-        <li><a href="ledger.php" class="<?= basename($_SERVER['PHP_SELF']) == 'ledger.php' ? 'active' : '' ?>"><i class='bx bx-money'></i> Payments & Ledger</a></li>
+        <li style="color:var(--text-muted); font-size:0.75rem; font-weight:800; padding:10px 20px; text-transform:uppercase; margin-top:10px;">Administration</li>
+        <li><a href="export_import.php" class="<?= basename($_SERVER['PHP_SELF']) == 'export_import.php' ? 'active' : '' ?>"><i class='bx bx-data'></i> Data Export &amp; Import</a></li>
 
         <li style="color:var(--text-muted); font-size:0.75rem; font-weight:800; padding:10px 20px; text-transform:uppercase; margin-top:10px;">Account</li>
         <li><a href="logout.php" style="color:#f87171;" onclick="return confirm('Are you sure you want to log out?');"><i class='bx bx-log-out-circle'></i> Sign Out</a></li>
