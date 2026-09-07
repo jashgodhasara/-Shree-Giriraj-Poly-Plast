@@ -763,13 +763,30 @@
         <span class="nav-icon"><i class="fa fa-gauge-high"></i></span>
         <span class="nav-label">Dashboard</span>
     </a>
-    <a href="{{ route('invoices.create') }}" class="{{ request()->routeIs('invoices.create') ? 'active' : '' }}">
-        <span class="nav-icon"><i class="fa fa-cash-register"></i></span>
-        <span class="nav-label">POS</span>
-    </a>
     <a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-chart-line"></i></span>
         <span class="nav-label">Reports</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">Billing &amp; Purchases</div>
+    <a href="{{ route('invoices.create') }}" class="{{ request()->routeIs('invoices.create') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-file-invoice-dollar"></i></span>
+        <span class="nav-label">Create Bill (વેચાણ બિલ)</span>
+        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981;">New</span>
+    </a>
+    <a href="{{ route('invoices.index') }}" class="{{ request()->routeIs('invoices.index') || request()->routeIs('invoices.show') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-receipt"></i></span>
+        <span class="nav-label">Sales Invoices History</span>
+    </a>
+    <a href="{{ route('purchase-orders.create') }}" class="{{ request()->routeIs('purchase-orders.create') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-cart-plus"></i></span>
+        <span class="nav-label">New Purchase Bill (ખરીદી)</span>
+        <span class="nav-badge" style="background:rgba(99,102,241,.2);color:#818cf8;">PO</span>
+    </a>
+    <a href="{{ route('purchase-orders.index') }}" class="{{ request()->routeIs('purchase-orders.index') || request()->routeIs('purchase-orders.show') ? 'active' : '' }}">
+        <span class="nav-icon"><i class="fa fa-truck-ramp-box"></i></span>
+        <span class="nav-label">Purchase Bills History</span>
     </a>
 
     <div class="sidebar-divider"></div>

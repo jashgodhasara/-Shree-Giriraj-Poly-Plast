@@ -130,6 +130,8 @@ class PurchaseOrderController extends Controller
 
             $grandTotal = round($subtotal + $cgst + $sgst + $igst, 2);
 
+            $isAutoReceive = $request->has('auto_receive') ? $request->boolean('auto_receive') : true;
+
             $po = PurchaseOrder::create([
                 'po_number'              => PurchaseOrder::generatePoNumber(),
                 'supplier_id'            => $supplier->id,
@@ -142,7 +144,7 @@ class PurchaseOrderController extends Controller
                 'sgst'                   => $sgst,
                 'igst'                   => $igst,
                 'grand_total'            => $grandTotal,
-                'status'                 => 'Pending',
+                'status'                 => $isAutoReceive ? 'Received' : 'Pending',
                 'notes'                  => $request->notes ?: null,
             ]);
 
@@ -150,13 +152,56 @@ class PurchaseOrderController extends Controller
                 $po->items()->create($iData);
             }
 
+            if ($isAutoReceive) {
+                foreach ($itemsData as $iData) {
+                    $material = Material::find($iData['material_id']);
+                    if ($material) {
+                        $material->increment('stock_quantity', $iData['quantity']);
+
+                        // Sync/Record to matching Product if exists
+                        $matchedProduct = Product::where('material_id', $material->id)
+                            ->orWhere('name', $material->name)
+                            ->first();
+
+                        if ($matchedProduct) {
+                            $this->inventoryService->recordPurchase(
+                                $matchedProduct,
+                                (float) $iData['quantity'],
+                                (float) $iData['unit_price'],
+                                $po->po_number,
+                                $po->id,
+                                $request->po_date ?: now()->toDateString(),
+                                "Purchase receipt from {$supplier->name}"
+                            );
+                        }
+                    }
+                }
+
+                // Post Credit Entry in Ledgers for Supplier
+                Ledger::create([
+                    'entity_type'      => 'Supplier',
+                    'entity_id'        => $supplier->id,
+                    'transaction_date' => $request->po_date ?: now()->toDateString(),
+                    'type'             => 'Credit',
+                    'amount'           => $grandTotal,
+                    'description'      => 'Purchase Bill Received #' . $po->po_number,
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'po_id'   => $po->id,
-                'message' => 'Purchase Order ' . $po->po_number . ' created successfully.',
+                'message' => 'Purchase Bill ' . $po->po_number . ' generated and stock updated successfully.',
             ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => collect($ve->errors())->flatten()->first() ?: 'Validation failed',
+                'errors'  => $ve->errors()
+            ], 422);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

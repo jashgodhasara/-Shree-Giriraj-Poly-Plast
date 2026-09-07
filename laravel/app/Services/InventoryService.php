@@ -203,7 +203,7 @@ class InventoryService
     /**
      * Record Outward Sale.
      */
-    public function recordSale(Product $product, float $quantity, float $unitPrice, string $invoiceNumber, int $invoiceId, ?string $date = null, ?string $remarks = null, bool $allowNegative = false): StockLedger
+    public function recordSale(Product $product, float $quantity, float $unitPrice, string $invoiceNumber, int $invoiceId, ?string $date = null, ?string $remarks = null, bool $allowNegative = true): StockLedger
     {
         return $this->recordTransaction([
             'product_id'       => $product->id,

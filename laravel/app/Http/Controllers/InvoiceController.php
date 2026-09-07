@@ -215,7 +215,8 @@ class InvoiceController extends Controller
                     $invoice->invoice_number,
                     $invoice->id,
                     $invoiceDate,
-                    "Sales Invoice #{$invoice->invoice_number} to {$customer->name}"
+                    "Sales Invoice #{$invoice->invoice_number} to {$customer->name}",
+                    true
                 );
             }
 

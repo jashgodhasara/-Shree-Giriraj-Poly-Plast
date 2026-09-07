@@ -151,7 +151,10 @@ class InventoryServiceTest extends TestCase
             25.00,
             5.00,
             'INV-FAIL',
-            99
+            99,
+            null,
+            null,
+            false
         );
     }
 

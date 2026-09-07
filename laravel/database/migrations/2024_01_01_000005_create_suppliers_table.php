@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('phone', 20)->nullable();
             $table->string('email')->nullable();
             $table->string('gstin', 15)->nullable();
+            $table->string('state', 50)->nullable();
             $table->text('address')->nullable();
             $table->timestamps();
         });

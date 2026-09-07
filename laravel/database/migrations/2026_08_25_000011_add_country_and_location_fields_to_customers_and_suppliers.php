@@ -24,6 +24,9 @@ return new class extends Migration
         });
 
         Schema::table('suppliers', function (Blueprint $table) {
+            if (!Schema::hasColumn('suppliers', 'state')) {
+                $table->string('state', 50)->default('Gujarat')->after('gstin');
+            }
             if (!Schema::hasColumn('suppliers', 'country')) {
                 $table->string('country', 100)->default('India')->after('state');
             }
