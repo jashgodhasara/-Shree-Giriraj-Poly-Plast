@@ -246,6 +246,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/ledger', [LedgerController::class, 'store'])->name('ledger.store');
     Route::delete('/ledger/{ledger}', [LedgerController::class, 'destroy'])->name('ledger.destroy');
 
+    // Download Apps Hub & Setup Packages
+    Route::get('/downloads', [\App\Http\Controllers\DownloadController::class, 'index'])->name('downloads.index');
+    Route::get('/downloads/desktop', [\App\Http\Controllers\DownloadController::class, 'desktop'])->name('downloads.desktop');
+    Route::get('/downloads/mobile', [\App\Http\Controllers\DownloadController::class, 'mobile'])->name('downloads.mobile');
+
     // ── Admin only ───────────────────────────────────────────────────
     Route::middleware('admin')->group(function () {
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
@@ -255,3 +260,4 @@ Route::middleware('auth')->group(function () {
         Route::post('/users/{user}/toggle-active', [UserManagementController::class, 'toggleActive'])->name('users.toggle-active');
     });
 });
+

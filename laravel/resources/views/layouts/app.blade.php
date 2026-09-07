@@ -7,6 +7,8 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="/manifest.json">
     <title>@yield('title', 'Shree Giriraj Poly Plast')</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -926,15 +928,15 @@
     @auth
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">Download Apps</div>
-    <a href="{{ asset('downloads/Shree-Giriraj-ERP-Desktop-Setup.zip') }}" download title="Download Windows Desktop App (Setup ZIP)">
+    <a href="{{ route('downloads.index') }}" class="{{ request()->routeIs('downloads.*') ? 'active' : '' }}" title="Download Windows Desktop & Mobile Apps Hub">
+        <span class="nav-icon"><i class="fa fa-cloud-arrow-down"></i></span>
+        <span class="nav-label">Download Apps</span>
+        <span class="nav-badge" style="background:rgba(99,102,241,.2);color:#818cf8;">Desktop &amp; APK</span>
+    </a>
+    <a href="{{ route('downloads.desktop') }}" title="Direct Download Windows Desktop App (.zip)">
         <span class="nav-icon"><i class="fa fa-desktop"></i></span>
         <span class="nav-label">Desktop App (.zip)</span>
-        <span class="nav-badge" style="background:rgba(99,102,241,.2);color:#818cf8;">Windows 64-bit</span>
-    </a>
-    <a href="http://192.168.1.13:8080" target="_blank" title="Download Mobile App APK & Portal">
-        <span class="nav-icon"><i class="fa fa-mobile-screen-button"></i></span>
-        <span class="nav-label">Mobile App Portal</span>
-        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#34d399;">Android APK</span>
+        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#34d399;">Windows 64-bit</span>
     </a>
 
     @if(auth()->user()->isAdmin())
