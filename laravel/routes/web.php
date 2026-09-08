@@ -251,6 +251,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/downloads/desktop', [\App\Http\Controllers\DownloadController::class, 'desktop'])->name('downloads.desktop');
     Route::get('/downloads/mobile', [\App\Http\Controllers\DownloadController::class, 'mobile'])->name('downloads.mobile');
 
+    // Cloud & Offline Auto Sync
+    Route::get('/sync', [\App\Http\Controllers\SyncController::class, 'index'])->name('sync.index');
+    Route::get('/sync/status', [\App\Http\Controllers\SyncController::class, 'status'])->name('sync.status');
+    Route::post('/sync/trigger', [\App\Http\Controllers\SyncController::class, 'trigger'])->name('sync.trigger');
+
+
     // ── Admin only ───────────────────────────────────────────────────
     Route::middleware('admin')->group(function () {
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');

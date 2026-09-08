@@ -21,18 +21,47 @@ fs.copyFileSync(path.join(rootDir, 'giriraj-desktop', 'main.js'), path.join(pkgD
 fs.copyFileSync(path.join(rootDir, 'giriraj-desktop', 'offline.html'), path.join(pkgDir, 'giriraj-desktop', 'offline.html'));
 fs.copyFileSync(path.join(rootDir, 'giriraj-desktop', 'package.json'), path.join(pkgDir, 'giriraj-desktop', 'package.json'));
 
-// 1. Standalone Native Desktop Window Launcher
+// 1. Standalone Smart Hybrid Launcher (Online Cloud + Offline Auto Fallback)
 const launcherBat = `@echo off
-title Shree Giriraj Poly Plast ERP - Desktop App
+setlocal
+title Shree Giriraj Poly Plast ERP
 echo ===================================================================
-echo   SHREE GIRIRAJ POLY PLAST ERP - WINDOWS DESKTOP APPLICATION
+echo   SHREE GIRIRAJ POLY PLAST ERP - HYBRID DESKTOP APPLICATION
 echo ===================================================================
 echo.
-echo Launching ERP Native Window...
+echo [1/2] Checking Network and Server Status...
 
-set TARGET_URL=https://shreegiriraj-erp.onrender.com
+set ONLINE_URL=https://shreegiriraj-erp.onrender.com
+set OFFLINE_URL=http://127.0.0.1:8000
+set TARGET_URL=%ONLINE_URL%
 
-:: 1. Microsoft Edge App Mode (Built-in on Windows 10/11)
+:: Test if online cloud is reachable
+curl -s -m 3 %ONLINE_URL%/api >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [Notice] Working in Offline Mode (No Internet).
+    echo Starting Local ERP Database Engine...
+    
+    :: Find PHP executable
+    set PHP_BIN=php
+    if exist "C:\\xampp\\php\\php.exe" set PHP_BIN=C:\\xampp\\php\\php.exe
+
+    :: Check if local backend is already running
+    curl -s -m 2 %OFFLINE_URL%/login >nul 2>&1
+    if %ERRORLEVEL% NEQ 0 (
+        if exist "%~dp0..\\laravel" (
+            cd /d "%~dp0..\\laravel"
+            start "Shree Giriraj ERP Local Backend" /min "%PHP_BIN%" artisan serve --host=127.0.0.1 --port=8000
+            timeout /t 2 /nobreak >nul
+        )
+    )
+    set TARGET_URL=%OFFLINE_URL%
+) else (
+    echo [Status] Connected to Live Cloud ERP!
+)
+
+echo [2/2] Opening Native Window...
+
+:: 1. Microsoft Edge App Mode (Windows 10 / 11)
 if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" (
     start "" "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" --app="%TARGET_URL%" --window-size=1366,820
     exit /b
@@ -75,20 +104,41 @@ timeout /t 3
 
 fs.writeFileSync(path.join(pkgDir, 'Install_Desktop_Shortcut.bat'), shortcutBat);
 
-// 3. README Instructions
+// 3. Offline Mode Direct Launcher
+const offlineBat = `@echo off
+title Shree Giriraj ERP - Offline Local Mode
+echo Starting Offline ERP on Local PC...
+set PHP_BIN=php
+if exist "C:\\xampp\\php\\php.exe" set PHP_BIN=C:\\xampp\\php\\php.exe
+if exist "%~dp0..\\laravel" (
+    cd /d "%~dp0..\\laravel"
+    start "Shree Giriraj ERP Local" /min "%PHP_BIN%" artisan serve --host=127.0.0.1 --port=8000
+    timeout /t 2 /nobreak >nul
+)
+if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" (
+    start "" "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" --app="http://127.0.0.1:8000" --window-size=1366,820
+    exit /b
+)
+start http://127.0.0.1:8000
+exit /b
+`;
+
+fs.writeFileSync(path.join(pkgDir, 'Offline_Local_ERP.bat'), offlineBat);
+
+// 4. README Instructions
 const readmeText = `===================================================================
-  SHREE GIRIRAJ POLY PLAST ERP - WINDOWS DESKTOP SETUP
+  SHREE GIRIRAJ POLY PLAST ERP - DUAL MODE DESKTOP APPLICATION
 ===================================================================
 
-INSTALLATION & USAGE:
-1. Double-click "Launch_Shree_Giriraj_ERP.bat" to start the Desktop Application.
-2. Double-click "Install_Desktop_Shortcut.bat" to place a 1-click icon on your Windows Desktop.
-
 FEATURES:
-- Opens in dedicated native desktop window without browser bars.
-- Instant access to Live Cloud ERP database.
-- Thermal invoice printing and hardware accelerated UI.
-- Compatible with Windows 10 and Windows 11 (64-bit / 32-bit).
+1. Works 100% OFFLINE without any internet connection.
+2. Auto-Syncs all offline bills & payments to Render Cloud when online.
+3. Dedicated desktop app window with thermal invoice printing.
+
+HOW TO RUN:
+- Double-click "Launch_Shree_Giriraj_ERP.bat" for auto Smart Mode.
+- Double-click "Install_Desktop_Shortcut.bat" to add desktop icon.
+- Double-click "Offline_Local_ERP.bat" for direct offline access.
 `;
 
 fs.writeFileSync(path.join(pkgDir, 'README.txt'), readmeText);

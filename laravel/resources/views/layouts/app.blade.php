@@ -942,6 +942,11 @@
     @if(auth()->user()->isAdmin())
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">Administration</div>
+    <a href="{{ route('sync.index') }}" class="{{ request()->routeIs('sync.*') ? 'active' : '' }}" title="Cloud & Offline Auto-Sync Management">
+        <span class="nav-icon"><i class="fa-solid fa-arrows-rotate"></i></span>
+        <span class="nav-label">Cloud Sync</span>
+        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#34d399;">Offline / Auto</span>
+    </a>
     <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">
         <span class="nav-icon"><i class="fa fa-users-gear"></i></span>
         <span class="nav-label">User Management</span>
@@ -1625,7 +1630,7 @@
         return false;
     }
 
-    // Trigger manual or post-action sync without page reload
+    // Trigger manual or post-action sync without page reload + Cloud Auto Sync
     async function triggerLiveSync(forceSync = false, isSilent = false) {
         if (isSyncing) return;
         if (!forceSync && isUserDataEntryActive()) {
@@ -1635,10 +1640,13 @@
         isSyncing = true;
         const icon = document.getElementById('liveSyncIcon');
         const text = document.getElementById('liveSyncText');
+        const dot = document.getElementById('liveSyncDot');
         if (icon) icon.classList.add('sync-spinning');
         if (text && !isSilent) text.textContent = 'Syncing...';
+        if (dot) dot.style.background = '#f59e0b';
 
         try {
+            // 1. Update DOM cards (Live view reload)
             const res = await fetch(window.location.href, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
             });
@@ -1647,64 +1655,93 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                // 1. Update all .card-body containers (Tables, Lists, Empty States) - ONLY if safe
                 const newCards = doc.querySelectorAll('.card-body');
                 const curCards = document.querySelectorAll('.card-body');
                 if (newCards.length && newCards.length === curCards.length) {
                     curCards.forEach((cur, idx) => {
-                        // Protect any card containing forms, inputs, textareas, selects
-                        if (!forceSync && cur.querySelector('form, input, textarea, select')) {
-                            return;
-                        }
+                        if (!forceSync && cur.querySelector('form, input, textarea, select')) return;
                         const newCard = newCards[idx];
-                        if (cur.innerHTML !== newCard.innerHTML) {
-                            cur.innerHTML = newCard.innerHTML;
-                        }
+                        if (cur.innerHTML !== newCard.innerHTML) cur.innerHTML = newCard.innerHTML;
                     });
-                } else {
-                    const newTable = doc.querySelector('.table-wrap');
-                    const curTable = document.querySelector('.table-wrap');
-                    if (newTable && curTable && (forceSync || !curTable.querySelector('input, form')) && newTable.innerHTML !== curTable.innerHTML) {
-                        curTable.innerHTML = newTable.innerHTML;
-                    }
                 }
 
-                // 2. Update Stats Grid & Metrics if present
                 const newStats = doc.querySelector('.stats-grid');
                 const curStats = document.querySelector('.stats-grid');
                 if (newStats && curStats && newStats.innerHTML !== curStats.innerHTML) {
                     curStats.innerHTML = newStats.innerHTML;
                 }
+            }
 
-                if (!isSilent) showToast('Data synchronized in real-time!', 'success');
+            // 2. Perform Cloud Synchronization if online
+            if (navigator.onLine) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const cloudSyncRes = await fetch('{{ route('sync.trigger') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (cloudSyncRes.ok) {
+                    const syncData = await cloudSyncRes.json();
+                    if (syncData.success) {
+                        const count = (syncData.report?.invoices_synced || 0) + (syncData.report?.customers_synced || 0);
+                        if (count > 0 && !isSilent) {
+                            showToast(`Cloud Sync Complete: ${count} offline entries uploaded!`, 'success');
+                        } else if (!isSilent) {
+                            showToast('Data synchronized with Cloud Live ERP!', 'success');
+                        }
+                        if (dot) dot.style.background = '#10b981';
+                    }
+                }
+            } else {
+                if (dot) dot.style.background = '#3b82f6';
+                if (!isSilent) showToast('Working in Offline Mode. Data saved locally on PC.', 'info');
             }
         } catch (e) {
-            if (!isSilent) showToast('Sync failed. Please check connection.', 'error');
+            if (dot) dot.style.background = '#3b82f6';
+            if (!isSilent) showToast('Offline Mode: Data saved locally on your laptop.', 'info');
         } finally {
             isSyncing = false;
             if (icon) icon.classList.remove('sync-spinning');
-            if (text) text.textContent = 'Live Sync';
+            if (text) text.textContent = navigator.onLine ? 'Live Sync' : 'Offline Mode';
         }
     }
 
-    // Smart sync on window focus / tab switch - ONLY if not entering data
+    // Auto-Sync immediately when laptop reconnects to internet
+    window.addEventListener('online', () => {
+        showToast('🌐 Internet Reconnected! Syncing offline bills to Cloud...', 'info');
+        triggerLiveSync(true, false);
+    });
+
+    window.addEventListener('offline', () => {
+        const dot = document.getElementById('liveSyncDot');
+        const text = document.getElementById('liveSyncText');
+        if (dot) dot.style.background = '#3b82f6';
+        if (text) text.textContent = 'Offline Mode';
+        showToast('💻 Switched to Offline Mode. You can continue creating bills without internet.', 'info');
+    });
+
+    // Smart sync on window focus / tab switch
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && !isUserDataEntryActive()) {
             triggerLiveSync(false, true);
         }
     });
+
     window.addEventListener('focus', () => {
         if (!document.hidden && !isUserDataEntryActive()) {
             triggerLiveSync(false, true);
         }
     });
 
-    // Real-time background sync every 15s (ONLY on list/dashboard pages when idle)
+    // Background cloud sync every 60s
     setInterval(() => {
         if (!document.hidden && !isUserDataEntryActive()) {
             triggerLiveSync(false, true);
         }
-    }, 15000);
+    }, 60000);
 </script>
 @yield('scripts')
 @stack('scripts')
