@@ -1,43 +1,49 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 title Shree Giriraj Poly Plast ERP
 echo ===================================================================
 echo   SHREE GIRIRAJ POLY PLAST ERP - HYBRID DESKTOP APPLICATION
 echo ===================================================================
 echo.
-echo [1/2] Checking Network and Local Backend Status...
 
 set ONLINE_URL=https://shreegiriraj-erp.onrender.com
 set OFFLINE_URL=http://127.0.0.1:8000
 set TARGET_URL=%ONLINE_URL%
 
-:: Find PHP executable
+:: 1. Detect PHP binary
 set PHP_BIN=php
 if exist "C:\xampp\php\php.exe" set PHP_BIN=C:\xampp\php\php.exe
 
-:: Ensure local backend is running in background for offline use & auto-sync
+:: 2. Find Laravel project directory
+set LARAVEL_DIR=
+if exist "%~dp0laravel\artisan" set LARAVEL_DIR=%~dp0laravel
+if not defined LARAVEL_DIR if exist "%~dp0..\laravel\artisan" set LARAVEL_DIR=%~dp0..\laravel
+if not defined LARAVEL_DIR if exist "C:\xampp\htdocs\shreegiriraj\laravel\artisan" set LARAVEL_DIR=C:\xampp\htdocs\shreegiriraj\laravel
+
+:: 3. Check if local backend is running, start if needed
 curl -s -m 2 %OFFLINE_URL%/login >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo Starting Local ERP Database Engine...
-    if exist "%~dp0laravel" (
-        cd /d "%~dp0laravel"
+    if defined LARAVEL_DIR (
+        echo Starting Local Offline ERP Engine on 127.0.0.1:8000...
+        pushd "%LARAVEL_DIR%"
         start "Shree Giriraj ERP Local Backend" /min "%PHP_BIN%" artisan serve --host=127.0.0.1 --port=8000
+        popd
         timeout /t 2 /nobreak >nul
     )
 )
 
-:: Test if online cloud is reachable
+:: 4. Check if online Cloud ERP is reachable
 curl -s -m 3 %ONLINE_URL%/api >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo [Notice] No Internet detected. Opening Offline Mode...
+    echo [Mode] No Internet. Launching Offline Mode on 127.0.0.1:8000...
     set TARGET_URL=%OFFLINE_URL%
 ) else (
-    echo [Status] Internet Connected!
+    echo [Mode] Internet Connected! Launching Cloud Live ERP...
 )
 
-echo [2/2] Opening Native Window...
+echo Opening Dedicated Desktop App Window...
 
-:: 1. Microsoft Edge App Mode (Built-in on Windows 10/11)
+:: Launch in native window mode
 if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" (
     start "" "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" --app="%TARGET_URL%" --window-size=1366,820
     exit /b
@@ -46,8 +52,6 @@ if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" (
     start "" "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" --app="%TARGET_URL%" --window-size=1366,820
     exit /b
 )
-
-:: 2. Google Chrome App Mode
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" (
     start "" "%ProgramFiles%\Google\Chrome\Application\chrome.exe" --app="%TARGET_URL%" --window-size=1366,820
     exit /b
@@ -61,6 +65,5 @@ if exist "%LocalAppData%\Google\Chrome\Application\chrome.exe" (
     exit /b
 )
 
-:: 3. Default browser fallback
 start %TARGET_URL%
 exit /b
