@@ -48,7 +48,7 @@
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span>Size:</span>
-                <strong style="color: #0f172a;">~{{ $desktopSize }} MB</strong>
+                <strong style="color: #0f172a;">{{ $desktopSize }}</strong>
             </div>
         </div>
 

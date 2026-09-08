@@ -38,7 +38,10 @@ serveo_url.txt
 # Build packages & binaries
 *.apk
 *.zip
+!laravel/public/downloads/*.zip
 dist/
+build_desktop_pkg/
+scratch_desktop_pkg/
 giriraj-desktop/dist/
 giriraj-mobile/.expo/
 giriraj-mobile/web-build/
